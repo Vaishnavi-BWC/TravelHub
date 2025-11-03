@@ -1,0 +1,36 @@
+server:
+  address: 0.0.0.0   # Listen on all interfaces
+  port: 8081
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:postgresql://dpg-d42qaqbipnbc73c2na9g-a.oregon-postgres.render.com:5432/travelhub_auth?sslmode=require
+    username: travelhubadmin
+    password: 9jc71x1boEON8EfTjHXL93vVZy1p3I3o
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 15000
+
+services:
+  employee:
+    url: http://localhost:8080/ems   # keep as is
+
+jwt:
+  secret: MySuperSecureAesEncryptionKey123456   # must match gateway
+  expiration-seconds: 3600
