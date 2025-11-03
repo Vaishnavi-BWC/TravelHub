@@ -29,7 +29,7 @@ feign:
 
 services:
   employee:
-    url: http://localhost:8080/ems   # keep as is
+    url: http://bwc-97.brainwaveconsulting.co.in:8080/ems   # keep as is
 
 jwt:
   secret: MySuperSecureAesEncryptionKey123456   # must match gateway

@@ -1,5 +1,4 @@
 package com.bwc.approval_workflow_service.dto;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -28,3 +27,4 @@ public class ApprovalRequestDTO {
     private Boolean markOverpriced;
     private String overpricedReason;
 }
+

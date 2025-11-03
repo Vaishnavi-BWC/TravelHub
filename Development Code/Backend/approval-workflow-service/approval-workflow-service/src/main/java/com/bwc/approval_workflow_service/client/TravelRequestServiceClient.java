@@ -4,15 +4,22 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.bwc.approval_workflow_service.config.FeignMultipartConfig;
 import com.bwc.approval_workflow_service.dto.BookingDocumentDTO;
 import com.bwc.approval_workflow_service.dto.BookingSummaryDTO;
 import com.bwc.approval_workflow_service.dto.TravelBookingDTO;
 import com.bwc.approval_workflow_service.dto.TravelRequestProxyDTO;
 
-@FeignClient(name = "travel-request-service", url = "${services.travel-request.url:http://localhost:8080}")
+@FeignClient(
+    name = "travel-request-service", 
+    url = "${services.travel-request.url:http://localhost:8090/travel-management}",
+    configuration = FeignMultipartConfig.class
+)
 public interface TravelRequestServiceClient {
 
     // ==========================================================
@@ -41,10 +48,13 @@ public interface TravelRequestServiceClient {
     // 📎 BOOKING DOCUMENT MANAGEMENT ENDPOINTS
     // ==========================================================
 
-    @PostMapping(value = "/api/bookings/{bookingId}/documents/upload", consumes = "multipart/form-data")
-    BookingDocumentDTO uploadBookingDocument(
-            @PathVariable UUID bookingId,
-            @RequestParam("file") MultipartFile file,
+    @PostMapping(
+        value = "/api/bookings/{bookingId}/documents/upload", 
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    ResponseEntity<BookingDocumentDTO> uploadBookingDocument(
+            @PathVariable("bookingId") UUID bookingId,
+            @RequestPart("file") MultipartFile file,
             @RequestParam("documentType") String documentType,
             @RequestParam(value = "description", required = false) String description,
             @RequestHeader("X-User-Id") UUID uploadedBy);

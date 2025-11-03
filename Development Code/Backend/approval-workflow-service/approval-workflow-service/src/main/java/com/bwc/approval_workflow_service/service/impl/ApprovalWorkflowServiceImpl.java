@@ -57,6 +57,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     private static final String STATUS_COMPLETED = "COMPLETED";
     
     // Constants for workflow types
+    private static final String WORKFLOW_TYPE_PRE_TRAVEL = "PRE_TRAVEL";
     private static final String WORKFLOW_TYPE_POST_TRAVEL = "POST_TRAVEL";
     
     // Constants for step names
@@ -65,10 +66,13 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     private static final String STEP_FINANCE_APPROVAL = "FINANCE_APPROVAL";
     private static final String STEP_TRAVEL_DESK_BOOKING = "TRAVEL_DESK_BOOKING";
     private static final String STEP_HR_COMPLIANCE = "HR_COMPLIANCE";
+    private static final String STEP_HR_APPROVAL = "HR_APPROVAL";
     
     // Constants for roles
     private static final String ROLE_MANAGER = "MANAGER";
     private static final String ROLE_TRAVEL_DESK = "TRAVEL_DESK";
+    private static final String ROLE_HR = "HR";
+    private static final String ROLE_FINANCE = "FINANCE";
     
     // Constants for reference types
     private static final String REFERENCE_TYPE_TRAVEL_REQUEST = "TRAVEL_REQUEST";
@@ -85,6 +89,8 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     private final NotificationServiceClient notificationClient;
     private final ApprovalWorkflowMapper mapper;
     private final ObjectMapper objectMapper;
+
+    // ============ CORE WORKFLOW METHODS ============
 
     @Override
     @Transactional
@@ -199,42 +205,128 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     private void handleApprove(ApprovalWorkflow workflow, List<WorkflowConfiguration> configs, ApprovalRequestDTO approvalRequest) {
         int currentIndex = findCurrentStepIndex(configs, workflow.getCurrentStep());
         
-        if (STEP_TRAVEL_DESK_CHECK.equals(workflow.getCurrentStep()) && 
-            Boolean.TRUE.equals(approvalRequest.getMarkOverpriced())) {
-            workflow.setIsOverpriced(true);
-            workflow.setOverpricedReason(approvalRequest.getOverpricedReason());
+        // Handle step-specific logic
+        handleStepSpecificLogic(workflow, approvalRequest);
+        
+        // For PRE_TRAVEL workflow, handle the conditional routing
+        if (WORKFLOW_TYPE_PRE_TRAVEL.equals(workflow.getWorkflowType())) {
+            handlePreTravelNextStep(workflow, configs, currentIndex);
+        } else {
+            // For POST_TRAVEL workflow, use sequential order
+            if (currentIndex < configs.size() - 1) {
+                WorkflowConfiguration nextStep = configs.get(currentIndex + 1);
+                updateWorkflowToNextStep(workflow, configs, nextStep);
+                sendNextApprovalNotification(workflow);
+            } else {
+                completeWorkflow(workflow, STATUS_APPROVED);
+            }
         }
+    }
 
-        if (STEP_FINANCE_APPROVAL.equals(workflow.getCurrentStep()) && 
-            approvalRequest.getAmountApproved() != null) {
-            workflow.setEstimatedCost(approvalRequest.getAmountApproved());
+    private void handlePreTravelNextStep(ApprovalWorkflow workflow, List<WorkflowConfiguration> configs, int currentIndex) {
+        String currentStep = workflow.getCurrentStep();
+        
+        switch (currentStep) {
+            case STEP_MANAGER_APPROVAL:
+                // Always go to TRAVEL_DESK_CHECK after manager approval
+                WorkflowConfiguration travelDeskCheck = getStepByName(configs, STEP_TRAVEL_DESK_CHECK);
+                updateWorkflowToNextStep(workflow, configs, travelDeskCheck);
+                sendNextApprovalNotification(workflow);
+                break;
+                
+            case STEP_TRAVEL_DESK_CHECK:
+                // Decision point: overpriced or not
+                if (Boolean.TRUE.equals(workflow.getIsOverpriced())) {
+                    log.info("🔀 OVERPRICED path: TRAVEL_DESK_CHECK -> FINANCE_APPROVAL");
+                    WorkflowConfiguration financeApproval = getStepByName(configs, STEP_FINANCE_APPROVAL);
+                    updateWorkflowToNextStep(workflow, configs, financeApproval);
+                } else {
+                    log.info("🔀 NORMAL path: TRAVEL_DESK_CHECK -> HR_APPROVAL");
+                    WorkflowConfiguration hrApproval = getStepByName(configs, STEP_HR_APPROVAL);
+                    updateWorkflowToNextStep(workflow, configs, hrApproval);
+                }
+                sendNextApprovalNotification(workflow);
+                break;
+                
+            case STEP_HR_APPROVAL:
+                // After HR approval, always go to FINANCE_APPROVAL in normal path
+                log.info("🔀 NORMAL path: HR_APPROVAL -> FINANCE_APPROVAL");
+                WorkflowConfiguration financeApproval = getStepByName(configs, STEP_FINANCE_APPROVAL);
+                updateWorkflowToNextStep(workflow, configs, financeApproval);
+                sendNextApprovalNotification(workflow);
+                break;
+                
+            case STEP_FINANCE_APPROVAL:
+                // Decision point after finance approval
+                if (Boolean.TRUE.equals(workflow.getIsOverpriced())) {
+                    log.info("🔀 OVERPRICED path: FINANCE_APPROVAL -> TRAVEL_DESK_BOOKING");
+                    WorkflowConfiguration travelDeskBooking = getStepByName(configs, STEP_TRAVEL_DESK_BOOKING);
+                    updateWorkflowToNextStep(workflow, configs, travelDeskBooking);
+                    sendNextApprovalNotification(workflow);
+                } else {
+                    log.info("✅ NORMAL path: FINANCE_APPROVAL -> COMPLETED");
+                    completeWorkflow(workflow, STATUS_APPROVED);
+                }
+                break;
+                
+            case STEP_TRAVEL_DESK_BOOKING:
+                // After booking in overpriced path, go to HR_COMPLIANCE
+                log.info("🔀 OVERPRICED path: TRAVEL_DESK_BOOKING -> HR_COMPLIANCE");
+                WorkflowConfiguration hrCompliance = getStepByName(configs, STEP_HR_COMPLIANCE);
+                updateWorkflowToNextStep(workflow, configs, hrCompliance);
+                sendNextApprovalNotification(workflow);
+                break;
+                
+            case STEP_HR_COMPLIANCE:
+                // Final step in overpriced path
+                log.info("✅ OVERPRICED path: HR_COMPLIANCE -> COMPLETED");
+                completeWorkflow(workflow, STATUS_APPROVED);
+                break;
+                
+            default:
+                throw new WorkflowException("Unknown step in PRE_TRAVEL workflow: " + currentStep);
         }
+    }
 
-        if (currentIndex >= configs.size() - 1) {
-            completeWorkflow(workflow, STATUS_APPROVED);
-            return;
+    private void handleStepSpecificLogic(ApprovalWorkflow workflow, ApprovalRequestDTO approvalRequest) {
+        String currentStep = workflow.getCurrentStep();
+        
+        if (STEP_TRAVEL_DESK_CHECK.equals(currentStep)) {
+            // Handle overpriced marking
+            if (Boolean.TRUE.equals(approvalRequest.getMarkOverpriced())) {
+                workflow.setIsOverpriced(true);
+                workflow.setOverpricedReason(approvalRequest.getOverpricedReason());
+                log.info("🏷️ Workflow {} marked as OVERPRICED", workflow.getWorkflowId());
+            }
+        } else if (STEP_FINANCE_APPROVAL.equals(currentStep)) {
+            // Handle amount approval
+            if (approvalRequest.getAmountApproved() != null) {
+                workflow.setEstimatedCost(approvalRequest.getAmountApproved());
+                log.info("💰 Finance approved amount: {} for workflow {}", approvalRequest.getAmountApproved(), workflow.getWorkflowId());
+            }
         }
+    }
 
-        WorkflowConfiguration nextStep = determineNextStep(workflow, configs, currentIndex);
+    private WorkflowConfiguration getStepByName(List<WorkflowConfiguration> configs, String stepName) {
+        return configs.stream()
+                .filter(c -> stepName.equals(c.getStepName()))
+                .findFirst()
+                .orElseThrow(() -> new WorkflowException("Step not found: " + stepName));
+    }
+
+    private void updateWorkflowToNextStep(ApprovalWorkflow workflow, List<WorkflowConfiguration> configs, WorkflowConfiguration nextStep) {
+        int nextIndex = findCurrentStepIndex(configs, nextStep.getStepName());
         
         workflow.setPreviousStep(workflow.getCurrentStep());
         workflow.setCurrentStep(nextStep.getStepName());
         workflow.setCurrentApproverRole(nextStep.getApproverRole());
-        workflow.setCurrentApproverId(determineApproverId(nextStep, 
-                fetchTravelRequestSafe(workflow.getTravelRequestId())));
-        workflow.setNextStep(getNextStep(configs, configs.indexOf(nextStep)));
+        workflow.setCurrentApproverId(determineApproverId(nextStep, fetchTravelRequestSafe(workflow.getTravelRequestId())));
+        workflow.setNextStep(getNextStep(configs, nextIndex));
         workflow.setDueDate(calculateDueDate(nextStep));
         workflow.setStatus(STATUS_PENDING);
         
-        if ("SYSTEM".equalsIgnoreCase(workflow.getCurrentApproverRole()) &&
-                "WORKFLOW_COMPLETE".equalsIgnoreCase(workflow.getCurrentStep())) {
-                completeWorkflow(workflow, STATUS_COMPLETED);
-                log.info("✅ Workflow {} auto-completed by system after final reimbursement step.",
-                        workflow.getWorkflowId());
-                return;
-            }
-
-        sendNextApprovalNotification(workflow);
+        log.info("🔄 Workflow {} moved from {} to {}", workflow.getWorkflowId(), 
+                workflow.getPreviousStep(), workflow.getCurrentStep());
     }
 
     private void handleReject(ApprovalWorkflow workflow, String comments) {
@@ -242,227 +334,24 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         workflow.setCompletedAt(LocalDateTime.now());
         updateTravelRequestStatus(workflow.getTravelRequestId(), STATUS_REJECTED);
         sendRejectionNotification(workflow, comments);
+        log.info("❌ Workflow {} rejected: {}", workflow.getWorkflowId(), comments);
     }
 
     private void handleReturn(ApprovalWorkflow workflow, String comments) {
         workflow.setStatus("RETURNED");
         updateTravelRequestStatus(workflow.getTravelRequestId(), "RETURNED");
         sendReturnNotification(workflow, comments);
+        log.info("↩️ Workflow {} returned: {}", workflow.getWorkflowId(), comments);
     }
 
     private void handleEscalate(ApprovalWorkflow workflow, String reason) {
         workflow.setStatus(STATUS_ESCALATED);
         workflow.setPriority("HIGH");
         sendEscalationNotification(workflow, reason);
+        log.info("🚨 Workflow {} escalated: {}", workflow.getWorkflowId(), reason);
     }
 
-    private void validateApproverAuthorization(ApprovalWorkflow workflow, ApprovalRequestDTO approvalRequest) {
-        String currentStepRole = workflow.getCurrentApproverRole();
-        String approverRole = approvalRequest.getApproverRole();
-        
-        if (!currentStepRole.equals(approverRole)) {
-            throw new WorkflowException(
-                String.format("Approver with role %s cannot approve step requiring role %s", 
-                             approverRole, currentStepRole)
-            );
-        }
-        
-        log.info("✅ Authorization validated: {} can approve {} step", 
-                 approverRole, workflow.getCurrentStep());
-    }
-
-    private void validateManagerAuthorization(ApprovalWorkflow workflow, ApprovalRequestDTO approvalRequest) {
-        if (ROLE_MANAGER.equals(workflow.getCurrentApproverRole())) {
-            if (workflow.getCurrentApproverId() == null) {
-                throw new WorkflowException("No manager assigned to this workflow step");
-            }
-            
-            if (!workflow.getCurrentApproverId().equals(approvalRequest.getApproverId())) {
-                throw new WorkflowException(
-                    String.format("Manager %s cannot approve request assigned to manager %s", 
-                                 approvalRequest.getApproverId(), workflow.getCurrentApproverId())
-                );
-            }
-        }
-    }
-
-    private WorkflowConfiguration determineNextStep(ApprovalWorkflow workflow, 
-                                                   List<WorkflowConfiguration> configs, 
-                                                   int currentIndex) {
-        String currentStep = workflow.getCurrentStep();
-        
-        if ("PRE_TRAVEL".equals(workflow.getWorkflowType())) {
-            if (STEP_MANAGER_APPROVAL.equals(currentStep)) {
-                return configs.stream()
-                        .filter(c -> STEP_TRAVEL_DESK_CHECK.equals(c.getStepName()))
-                        .findFirst()
-                        .orElse(configs.get(currentIndex + 1));
-            } else if (STEP_TRAVEL_DESK_CHECK.equals(currentStep)) {
-                if (Boolean.TRUE.equals(workflow.getIsOverpriced())) {
-                    return configs.stream()
-                            .filter(c -> STEP_FINANCE_APPROVAL.equals(c.getStepName()))
-                            .findFirst()
-                            .orElse(configs.get(currentIndex + 1));
-                } else {
-                    return configs.stream()
-                            .filter(c -> STEP_HR_COMPLIANCE.equals(c.getStepName()))
-                            .findFirst()
-                            .orElse(configs.get(currentIndex + 1));
-                }
-            } else if (STEP_FINANCE_APPROVAL.equals(currentStep)) {
-                return configs.stream()
-                        .filter(c -> STEP_TRAVEL_DESK_BOOKING.equals(c.getStepName()))
-                        .findFirst()
-                        .orElse(configs.get(currentIndex + 1));
-            } else if (STEP_TRAVEL_DESK_BOOKING.equals(currentStep)) {
-                return configs.stream()
-                        .filter(c -> STEP_HR_COMPLIANCE.equals(c.getStepName()))
-                        .findFirst()
-                        .orElse(configs.get(currentIndex + 1));
-            } else if (STEP_HR_COMPLIANCE.equals(currentStep)) {
-                return configs.stream()
-                        .filter(c -> "FINANCE_FINAL".equals(c.getStepName()))
-                        .findFirst()
-                        .orElse(configs.get(currentIndex + 1));
-            } else {
-                return configs.get(currentIndex + 1);
-            }
-        }
-        
-        if (WORKFLOW_TYPE_POST_TRAVEL.equals(workflow.getWorkflowType())) {
-            if ("TRAVEL_DESK_BILL_REVIEW".equals(currentStep)) {
-                if (Boolean.TRUE.equals(workflow.getIsOverpriced())) {
-                    return configs.stream()
-                            .filter(c -> "FINANCE_REIMBURSEMENT".equals(c.getStepName()))
-                            .findFirst()
-                            .orElse(configs.get(currentIndex + 1));
-                } else {
-                    return configs.stream()
-                            .filter(c -> "FINANCE_REIMBURSEMENT".equals(c.getStepName()))
-                            .findFirst()
-                            .orElse(configs.get(currentIndex + 1));
-                }
-            } else {
-                return configs.get(currentIndex + 1);
-            }
-        }
-        
-        return configs.get(currentIndex + 1);
-    }
-    
-    @Override
-    @Transactional
-    public void recordBookingAction(UUID workflowId, UUID travelDeskId, String action, String comments) {
-        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
-                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
-
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(workflowId)
-                .travelRequestId(workflow.getTravelRequestId())
-                .approverRole(ROLE_TRAVEL_DESK)
-                .approverId(travelDeskId)
-                .action(action)
-                .step(STEP_TRAVEL_DESK_BOOKING)
-                .comments(comments)
-                .actionTakenAt(LocalDateTime.now())
-                .build());
-        
-        log.info("Booking action recorded: {} for workflow {}", action, workflowId);
-    }
-    
-
-    @Override
-    @Transactional
-    public ApprovalWorkflowDTO markBookingUploaded(UUID workflowId, UUID uploadedBy) {
-        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
-                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
-
-        if (!STEP_TRAVEL_DESK_BOOKING.equals(workflow.getCurrentStep())) {
-            throw new WorkflowException("Workflow is not in booking upload step");
-        }
-
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(workflowId)
-                .travelRequestId(workflow.getTravelRequestId())
-                .approverRole(ROLE_TRAVEL_DESK)
-                .approverId(uploadedBy)
-                .action("UPLOAD_BOOKING")
-                .step(STEP_TRAVEL_DESK_BOOKING)
-                .comments("Travel bookings uploaded")
-                .actionTakenAt(LocalDateTime.now())
-                .build());
-
-        List<WorkflowConfiguration> configs = configRepository
-                .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflow.getWorkflowType());
-        
-        WorkflowConfiguration nextStep = configs.stream()
-                .filter(c -> STEP_HR_COMPLIANCE.equals(c.getStepName()))
-                .findFirst()
-                .orElseThrow(() -> new WorkflowException("HR compliance step not found"));
-
-        workflow.setPreviousStep(workflow.getCurrentStep());
-        workflow.setCurrentStep(nextStep.getStepName());
-        workflow.setCurrentApproverRole(nextStep.getApproverRole());
-        workflow.setCurrentApproverId(determineApproverId(nextStep, 
-                fetchTravelRequestSafe(workflow.getTravelRequestId())));
-        workflow.setNextStep(getNextStep(configs, configs.indexOf(nextStep)));
-        workflow.setDueDate(calculateDueDate(nextStep));
-
-        sendNextApprovalNotification(workflow);
-
-        return mapper.toDto(workflowRepository.save(workflow));
-    }
-
-    @Override
-    @Transactional
-    public ApprovalWorkflowDTO uploadBills(UUID workflowId, Double actualCost, UUID uploadedBy) {
-        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
-                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
-
-        if (!WORKFLOW_TYPE_POST_TRAVEL.equals(workflow.getWorkflowType())) {
-            throw new WorkflowException("Only post-travel workflows can have bills uploaded");
-        }
-
-        workflow.setActualCost(actualCost);
-
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(workflowId)
-                .travelRequestId(workflow.getTravelRequestId())
-                .approverRole("EMPLOYEE")
-                .approverId(uploadedBy)
-                .action("UPLOAD_BILLS")
-                .step("BILL_UPLOAD")
-                .comments("Travel bills uploaded with actual cost: " + actualCost)
-                .actionTakenAt(LocalDateTime.now())
-                .build());
-
-        List<WorkflowConfiguration> configs = configRepository
-                .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflow.getWorkflowType());
-        
-        WorkflowConfiguration nextStep = configs.stream()
-                .filter(c -> "TRAVEL_DESK_BILL_REVIEW".equals(c.getStepName()))
-                .findFirst()
-                .orElseThrow(() -> new WorkflowException("Travel Desk bill review step not found"));
-
-        workflow.setPreviousStep(workflow.getCurrentStep());
-        workflow.setCurrentStep(nextStep.getStepName());
-        workflow.setCurrentApproverRole(nextStep.getApproverRole());
-        workflow.setCurrentApproverId(determineApproverId(nextStep, 
-                fetchTravelRequestSafe(workflow.getTravelRequestId())));
-        workflow.setNextStep(getNextStep(configs, configs.indexOf(nextStep)));
-        workflow.setDueDate(calculateDueDate(nextStep));
-        workflow.setStatus(STATUS_PENDING);
-
-        try {
-            travelRequestClient.updateActualCost(workflow.getTravelRequestId(), actualCost);
-        } catch (Exception e) {
-            log.warn("Failed to update actual cost: {}", e.getMessage());
-        }
-
-        sendNextApprovalNotification(workflow);
-
-        return mapper.toDto(workflowRepository.save(workflow));
-    }
+    // ============ WORKFLOW COMPLETION ============
 
     private void completeWorkflow(ApprovalWorkflow workflow, String status) {
         workflow.setStatus(status);
@@ -472,28 +361,63 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         String travelRequestStatus = STATUS_APPROVED.equals(status) ? STATUS_COMPLETED : status;
         updateTravelRequestStatus(workflow.getTravelRequestId(), travelRequestStatus);
 
-        if ("PRE_TRAVEL".equals(workflow.getWorkflowType()) && STATUS_APPROVED.equals(status)) {
-            try {
-                boolean postTravelExists = workflowRepository
-                        .findByTravelRequestIdAndWorkflowType(workflow.getTravelRequestId(), WORKFLOW_TYPE_POST_TRAVEL)
-                        .isPresent();
-
-                if (!postTravelExists) {
-                    TravelRequestProxyDTO travelRequest = fetchTravelRequestSafe(workflow.getTravelRequestId());
-                    initiateWorkflow(travelRequest, WORKFLOW_TYPE_POST_TRAVEL, workflow.getEstimatedCost());
-                    log.info("✅ POST_TRAVEL workflow automatically initiated for request {}", workflow.getTravelRequestId());
-                } else {
-                    log.warn("⚠️ POST_TRAVEL workflow already exists for request {}", workflow.getTravelRequestId());
-                }
-            } catch (Exception e) {
-                log.error("❌ Failed to auto-initiate POST_TRAVEL workflow: {}", e.getMessage());
-            }
+        // Auto-initiate POST_TRAVEL workflow for approved PRE_TRAVEL requests
+        if (WORKFLOW_TYPE_PRE_TRAVEL.equals(workflow.getWorkflowType()) && STATUS_APPROVED.equals(status)) {
+            initiatePostTravelWorkflow(workflow);
         }
 
         sendCompletionNotification(workflow);
+        log.info("✅ Workflow {} completed with status: {}", workflow.getWorkflowId(), status);
     }
 
-    // Helper methods
+    private void initiatePostTravelWorkflow(ApprovalWorkflow preTravelWorkflow) {
+        try {
+            boolean postTravelExists = workflowRepository
+                    .findByTravelRequestIdAndWorkflowType(preTravelWorkflow.getTravelRequestId(), WORKFLOW_TYPE_POST_TRAVEL)
+                    .isPresent();
+
+            if (!postTravelExists) {
+                TravelRequestProxyDTO travelRequest = fetchTravelRequestSafe(preTravelWorkflow.getTravelRequestId());
+                initiateWorkflow(travelRequest, WORKFLOW_TYPE_POST_TRAVEL, preTravelWorkflow.getEstimatedCost());
+                log.info("✅ POST_TRAVEL workflow automatically initiated for request {}",
+                        preTravelWorkflow.getTravelRequestId());
+            } else {
+                log.warn("⚠️ POST_TRAVEL workflow already exists for request {}", preTravelWorkflow.getTravelRequestId());
+            }
+        } catch (Exception e) {
+            log.error("❌ Failed to auto-initiate POST_TRAVEL workflow: {}", e.getMessage());
+        }
+    }
+
+    // ============ VALIDATION METHODS ============
+
+    private void validateApproverAuthorization(ApprovalWorkflow workflow, ApprovalRequestDTO approvalRequest) {
+        String currentStepRole = workflow.getCurrentApproverRole();
+        String approverRole = approvalRequest.getApproverRole();
+
+        if (!currentStepRole.equals(approverRole)) {
+            throw new WorkflowException(String.format("Approver with role %s cannot approve step requiring role %s",
+                    approverRole, currentStepRole));
+        }
+
+        log.info("✅ Authorization validated: {} can approve {} step", approverRole, workflow.getCurrentStep());
+    }
+
+    private void validateManagerAuthorization(ApprovalWorkflow workflow, ApprovalRequestDTO approvalRequest) {
+        if (ROLE_MANAGER.equals(workflow.getCurrentApproverRole())) {
+            if (workflow.getCurrentApproverId() == null) {
+                throw new WorkflowException("No manager assigned to this workflow step");
+            }
+
+            if (!workflow.getCurrentApproverId().equals(approvalRequest.getApproverId())) {
+                throw new WorkflowException(String.format("Manager %s cannot approve request assigned to manager %s",
+                        approvalRequest.getApproverId(), workflow.getCurrentApproverId()));
+            }
+        }
+    }
+
+    // ============ HELPER METHODS ============
+
     private TravelRequestProxyDTO fetchTravelRequestSafe(UUID id) {
         try {
             return travelRequestClient.getTravelRequest(id);
@@ -515,42 +439,48 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     private UUID determineApproverId(WorkflowConfiguration step, TravelRequestProxyDTO travelRequest) {
         UUID employeeId = travelRequest.employeeId();
 
-        if (ROLE_MANAGER.equalsIgnoreCase(step.getApproverRole())) {
-            try {
-                EmployeeProxyDTO employee = employeeClient.getEmployee(employeeId);
+        switch (step.getApproverRole()) {
+            case ROLE_MANAGER:
+                return determineManagerApprover(step, employeeId);
+            case ROLE_TRAVEL_DESK:
+            case ROLE_HR:
+            case ROLE_FINANCE:
+                return determineRoleBasedApprover(step, employeeId);
+            default:
+                log.warn("Unknown approver role: {}", step.getApproverRole());
+                return getSystemAdminIdFallback();
+        }
+    }
 
-                if (employee.getManagerId() != null) {
-                    logApproverAssignment(
-                            step.getStepName(),
-                            ROLE_MANAGER,
-                            employee.getManagerId(),
-                            employee.getEmployeeId(),
-                            "EmployeeService"
-                    );
-                    return employee.getManagerId();
-                } else {
-                    UUID fallbackId = getSystemAdminIdFallback();
-                    logApproverAssignment(
-                            step.getStepName(),
-                            ROLE_MANAGER,
-                            fallbackId,
-                            employee.getEmployeeId(),
-                            "Fallback: No manager found"
-                    );
-                    return fallbackId;
-                }
+    private UUID determineManagerApprover(WorkflowConfiguration step, UUID employeeId) {
+        try {
+            EmployeeProxyDTO employee = employeeClient.getEmployee(employeeId);
 
-            } catch (Exception e) {
-                log.error("❌ [{}] Failed to fetch manager for employee {}: {}",
-                        step.getStepName(), employeeId, e.getMessage());
+            if (employee.getManagerId() != null) {
+                logApproverAssignment(step.getStepName(), ROLE_MANAGER, employee.getManagerId(),
+                        employee.getEmployeeId(), "EmployeeService");
+                return employee.getManagerId();
+            } else {
                 UUID fallbackId = getSystemAdminIdFallback();
-                logApproverAssignment(step.getStepName(), ROLE_MANAGER, fallbackId, employeeId, "Exception fallback");
+                logApproverAssignment(step.getStepName(), ROLE_MANAGER, fallbackId, employee.getEmployeeId(),
+                        "Fallback: No manager found");
                 return fallbackId;
             }
+        } catch (Exception e) {
+            log.error("❌ [{}] Failed to fetch manager for employee {}: {}", step.getStepName(), employeeId,
+                    e.getMessage());
+            UUID fallbackId = getSystemAdminIdFallback();
+            logApproverAssignment(step.getStepName(), ROLE_MANAGER, fallbackId, employeeId, "Exception fallback");
+            return fallbackId;
         }
+    }
 
-        logApproverAssignment(step.getStepName(), step.getApproverRole(), null, employeeId, "Non-manager step");
-        return null;
+    private UUID determineRoleBasedApprover(WorkflowConfiguration step, UUID employeeId) {
+        // For non-manager roles, you might want to implement role-based assignment
+        // For now, return a system user as fallback
+        UUID approverId = getSystemAdminIdFallback();
+        logApproverAssignment(step.getStepName(), step.getApproverRole(), approverId, employeeId, "System fallback");
+        return approverId;
     }
 
     private UUID getSystemAdminIdFallback() {
@@ -562,15 +492,13 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     }
 
     private LocalDateTime calculateDueDate(WorkflowConfiguration step) {
-        return step.getTimeLimitHours() != null ? 
-                LocalDateTime.now().plusHours(step.getTimeLimitHours()) : 
-                LocalDateTime.now().plusDays(3);
+        return step.getTimeLimitHours() != null ? LocalDateTime.now().plusHours(step.getTimeLimitHours())
+                : LocalDateTime.now().plusDays(3);
     }
 
     private String calculatePriority(TravelRequestProxyDTO travelRequest, Double estimatedCost) {
         if (estimatedCost != null && estimatedCost > 5000) return "HIGH";
-        long days = java.time.temporal.ChronoUnit.DAYS.between(
-                travelRequest.startDate(), travelRequest.endDate());
+        long days = java.time.temporal.ChronoUnit.DAYS.between(travelRequest.startDate(), travelRequest.endDate());
         if (days > 14) return "HIGH";
         return "NORMAL";
     }
@@ -603,21 +531,381 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         }
     }
 
+    private void logApproverAssignment(String stepName, String role, UUID approverId, UUID employeeId, String source) {
+        if (approverId != null) {
+            log.info("🧭 [{}] Assigned {} role to approver {} for employee {} (source: {})", stepName, role, approverId,
+                    employeeId, source);
+        } else {
+            log.warn("⚠️ [{}] No approver ID found for role {} (employee: {}, source: {})", stepName, role, employeeId,
+                    source);
+        }
+    }
+
+    // ============ NOTIFICATION METHODS ============
+
+    @Async
+    void sendNewApprovalNotification(ApprovalWorkflow workflow, TravelRequestProxyDTO travelRequest,
+            EmployeeProxyDTO employee) {
+        try {
+            NotificationRequestDTO notification = NotificationRequestDTO.builder()
+                    .userId(workflow.getCurrentApproverId())
+                    .subject("Approval Required: Travel Request")
+                    .message("Travel request from " + employee.getFullName() + " requires your approval")
+                    .notificationType("APPROVAL_REQUEST")
+                    .referenceId(workflow.getTravelRequestId())
+                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
+                    .build();
+            notificationClient.sendNotification(notification);
+        } catch (Exception e) {
+            log.warn("Failed to send notification: {}", e.getMessage());
+        }
+    }
+
+    @Async
+    void sendNextApprovalNotification(ApprovalWorkflow workflow) {
+        try {
+            NotificationRequestDTO notification = NotificationRequestDTO.builder()
+                    .userId(workflow.getCurrentApproverId())
+                    .subject("Action Required: Next Approval Step")
+                    .message("Workflow requires your action at step: " + workflow.getCurrentStep())
+                    .notificationType("APPROVAL_NEXT")
+                    .referenceId(workflow.getTravelRequestId())
+                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
+                    .build();
+            notificationClient.sendNotification(notification);
+        } catch (Exception e) {
+            log.warn("Failed to send notification: {}", e.getMessage());
+        }
+    }
+
+    @Async
+    void sendRejectionNotification(ApprovalWorkflow workflow, String comments) {
+        try {
+            NotificationRequestDTO notification = NotificationRequestDTO.builder()
+                    .userId(workflow.getCurrentApproverId())
+                    .subject("Workflow Rejected")
+                    .message("Workflow " + workflow.getWorkflowId() + " was rejected. Comments: " + comments)
+                    .notificationType("WORKFLOW_REJECTED")
+                    .referenceId(workflow.getTravelRequestId())
+                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
+                    .build();
+            notificationClient.sendNotification(notification);
+        } catch (Exception e) {
+            log.warn("Failed to send rejection notification: {}", e.getMessage());
+        }
+    }
+
+    @Async
+    void sendReturnNotification(ApprovalWorkflow workflow, String comments) {
+        try {
+            NotificationRequestDTO notification = NotificationRequestDTO.builder()
+                    .userId(workflow.getCurrentApproverId())
+                    .subject("Workflow Returned")
+                    .message("Workflow " + workflow.getWorkflowId() + " returned for correction. Comments: " + comments)
+                    .notificationType("WORKFLOW_RETURNED")
+                    .referenceId(workflow.getTravelRequestId())
+                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
+                    .build();
+            notificationClient.sendNotification(notification);
+        } catch (Exception e) {
+            log.warn("Failed to send return notification: {}", e.getMessage());
+        }
+    }
+
+    @Async
+    void sendEscalationNotification(ApprovalWorkflow workflow, String reason) {
+        try {
+            NotificationRequestDTO notification = NotificationRequestDTO.builder()
+                    .userId(workflow.getCurrentApproverId())
+                    .subject("Workflow Escalated")
+                    .message("Workflow " + workflow.getWorkflowId() + " escalated. Reason: " + reason)
+                    .notificationType("WORKFLOW_ESCALATED")
+                    .referenceId(workflow.getTravelRequestId())
+                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
+                    .build();
+            notificationClient.sendNotification(notification);
+        } catch (Exception e) {
+            log.warn("Failed to send escalation notification: {}", e.getMessage());
+        }
+    }
+
+    @Async
+    void sendCompletionNotification(ApprovalWorkflow workflow) {
+        try {
+            NotificationRequestDTO notification = NotificationRequestDTO.builder()
+                    .userId(workflow.getCurrentApproverId())
+                    .subject("Workflow Completed")
+                    .message("Workflow " + workflow.getWorkflowId() + " has been completed")
+                    .notificationType("WORKFLOW_COMPLETED")
+                    .referenceId(workflow.getTravelRequestId())
+                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
+                    .build();
+            notificationClient.sendNotification(notification);
+        } catch (Exception e) {
+            log.warn("Failed to send completion notification: {}", e.getMessage());
+        }
+    }
+
+    // ============ OTHER INTERFACE METHODS ============
+
     @Override
     @Transactional(readOnly = true)
-    public List<ApprovalWorkflowDTO> getWorkflowsByStatusAndStep(String status, String step) {
-        return workflowRepository.findByStatusAndCurrentStep(status, step)
-                .stream()
-                .map(mapper::toDto)
-                .toList();
+    public ApprovalWorkflowDTO getWorkflowByRequestId(UUID travelRequestId) {
+        return workflowRepository.findByTravelRequestId(travelRequestId).map(mapper::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
     }
-    
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApprovalWorkflowDTO getWorkflow(UUID workflowId) {
+        return workflowRepository.findById(workflowId).map(mapper::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApprovalWorkflowDTO> getPendingApprovals(String approverRole, UUID approverId) {
+        List<ApprovalWorkflow> workflows;
+        if (approverId != null) {
+            workflows = workflowRepository.findByCurrentApproverIdAndStatus(approverId, STATUS_PENDING);
+        } else {
+            workflows = workflowRepository.findByCurrentApproverRoleAndStatus(approverRole, STATUS_PENDING);
+        }
+        return workflows.stream().map(mapper::toDto).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApprovalWorkflowDTO> getPendingApprovalsByRole(String approverRole) {
+        return workflowRepository.findByCurrentApproverRoleAndStatus(approverRole, STATUS_PENDING).stream()
+                .map(mapper::toDto).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApprovalWorkflowDTO> getWorkflowsByStatus(String status) {
+        return workflowRepository.findByStatus(status).stream().map(mapper::toDto).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApprovalActionDTO> getWorkflowHistory(UUID travelRequestId) {
+        return actionRepository.findByTravelRequestIdOrderByCreatedAtDesc(travelRequestId).stream()
+                .map(mapper::toActionDto).toList();
+    }
+
+    @Override
+    @Transactional
+    public ApprovalWorkflowDTO escalateWorkflow(UUID workflowId, String reason, UUID escalatedBy) {
+        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
+        workflow.setStatus(STATUS_ESCALATED);
+        workflow.setPriority("HIGH");
+        workflowRepository.save(workflow);
+        sendEscalationNotification(workflow, reason);
+        return mapper.toDto(workflow);
+    }
+
+    @Override
+    @Transactional
+    public ApprovalWorkflowDTO reassignWorkflow(UUID workflowId, String newApproverRole, UUID newApproverId) {
+        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
+        workflow.setCurrentApproverRole(newApproverRole);
+        workflow.setCurrentApproverId(newApproverId);
+        workflowRepository.save(workflow);
+        sendNextApprovalNotification(workflow);
+        return mapper.toDto(workflow);
+    }
+
+    @Override
+    public void reloadWorkflowConfigurations() {
+        log.info("Workflow configurations reloaded");
+    }
+
+    @Override
+    @Transactional
+    public ApprovalWorkflowDTO updateWorkflowPriority(UUID workflowId, String priority) {
+        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
+        workflow.setPriority(priority);
+        ApprovalWorkflow updated = workflowRepository.save(workflow);
+        return mapper.toDto(updated);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WorkflowMetricsDTO getWorkflowMetrics() {
+        long totalWorkflows = workflowRepository.count();
+        long pendingWorkflows = workflowRepository.countByStatus(STATUS_PENDING);
+        long approvedWorkflows = workflowRepository.countByStatus(STATUS_APPROVED);
+        long rejectedWorkflows = workflowRepository.countByStatus(STATUS_REJECTED);
+        long escalatedWorkflows = workflowRepository.countByStatus(STATUS_ESCALATED);
+
+        double averageApprovalTime = calculateAverageApprovalTime();
+
+        return WorkflowMetricsDTO.builder()
+                .totalWorkflows(totalWorkflows)
+                .pendingWorkflows(pendingWorkflows)
+                .approvedWorkflows(approvedWorkflows)
+                .rejectedWorkflows(rejectedWorkflows)
+                .escalatedWorkflows(escalatedWorkflows)
+                .averageApprovalTime(averageApprovalTime)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApprovalStatsDTO> getApprovalStatsByApprover(UUID approverId) {
+        List<ApprovalWorkflow> workflows = workflowRepository.findByCurrentApproverIdAndStatus(approverId, STATUS_PENDING);
+
+        return List.of(ApprovalStatsDTO.builder()
+                .approverId(approverId)
+                .totalAssigned((long) workflows.size())
+                .pending((long) workflows.size())
+                .approved(0L)
+                .rejected(0L)
+                .averageProcessingTime(0.0)
+                .build());
+    }
+
+    private double calculateAverageApprovalTime() {
+        List<ApprovalWorkflow> completedWorkflows = workflowRepository.findByStatus(STATUS_APPROVED);
+        if (completedWorkflows.isEmpty()) {
+            return 0.0;
+        }
+
+        double totalHours = completedWorkflows.stream().mapToDouble(wf -> {
+            if (wf.getCreatedAt() != null && wf.getCompletedAt() != null) {
+                return java.time.Duration.between(wf.getCreatedAt(), wf.getCompletedAt()).toHours();
+            }
+            return 0.0;
+        }).sum();
+
+        return totalHours / completedWorkflows.size();
+    }
+
+    // ============ BOOKING MANAGEMENT METHODS ============
+
+    @Override
+    @Transactional
+    public void recordBookingAction(UUID workflowId, UUID travelDeskId, String action, String comments) {
+        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
+
+        actionRepository
+                .save(ApprovalAction.builder()
+                        .workflowId(workflowId)
+                        .travelRequestId(workflow.getTravelRequestId())
+                        .approverRole(ROLE_TRAVEL_DESK)
+                        .approverId(travelDeskId)
+                        .action(action)
+                        .step(STEP_TRAVEL_DESK_BOOKING)
+                        .comments(comments)
+                        .actionTakenAt(LocalDateTime.now())
+                        .build());
+
+        log.info("Booking action recorded: {} for workflow {}", action, workflowId);
+    }
+
+    @Override
+    @Transactional
+    public ApprovalWorkflowDTO markBookingUploaded(UUID workflowId, UUID uploadedBy) {
+        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
+
+        if (!STEP_TRAVEL_DESK_BOOKING.equals(workflow.getCurrentStep())) {
+            throw new WorkflowException("Workflow is not in booking upload step");
+        }
+
+        actionRepository.save(ApprovalAction.builder()
+                .workflowId(workflowId)
+                .travelRequestId(workflow.getTravelRequestId())
+                .approverRole(ROLE_TRAVEL_DESK)
+                .approverId(uploadedBy)
+                .action("UPLOAD_BOOKING")
+                .step(STEP_TRAVEL_DESK_BOOKING)
+                .comments("Travel bookings uploaded")
+                .actionTakenAt(LocalDateTime.now())
+                .build());
+
+        List<WorkflowConfiguration> configs = configRepository
+                .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflow.getWorkflowType());
+
+        WorkflowConfiguration nextStep = configs.stream()
+                .filter(c -> STEP_HR_COMPLIANCE.equals(c.getStepName()))
+                .findFirst()
+                .orElseThrow(() -> new WorkflowException("HR compliance step not found"));
+
+        workflow.setPreviousStep(workflow.getCurrentStep());
+        workflow.setCurrentStep(nextStep.getStepName());
+        workflow.setCurrentApproverRole(nextStep.getApproverRole());
+        workflow.setCurrentApproverId(determineApproverId(nextStep, fetchTravelRequestSafe(workflow.getTravelRequestId())));
+        workflow.setNextStep(getNextStep(configs, configs.indexOf(nextStep)));
+        workflow.setDueDate(calculateDueDate(nextStep));
+
+        sendNextApprovalNotification(workflow);
+
+        return mapper.toDto(workflowRepository.save(workflow));
+    }
+
+    @Override
+    @Transactional
+    public ApprovalWorkflowDTO uploadBills(UUID workflowId, Double actualCost, UUID uploadedBy) {
+        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
+                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
+
+        if (!WORKFLOW_TYPE_POST_TRAVEL.equals(workflow.getWorkflowType())) {
+            throw new WorkflowException("Only post-travel workflows can have bills uploaded");
+        }
+
+        workflow.setActualCost(actualCost);
+
+        actionRepository
+                .save(ApprovalAction.builder()
+                        .workflowId(workflowId)
+                        .travelRequestId(workflow.getTravelRequestId())
+                        .approverRole("EMPLOYEE")
+                        .approverId(uploadedBy)
+                        .action("UPLOAD_BILLS")
+                        .step("BILL_UPLOAD")
+                        .comments("Travel bills uploaded with actual cost: " + actualCost)
+                        .actionTakenAt(LocalDateTime.now())
+                        .build());
+
+        List<WorkflowConfiguration> configs = configRepository
+                .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflow.getWorkflowType());
+
+        WorkflowConfiguration nextStep = configs.stream()
+                .filter(c -> "TRAVEL_DESK_BILL_REVIEW".equals(c.getStepName()))
+                .findFirst()
+                .orElseThrow(() -> new WorkflowException("Travel Desk bill review step not found"));
+
+        workflow.setPreviousStep(workflow.getCurrentStep());
+        workflow.setCurrentStep(nextStep.getStepName());
+        workflow.setCurrentApproverRole(nextStep.getApproverRole());
+        workflow.setCurrentApproverId(determineApproverId(nextStep, fetchTravelRequestSafe(workflow.getTravelRequestId())));
+        workflow.setNextStep(getNextStep(configs, configs.indexOf(nextStep)));
+        workflow.setDueDate(calculateDueDate(nextStep));
+        workflow.setStatus(STATUS_PENDING);
+
+        try {
+            travelRequestClient.updateActualCost(workflow.getTravelRequestId(), actualCost);
+        } catch (Exception e) {
+            log.warn("Failed to update actual cost: {}", e.getMessage());
+        }
+
+        sendNextApprovalNotification(workflow);
+
+        return mapper.toDto(workflowRepository.save(workflow));
+    }
+
     @Override
     @Transactional
     public ApprovalWorkflowDTO markBookingCompleted(UUID workflowId, UUID travelDeskId, String comments, BookingDetailsDTO bookingDetails) {
         return markBookingCompleted(workflowId, travelDeskId, comments);
     }
-    
+
     @Override
     @Transactional
     public ApprovalWorkflowDTO markBookingCompleted(UUID workflowId, UUID travelDeskId, String comments) {
@@ -643,7 +931,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
 
         List<WorkflowConfiguration> configs = configRepository
                 .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflow.getWorkflowType());
-        
+
         WorkflowConfiguration nextStep = configs.stream()
                 .filter(c -> STEP_HR_COMPLIANCE.equals(c.getStepName()))
                 .findFirst()
@@ -652,17 +940,22 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         workflow.setPreviousStep(workflow.getCurrentStep());
         workflow.setCurrentStep(nextStep.getStepName());
         workflow.setCurrentApproverRole(nextStep.getApproverRole());
-        workflow.setCurrentApproverId(determineApproverId(nextStep, 
-                fetchTravelRequestSafe(workflow.getTravelRequestId())));
+        workflow.setCurrentApproverId(determineApproverId(nextStep, fetchTravelRequestSafe(workflow.getTravelRequestId())));
         workflow.setNextStep(getNextStep(configs, configs.indexOf(nextStep)));
         workflow.setDueDate(calculateDueDate(nextStep));
 
         sendNextApprovalNotification(workflow);
 
         ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
-        
+
         log.info("✅ Bookings marked as completed for workflow {}, moved to HR compliance", workflowId);
         return mapper.toDto(updatedWorkflow);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApprovalWorkflowDTO> getWorkflowsByStatusAndStep(String status, String step) {
+        return workflowRepository.findByStatusAndCurrentStep(status, step).stream().map(mapper::toDto).toList();
     }
 
     @Override
@@ -711,12 +1004,13 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .build());
 
         ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
-        
+
         log.info("✅ Booking details updated for workflow {}", workflowId);
         return mapper.toDto(updatedWorkflow);
     }
 
-    // Helper methods for booking management
+    // ============ BOOKING MANAGEMENT HELPER METHODS ============
+
     private String convertBookingDetailsToJson(BookingDetailsDTO bookingDetails) {
         try {
             return objectMapper.writeValueAsString(bookingDetails);
@@ -771,258 +1065,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .toList();
     }
 
-    // Notification methods
-    @Async
-    void sendNewApprovalNotification(ApprovalWorkflow workflow, TravelRequestProxyDTO travelRequest, EmployeeProxyDTO employee) {
-        try {
-            NotificationRequestDTO notification = NotificationRequestDTO.builder()
-                    .userId(workflow.getCurrentApproverId())
-                    .subject("Approval Required: Travel Request")
-                    .message("Travel request from " + employee.getFullName() + " requires your approval")
-                    .notificationType("APPROVAL_REQUEST")
-                    .referenceId(workflow.getTravelRequestId())
-                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
-                    .build();
-            notificationClient.sendNotification(notification);
-        } catch (Exception e) {
-            log.warn("Failed to send notification: {}", e.getMessage());
-        }
-    }
-
-    @Async
-    void sendNextApprovalNotification(ApprovalWorkflow workflow) {
-        try {
-            NotificationRequestDTO notification = NotificationRequestDTO.builder()
-                    .userId(workflow.getCurrentApproverId())
-                    .subject("Action Required: Next Approval Step")
-                    .message("Workflow requires your action at step: " + workflow.getCurrentStep())
-                    .notificationType("APPROVAL_NEXT")
-                    .referenceId(workflow.getTravelRequestId())
-                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
-                    .build();
-            notificationClient.sendNotification(notification);
-        } catch (Exception e) {
-            log.warn("Failed to send notification: {}", e.getMessage());
-        }
-    }
-
-    @Async
-    void sendRejectionNotification(ApprovalWorkflow workflow, String comments) {
-        try {
-            NotificationRequestDTO notification = NotificationRequestDTO.builder()
-                    .subject("Workflow Rejected")
-                    .message("Workflow " + workflow.getWorkflowId() + " was rejected. Comments: " + comments)
-                    .notificationType("WORKFLOW_REJECTED")
-                    .referenceId(workflow.getTravelRequestId())
-                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
-                    .build();
-            notificationClient.sendNotification(notification);
-        } catch (Exception e) {
-            log.warn("Failed to send rejection notification: {}", e.getMessage());
-        }
-    }
-
-    @Async
-    void sendReturnNotification(ApprovalWorkflow workflow, String comments) {
-        try {
-            NotificationRequestDTO notification = NotificationRequestDTO.builder()
-                    .subject("Workflow Returned")
-                    .message("Workflow " + workflow.getWorkflowId() + " returned for correction. Comments: " + comments)
-                    .notificationType("WORKFLOW_RETURNED")
-                    .referenceId(workflow.getTravelRequestId())
-                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
-                    .build();
-            notificationClient.sendNotification(notification);
-        } catch (Exception e) {
-            log.warn("Failed to send return notification: {}", e.getMessage());
-        }
-    }
-
-    @Async
-    void sendEscalationNotification(ApprovalWorkflow workflow, String reason) {
-        try {
-            NotificationRequestDTO notification = NotificationRequestDTO.builder()
-                    .subject("Workflow Escalated")
-                    .message("Workflow " + workflow.getWorkflowId() + " escalated. Reason: " + reason)
-                    .notificationType("WORKFLOW_ESCALATED")
-                    .referenceId(workflow.getTravelRequestId())
-                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
-                    .build();
-            notificationClient.sendNotification(notification);
-        } catch (Exception e) {
-            log.warn("Failed to send escalation notification: {}", e.getMessage());
-        }
-    }
-
-    @Async
-    void sendCompletionNotification(ApprovalWorkflow workflow) {
-        try {
-            NotificationRequestDTO notification = NotificationRequestDTO.builder()
-                    .subject("Workflow Completed")
-                    .message("Workflow " + workflow.getWorkflowId() + " has been completed")
-                    .notificationType("WORKFLOW_COMPLETED")
-                    .referenceId(workflow.getTravelRequestId())
-                    .referenceType(REFERENCE_TYPE_TRAVEL_REQUEST)
-                    .build();
-            notificationClient.sendNotification(notification);
-        } catch (Exception e) {
-            log.warn("Failed to send completion notification: {}", e.getMessage());
-        }
-    }
-
-    // Other methods from interface
-    @Override
-    @Transactional(readOnly = true)
-    public ApprovalWorkflowDTO getWorkflowByRequestId(UUID travelRequestId) {
-        return workflowRepository.findByTravelRequestId(travelRequestId)
-                .map(mapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApprovalWorkflowDTO getWorkflow(UUID workflowId) {
-        return workflowRepository.findById(workflowId)
-                .map(mapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ApprovalWorkflowDTO> getPendingApprovals(String approverRole, UUID approverId) {
-        List<ApprovalWorkflow> workflows;
-        if (approverId != null) {
-            workflows = workflowRepository.findByCurrentApproverIdAndStatus(approverId, STATUS_PENDING);
-        } else {
-            workflows = workflowRepository.findByCurrentApproverRoleAndStatus(approverRole, STATUS_PENDING);
-        }
-        return workflows.stream().map(mapper::toDto).toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ApprovalWorkflowDTO> getPendingApprovalsByRole(String approverRole) {
-        return workflowRepository.findByCurrentApproverRoleAndStatus(approverRole, STATUS_PENDING)
-                .stream().map(mapper::toDto).toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ApprovalWorkflowDTO> getWorkflowsByStatus(String status) {
-        return workflowRepository.findByStatus(status).stream()
-                .map(mapper::toDto)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ApprovalActionDTO> getWorkflowHistory(UUID travelRequestId) {
-        return actionRepository.findByTravelRequestIdOrderByCreatedAtDesc(travelRequestId)
-                .stream().map(mapper::toActionDto).toList();
-    }
-
-    @Override
-    public ApprovalWorkflowDTO escalateWorkflow(UUID workflowId, String reason, UUID escalatedBy) {
-        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
-                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
-        workflow.setStatus(STATUS_ESCALATED);
-        workflow.setPriority("HIGH");
-        workflowRepository.save(workflow);
-        sendEscalationNotification(workflow, reason);
-        return mapper.toDto(workflow);
-    }
-
-    @Override
-    public ApprovalWorkflowDTO reassignWorkflow(UUID workflowId, String newApproverRole, UUID newApproverId) {
-        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
-                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
-        workflow.setCurrentApproverRole(newApproverRole);
-        workflow.setCurrentApproverId(newApproverId);
-        workflowRepository.save(workflow);
-        sendNextApprovalNotification(workflow);
-        return mapper.toDto(workflow);
-    }
-
-    @Override
-    public void reloadWorkflowConfigurations() {
-        log.info("Workflow configurations reloaded");
-    }
-
-    @Override
-    @Transactional
-    public ApprovalWorkflowDTO updateWorkflowPriority(UUID workflowId, String priority) {
-        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
-                .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
-        workflow.setPriority(priority);
-        ApprovalWorkflow updated = workflowRepository.save(workflow);
-        return mapper.toDto(updated);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public WorkflowMetricsDTO getWorkflowMetrics() {
-        long totalWorkflows = workflowRepository.count();
-        long pendingWorkflows = workflowRepository.countByStatus(STATUS_PENDING);
-        long approvedWorkflows = workflowRepository.countByStatus(STATUS_APPROVED);
-        long rejectedWorkflows = workflowRepository.countByStatus(STATUS_REJECTED);
-        long escalatedWorkflows = workflowRepository.countByStatus(STATUS_ESCALATED);
-
-        double averageApprovalTime = calculateAverageApprovalTime();
-
-        return WorkflowMetricsDTO.builder()
-                .totalWorkflows(totalWorkflows)
-                .pendingWorkflows(pendingWorkflows)
-                .approvedWorkflows(approvedWorkflows)
-                .rejectedWorkflows(rejectedWorkflows)
-                .escalatedWorkflows(escalatedWorkflows)
-                .averageApprovalTime(averageApprovalTime)
-                .build();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ApprovalStatsDTO> getApprovalStatsByApprover(UUID approverId) {
-        List<ApprovalWorkflow> workflows = workflowRepository.findByCurrentApproverIdAndStatus(approverId, STATUS_PENDING);
-        
-        return List.of(ApprovalStatsDTO.builder()
-                .approverId(approverId)
-                .totalAssigned((long) workflows.size())
-                .pending((long) workflows.size())
-                .approved(0L)
-                .rejected(0L)
-                .averageProcessingTime(0.0)
-                .build());
-    }
-
-    private double calculateAverageApprovalTime() {
-        List<ApprovalWorkflow> completedWorkflows = workflowRepository.findByStatus(STATUS_APPROVED);
-        if (completedWorkflows.isEmpty()) {
-            return 0.0;
-        }
-        
-        double totalHours = completedWorkflows.stream()
-                .mapToDouble(wf -> {
-                    if (wf.getCreatedAt() != null && wf.getCompletedAt() != null) {
-                        return java.time.Duration.between(wf.getCreatedAt(), wf.getCompletedAt()).toHours();
-                    }
-                    return 0.0;
-                })
-                .sum();
-        
-        return totalHours / completedWorkflows.size();
-    }
-    
-    private void logApproverAssignment(String stepName, String role, UUID approverId, UUID employeeId, String source) {
-        if (approverId != null) {
-            log.info("🧭 [{}] Assigned {} role to approver {} for employee {} (source: {})",
-                    stepName, role, approverId, employeeId, source);
-        } else {
-            log.warn("⚠️ [{}] No approver ID found for role {} (employee: {}, source: {})",
-                    stepName, role, employeeId, source);
-        }
-    }
-    
-    // ============ BOOKING MANAGEMENT METHODS ============
+    // ============ TRAVEL BOOKING METHODS ============
 
     @Override
     @Transactional
@@ -1220,7 +1263,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .build();
     }
 
-    // ============ HELPER METHODS FOR BOOKING CONVERSION ============
+    // ============ BOOKING CONVERSION HELPER METHODS ============
 
     private BookingDetailsDTO.FlightBookingDTO convertToFlightBooking(TravelBookingDTO bookingDTO) {
         return BookingDetailsDTO.FlightBookingDTO.builder()

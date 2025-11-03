@@ -1,18 +1,20 @@
 package com.bwc.employee_management_service.mapper;
 
-import com.bwc.employee_management_service.dto.EmployeeRequest;
-import com.bwc.employee_management_service.dto.EmployeeResponse;
-import com.bwc.employee_management_service.entity.Employee;
-import com.bwc.employee_management_service.entity.Project;
-import com.bwc.employee_management_service.entity.Role;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+
+import com.bwc.employee_management_service.dto.EmployeeRequest;
+import com.bwc.employee_management_service.dto.EmployeeResponse;
+import com.bwc.employee_management_service.dto.ProjectResponse;
+import com.bwc.employee_management_service.entity.Employee;
+import com.bwc.employee_management_service.entity.Project;
+import com.bwc.employee_management_service.entity.Role;
 
 @Mapper(componentModel = "spring")
 public interface EmployeeMapper {
@@ -34,9 +36,10 @@ public interface EmployeeMapper {
     @Mapping(target = "active", source = "isActive")
     @Mapping(target = "managerName", source = "manager.fullName")
     @Mapping(target = "roleIds", source = "roles", qualifiedByName = "mapRolesToIds")
-    @Mapping(target = "roles", source = "roles", qualifiedByName = "mapRolesToNames") // 🔥 new
-    @Mapping(target = "projectIds", source = "projects", qualifiedByName = "mapProjectsToIds")
+    @Mapping(target = "roles", source = "roles", qualifiedByName = "mapRolesToNames")
+    @Mapping(target = "projects", source = "projects", qualifiedByName = "mapProjectsToResponses")
     EmployeeResponse toResponse(Employee employee);
+
 
     // ✅ Map roles → Set<UUID>
     @Named("mapRolesToIds")
@@ -64,4 +67,13 @@ public interface EmployeeMapper {
                 .map(Project::getProjectId)
                 .collect(Collectors.toSet());
     }
+    
+    @Named("mapProjectsToResponses")
+    default Set<ProjectResponse> mapProjectsToResponses(Set<Project> projects) {
+        if (projects == null) return Collections.emptySet();
+        return projects.stream()
+                .map(ProjectMapper::toResponse)
+                .collect(Collectors.toSet());
+    }
+
 }

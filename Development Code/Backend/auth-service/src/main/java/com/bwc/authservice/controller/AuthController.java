@@ -29,8 +29,8 @@ public class AuthController {
 
     // ✅ Constants to avoid literal duplication
     private static final String COOKIE_NAME = "auth_token";
-//    private static final String DOMAIN = ".brainwaveconsulting.co.in";
-    private static final String DOMAIN = "localhost";
+    private static final String DOMAIN = ".brainwaveconsulting.co.in";
+//    private static final String DOMAIN = "localhost";
     private static final String ROLES_CLAIM = "roles";
 
     @PostMapping("/login")

@@ -4,6 +4,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 public class SecurityConfig {
@@ -11,8 +16,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // ✅ modern lambda style
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ updated syntax
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().permitAll()
             );
@@ -20,14 +25,24 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Example CORS configuration bean
     @Bean
-    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
-        var configuration = new org.springframework.web.cors.CorsConfiguration();
-        configuration.addAllowedOriginPattern("*");
-        configuration.addAllowedMethod("*");
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // ✅ Allow all origins
+        configuration.setAllowedOriginPatterns(List.of("*"));
+
+        // ✅ Allow credentials
+        configuration.setAllowCredentials(true);
+
+        // ✅ Allow all headers and methods
         configuration.addAllowedHeader("*");
-        var source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        configuration.addAllowedMethod("*");
+
+        // ✅ (Optional) expose headers if frontend needs them
+        configuration.addExposedHeader("*");
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }

@@ -1,11 +1,11 @@
 package com.bwc.employee_management_service.dto;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 @Data
 @Schema(description = "Response DTO containing employee details")
@@ -45,10 +45,14 @@ public class EmployeeResponse {
 
     @Schema(description = "Set of assigned role names", example = "[\"HR\", \"MANAGER\"]")
     private Set<String> roles;
-    
+
+    // ✅ Added this back so controller compiles fine
     @Schema(description = "Set of assigned project UUIDs")
     private Set<UUID> projectIds;
-    
+
+    @Schema(description = "Set of assigned projects with full details")
+    private Set<ProjectResponse> projects;
+
     @Schema(description = "Creation timestamp", 
             example = "2023-12-07T10:30:00.000Z", accessMode = Schema.AccessMode.READ_ONLY)
     private LocalDateTime createdAt;

@@ -114,7 +114,24 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-
+			
+		<!-- Feign Multipart Support -->
+		<dependency>
+		    <groupId>io.github.openfeign.form</groupId>
+		    <artifactId>feign-form</artifactId>
+		    <version>3.8.0</version>
+		</dependency>
+		<dependency>
+		    <groupId>io.github.openfeign.form</groupId>
+		    <artifactId>feign-form-spring</artifactId>
+		    <version>3.8.0</version>
+		</dependency>
+		
+		<!-- HTTP Client for Feign -->
+		<dependency>
+		    <groupId>io.github.openfeign</groupId>
+		    <artifactId>feign-httpclient</artifactId>
+		</dependency>
     </dependencies>
 
     <dependencyManagement>

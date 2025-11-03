@@ -1,16 +1,29 @@
 package com.bwc.approval_workflow_service.controller;
 
+
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.bwc.approval_workflow_service.client.TravelRequestServiceClient;
-import com.bwc.approval_workflow_service.dto.*;
+import com.bwc.approval_workflow_service.dto.ApprovalRequestDTO;
+import com.bwc.approval_workflow_service.dto.ApprovalWorkflowDTO;
+import com.bwc.approval_workflow_service.dto.BookingDocumentDTO;
+import com.bwc.approval_workflow_service.dto.BookingSummaryDTO;
+import com.bwc.approval_workflow_service.dto.TravelBookingDTO;
 import com.bwc.approval_workflow_service.service.ApprovalWorkflowService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,7 +31,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/travel-desk/approvals")
 @RequiredArgsConstructor
@@ -109,9 +124,10 @@ public class TravelDeskApprovalController {
     // ==========================================================
 
     @Operation(summary = "Upload booking document")
-    @PostMapping(value = "/{requestId}/bookings/{bookingId}/documents/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/{requestId}/bookings/{bookingId}/documents/upload", 
+                consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('TRAVEL_DESK')")
-    public ResponseEntity<BookingDocumentDTO> uploadDocument(
+    public ResponseEntity<?> uploadDocument(
             @PathVariable UUID requestId,
             @PathVariable UUID bookingId,
             @RequestParam("file") MultipartFile file,
@@ -119,10 +135,37 @@ public class TravelDeskApprovalController {
             @RequestParam(value = "description", required = false) String description,
             HttpServletRequest request) {
 
-        UUID uploadedBy = parseUserId(request);
-        BookingDocumentDTO document = travelClient.uploadBookingDocument(
-                bookingId, file, documentType, description, uploadedBy);
-        return ResponseEntity.ok(document);
+        try {
+            UUID uploadedBy = parseUserId(request);
+            log.info("Uploading document for booking: {}, type: {}, uploadedBy: {}", 
+                    bookingId, documentType, uploadedBy);
+
+            // Validate file
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body("File cannot be empty");
+            }
+
+            if (file.getSize() > 10 * 1024 * 1024) { // 10MB
+                return ResponseEntity.badRequest().body("File size exceeds 10MB limit");
+            }
+
+            ResponseEntity<BookingDocumentDTO> response = travelClient.uploadBookingDocument(
+                    bookingId, file, documentType, description, uploadedBy);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                log.info("Document uploaded successfully for booking: {}", bookingId);
+                return ResponseEntity.ok(response.getBody());
+            } else {
+                log.error("Failed to upload document. Response status: {}", response.getStatusCode());
+                return ResponseEntity.status(response.getStatusCode())
+                        .body("Failed to upload document: " + response.getStatusCode());
+            }
+
+        } catch (Exception e) {
+            log.error("Error uploading document for booking {}: {}", bookingId, e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body("Error uploading document: " + e.getMessage());
+        }
     }
 
     @Operation(summary = "Get all documents for a booking")
@@ -192,6 +235,12 @@ public class TravelDeskApprovalController {
 
     private UUID parseUserId(HttpServletRequest request) {
         String id = request.getHeader("X-User-Id");
-        return id != null ? UUID.fromString(id) : null;
+        if (id == null) {
+            throw new IllegalArgumentException("X-User-Id header is required");
+        }
+        return UUID.fromString(id);
     }
+    
+    
+    
 }
