@@ -1,0 +1,324 @@
+/* pages/Travel/RequestDetailPage.css */
+.request-detail-page {
+  padding: 1rem;
+  width: 100%;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Header */
+.request-detail-page .page-header {
+  margin-bottom: 0.5rem;
+}
+
+.request-detail-page .back-button {
+  background: none;
+  border: 1px solid #ddd;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.request-detail-page .back-button:hover {
+  background: #f5f5f5;
+}
+
+.request-detail-page .page-title {
+  font-size: 25px;
+  font-weight: 600;
+  color: #0c0c0c;
+  margin: 0 0 0.5rem 0;
+}
+
+.request-detail-page .page-subtitle {
+  color: #666;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Main Card */
+.request-detail-page .detail-card {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+}
+
+.request-detail-page .card-headerrequestdetail {
+  padding: 1rem;
+  border-bottom: 1px solid #e1e5e9;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.request-detail-page .card-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.request-detail-page .status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-block;
+  animation: status-blink 2s infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Blinking animation for all status badges - scoped to this page */
+@keyframes status-blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+/* Updated status styles with new colors - scoped to this page */
+.request-detail-page .status-pending { 
+  background: linear-gradient(45deg, #ff9800, #ffc107);
+  color: white;
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+  animation: status-blink 1.5s infinite, status-glow 2s infinite alternate;
+}
+
+.request-detail-page .status-approved { 
+  background: linear-gradient(45deg, #2e7d32, #4caf50);
+  color: white;
+  box-shadow: 0 0 10px rgba(46, 125, 50, 0.5);
+  animation: status-pulse 2s infinite;
+}
+
+.request-detail-page .status-rejected { 
+  background: linear-gradient(45deg, #c62828, #ef5350);
+  color: white;
+  box-shadow: 0 0 10px rgba(198, 40, 40, 0.5);
+  animation: status-shake 0.5s infinite;
+}
+
+.request-detail-page .status-draft { 
+  background: linear-gradient(45deg, #c62828, #ef5350);
+  color: white;
+  box-shadow: 0 0 10px rgba(198, 40, 40, 0.5);
+  animation: status-bounce 1s infinite;
+}
+
+.request-detail-page .status-submitted { 
+  background: linear-gradient(45deg, #1976d2, #42a5f5);
+  color: white;
+  box-shadow: 0 0 10px rgba(25, 118, 210, 0.5);
+  animation: status-fade 2s infinite;
+}
+
+/* Additional eye-catching animations - scoped with unique names */
+@keyframes status-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 152, 0, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(255, 152, 0, 0.8), 0 0 30px rgba(255, 152, 0, 0.6); }
+}
+
+@keyframes status-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes status-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+@keyframes status-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes status-fade {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Content */
+.request-detail-page .card-content {
+  padding: 1.25rem;
+}
+
+/* Two-column grid layout */
+.request-detail-page .details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.request-detail-page .detail-section {
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.request-detail-page .section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #666;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.request-detail-page .detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.request-detail-page .detail-row:last-child {
+  border-bottom: none;
+}
+
+.request-detail-page .detail-label {
+  color: #666;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.request-detail-page .detail-value {
+  color: #333;
+  font-weight: 500;
+  font-size: 0.9rem;
+  flex: 1;
+  text-align: right;
+}
+
+/* Badge styles */
+.request-detail-page .badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.request-detail-page .badge-success { background: #e8f5e8; color: #2e7d32; }
+.request-detail-page .badge-warning { background: #fff3cd; color: #856404; }
+.request-detail-page .badge-danger { background: #ffebee; color: #721c24; }
+
+/* Actions */
+.request-detail-page .action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  justify-content: right;
+  width: 30%;
+  margin-left: 70%;
+}
+
+.request-detail-page .btn {
+  padding: 0.6rem 1.25rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.request-detail-page .btn-primary {
+  background: #1976d2;
+  color: white;
+  border-color: #1976d2;
+}
+
+.request-detail-page .btn-primary:hover {
+  background: #1565c0;
+}
+
+.request-detail-page .btn-secondary {
+  background: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+.request-detail-page .btn-secondary:hover {
+  background: #5a6268;
+}
+
+/* Loading & Error States */
+.request-detail-page .loading-container,
+.request-detail-page .error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.request-detail-page .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #1976d2;
+  border-radius: 50%;
+  animation: status-spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.request-detail-page .error-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+@keyframes status-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .request-detail-page .details-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .request-detail-page {
+    padding: 0.75rem;
+  }
+  
+  .request-detail-page .card-headerrequestdetail {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .request-detail-page .detail-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .request-detail-page .detail-value {
+    text-align: left;
+  }
+  
+  .request-detail-page .action-buttons {
+    flex-direction: column;
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
+  }
+  
+  .request-detail-page .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

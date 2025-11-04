@@ -1,0 +1,11 @@
+.dashboard-page
+{
+    padding: 30px;
+}
+.dashboard-page .page-header h1
+{
+    font-size: 30px;
+    margin-bottom: 2%;
+    font-weight: 700;
+    text-align: left;
+}
