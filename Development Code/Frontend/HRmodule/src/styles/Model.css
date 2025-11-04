@@ -1,0 +1,100 @@
+/* styles/Model.css */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+  position: relative;
+}
+
+.modal-small {
+  width: 400px;
+}
+
+.modal-medium {
+  width: 600px;
+}
+
+.modal-large {
+  width: 800px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #6b7280;
+}
+
+.modal-close:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.modal-content {
+  padding: 20px;
+}
+
+/* TEMPORARY FIX - Add this to your CSS */
+.modal-backdrop {
+  pointer-events: none; /* Disable backdrop interactions when dropdown is open */
+}
+
+.modal-backdrop .modal-container {
+  pointer-events: auto; /* Re-enable for modal content */
+}
+
+.dropdown-menu {
+  pointer-events: auto;
+}
+/* Add this to your Modal CSS */
+.modal-container {
+  /* FIX: Absolutely fixed size */
+  width: 600px !important;
+  height: 500px !important;
+  resize: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+.modal-content {
+  /* FIX: Fixed content area */
+  height: 440px; /* 500px modal - 60px header */
+  overflow: visible;
+}
+
+
+

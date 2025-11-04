@@ -1,0 +1,142 @@
+/* Button Styles */
+.btn {
+  padding: var(--space-lg) var(--space-xl);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-white);
+}
+
+.btn:hover {
+  background: var(--bg-light);
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btnPrimary {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  color: var(--text-light);
+  border: none;
+}
+
+.btnPrimary:hover {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, #2c639c 100%);
+  transform: translateY(-2px);
+}
+
+.btnSecondary {
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.btnSecondary:hover {
+  background: var(--bg-light);
+  color: var(--text-primary);
+}
+
+.btnAccent {
+  background-color: #32cc56;
+  color: var(--text-light);
+  border: none;
+}
+
+.btnAccent:hover {
+  background-color: #165c26;
+  transform: translateY(-2px);
+}
+
+.btnReject {
+  background: linear-gradient(135deg, var(--danger-color) 0%, #fd7e14 100%);
+  color: var(--text-light);
+  border: none;
+}
+
+.btnReject:hover {
+  background: linear-gradient(135deg, #bd2130 0%, #e4600f 100%);
+  transform: translateY(-2px);
+}
+
+.btnDraft {
+  background: var(--secondary-color);
+  color: var(--text-light);
+  border: none;
+}
+
+.btnDraft:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+.btnIcon {
+  padding: var(--space-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  margin: 0 3px;
+}
+
+.btnIcon:hover {
+  color: var(--primary-color);
+  background: var(--bg-light);
+  transform: scale(1.1);
+}
+
+.btnIconSvg {
+  font-size: var(--font-size-md);
+}
+
+.btnLogout {
+  margin-top: var(--space-xl);
+}
+
+/* Floating Button */
+.logoutFloatBtn {
+  position: fixed;
+  bottom: 5px;
+  right: 10px;
+  background: #837e7e;
+  color: var(--text-light);
+  padding: var(--space-md) var(--space-2xl);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: 500;
+  transition: all var(--transition-normal);
+  z-index: 99;
+}
+
+.logoutFloatBtn:hover {
+  background: #131212;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+.addempbtn
+{
+  width: 15%;
+  margin-left: 85%;
+}
+.detailHeader .btnSecondary
+{
+  width: 15%;
+  padding: 15px 0px;
+  border-radius: 15px;
+  margin-left: 85%;
+}

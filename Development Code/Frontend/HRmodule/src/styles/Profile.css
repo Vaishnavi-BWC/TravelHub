@@ -1,0 +1,35 @@
+.contentprofile
+{
+ margin-top: 4%;
+}
+.profileContainer
+{
+    display: flex;
+    gap: var(--space-xl);
+}
+.cardBody .profileImage{
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    /* border: 5px double white; */
+}
+.profileCard
+{
+    width: 30%;
+    margin-left: 2%;
+}
+.profileDetails
+{
+    width: 65%;
+}
+.detailItem
+{
+    display: flex;
+
+}
+.detailItem label
+{
+    width: 150px;
+    font-weight: 400;
+    line-height: 40px;
+}

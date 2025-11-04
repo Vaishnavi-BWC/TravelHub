@@ -1,0 +1,21 @@
+.detailHeader .detailheading
+{
+    width: 30%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--bg-dark) 100%);
+    padding: 5px;
+    border-radius: 5px;
+    color: white;
+    font-weight: 700;
+    text-align: center;
+}
+.formActions
+{
+    padding:5px;
+    /* border: 1px solid #000; */
+}
+.btnsec
+{
+    height: 45px;
+    margin-top: 2%;
+    /* border: 1px solid #000; */
+}

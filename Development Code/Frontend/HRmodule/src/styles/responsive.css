@@ -1,0 +1,270 @@
+/* Responsive Styles */
+@media (max-width: 1200px) {
+  .sidebar {
+    width: 250px;
+  }
+  
+  .mainContent {
+    margin-left: 250px;
+  }
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    width: 220px;
+  }
+  
+  .mainContent {
+    margin-left: 220px;
+  }
+  
+  .header h1 {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .statCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .statIcon {
+    margin-bottom: var(--space-sm);
+  }
+  
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .cardBodyGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.sidebarOpen {
+    transform: translateX(0);
+  }
+  
+  .mainContent {
+    margin-left: 0;
+  }
+  
+  .mobileMenuBtn {
+    display: block;
+  }
+  
+  .sidebarToggle {
+    display: block;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .formGroupFull {
+    grid-column: 1;
+  }
+  
+  .formActions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+  
+  .detailHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-lg);
+  }
+  
+  .cardHeaderFlex {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+}
+
+@media (max-width: 576px) {
+  .content {
+    padding: var(--space-lg);
+  }
+  
+  .statsContainer {
+    grid-template-columns: 1fr;
+  }
+  
+  .quickActionGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header {
+    padding: var(--space-md) var(--space-lg);
+  }
+  
+  .userInfo {
+    gap: var(--space-md);
+  }
+  
+  .userProfile {
+    padding: var(--space-xs) var(--space-md);
+  }
+  
+  .userProfile img {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+/* Milestone Styles */
+.milestone {
+  position: relative;
+  padding-left: 40px;
+  margin-bottom: var(--space-2xl);
+}
+
+.milestoneBubble {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid;
+}
+
+.milestoneBubble.completed {
+  background: var(--success-color);
+  border-color: #1e7e34;
+}
+
+.milestoneBubble.active {
+  background: #007bff;
+  border-color: #0056b3;
+}
+
+.milestoneBubble.idle {
+  background: var(--bg-light);
+  border-color: var(--border-dark);
+}
+
+.milestone h4 {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.milestoneSubtitle {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: 4px;
+}
+
+.milestoneDesc {
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.milestoneLine {
+  position: absolute;
+  left: 9px;
+  top: 24px;
+  width: 2px;
+  height: 30px;
+  background: var(--border-color);
+}
+
+.milestone:last-child .milestoneLine {
+  display: none;
+}
+
+/* Process completion styles */
+.processComplete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-2xl);
+  background: #d4edda;
+  border-radius: var(--radius-lg);
+  margin-top: 1px;
+  border: 1px solid #c3e6cb;
+}
+
+.processCompleteIcon {
+  font-size: 3rem;
+  color: var(--success-color);
+  margin-bottom: var(--space-lg);
+}
+
+.processComplete h4 {
+  color: #155724;
+  margin-bottom: var(--space-sm);
+  font-size: var(--font-size-2xl);
+}
+
+.processComplete p {
+  color: #155724;
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+/* Filter and Search */
+.filterButtons {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: var(--bg-white);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  transition: all var(--transition-normal);
+}
+
+.filterBtn:hover {
+  background: var(--bg-light);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+}
+
+.filterBtn.active {
+  background: var(--primary-color);
+  color: var(--text-light);
+  border: none;
+}
+
+.filterBtn.active:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.searchInput {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  width: 250px;
+  transition: all var(--transition-normal);
+  background: var(--bg-light);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(58, 123, 184, 0.2);
+  background: var(--bg-white);
+}

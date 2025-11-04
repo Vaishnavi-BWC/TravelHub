@@ -1,0 +1,83 @@
+/* Card Styles */
+.card {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-xl);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  border: 1px solid var(--border-color);
+  /* border: 1px solid #000; */
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+.cardHeader {
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--bg-light);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardHeaderFlex {
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--bg-light);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+}
+
+.cardHeader h3 {
+  font-size: var(--font-size-xl);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.cardBody {
+  padding: var(--space-xl);
+ text-align: center;
+}
+.cardBodyGrid {
+  padding: var(--space-xl);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2xl);
+}
+
+/* Info Card */
+.infoCard {
+  background: #d1ecf1;
+  border-left: 4px solid #0c5460;
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-xl);
+}
+
+.infoCardContent {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.infoIcon {
+  color: #0c5460;
+  font-size: var(--font-size-2xl);
+  flex-shrink: 0;
+}
+
+.infoCard h3 {
+  color: #0c5460;
+  margin-bottom: var(--space-sm);
+}
+
+.infoList p {
+  margin-bottom: var(--space-sm);
+  color: #0c5460;
+}
