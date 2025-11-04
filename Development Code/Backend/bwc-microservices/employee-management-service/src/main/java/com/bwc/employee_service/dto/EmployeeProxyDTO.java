@@ -1,14 +1,14 @@
 package com.bwc.employee_service.dto;
 
+import java.util.Set;
+import java.util.UUID;
 
-
+import com.bwc.employee_management_service.dto.ProjectResponse;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Set;
-import java.util.UUID;
 
 @Data
 @Builder
@@ -23,6 +23,6 @@ public class EmployeeProxyDTO {
     private UUID managerId;
     private Set<String> roles;
 
-    // ✅ Add this line
-    private Set<UUID> projectIds;
+    @Schema(description = "Set of assigned projects with full details")
+    private Set<ProjectResponse> projects;
 }

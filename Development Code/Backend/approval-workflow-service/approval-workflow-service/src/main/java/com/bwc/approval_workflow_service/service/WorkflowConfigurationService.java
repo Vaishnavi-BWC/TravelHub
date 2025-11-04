@@ -1,6 +1,7 @@
 package com.bwc.approval_workflow_service.service;
 
 import com.bwc.approval_workflow_service.entity.WorkflowConfiguration;
+import com.bwc.approval_workflow_service.dto.WorkflowSettingsDTO;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,4 +29,24 @@ public interface WorkflowConfigurationService {
     
     // Reload configurations (clear cache, etc.)
     void reloadConfigurations();
+    
+    // NEW METHODS FOR SETTINGS MANAGEMENT
+    
+    // Update SLA/time limit for a specific step
+    WorkflowConfiguration updateStepSLA(UUID configId, Integer timeLimitHours, Boolean autoApproveAfterTimeout);
+    
+    // Toggle step activation
+    WorkflowConfiguration toggleStepActivation(UUID configId, Boolean isActive);
+    
+    // Update multiple settings at once
+    WorkflowConfiguration updateStepSettings(UUID configId, WorkflowSettingsDTO settings);
+    
+    // Bulk update SLA for all steps of a workflow type
+    List<WorkflowConfiguration> bulkUpdateSLA(String workflowType, Integer timeLimitHours);
+    
+    // Get workflow settings summary
+    WorkflowSettingsDTO getWorkflowSettingsSummary(String workflowType);
+    
+    // Update step sequence order
+    WorkflowConfiguration updateStepSequence(UUID configId, Integer newSequenceOrder);
 }

@@ -55,9 +55,14 @@ public class TravelRequestServiceImpl implements TravelRequestService {
         log.info("Creating new travel request for employee: {}", dto.getEmployeeId());
 
         var employee = employeeServiceClient.getEmployee(dto.getEmployeeId());
-        log.info("Employee {} fetched successfully with projects: {}", employee.getFullName(), employee.getProjectIds());
+        log.info("Employee {} fetched successfully with {} project(s)", employee.getFullName(),
+                employee.getProjects() != null ? employee.getProjects().size() : 0);
 
-        if (employee.getProjectIds() == null || !employee.getProjectIds().contains(dto.getProjectId())) {
+        // ✅ Validate that employee is assigned to this project
+        boolean isAssigned = employee.getProjects() != null && employee.getProjects().stream()
+                .anyMatch(p -> p.getProjectId().equals(dto.getProjectId()));
+
+        if (!isAssigned) {
             throw new IllegalArgumentException(String.format(
                     "Employee %s is not assigned to project %s",
                     employee.getFullName(), dto.getProjectId()));
@@ -82,6 +87,7 @@ public class TravelRequestServiceImpl implements TravelRequestService {
                 .estimatedBudget(saved.getEstimatedBudget())
                 .build();
 
+        // ✅ Execute after transaction commit
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {

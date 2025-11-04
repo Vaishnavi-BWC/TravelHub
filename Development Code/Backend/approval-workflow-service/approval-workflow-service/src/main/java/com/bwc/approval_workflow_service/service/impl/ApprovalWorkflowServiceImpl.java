@@ -2,10 +2,13 @@ package com.bwc.approval_workflow_service.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,7 @@ import com.bwc.approval_workflow_service.client.NotificationServiceClient;
 import com.bwc.approval_workflow_service.client.PolicyServiceClient;
 import com.bwc.approval_workflow_service.client.TravelRequestServiceClient;
 import com.bwc.approval_workflow_service.dto.ApprovalActionDTO;
+import com.bwc.approval_workflow_service.dto.ApprovalHistoryDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalRequestDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalStatsDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalWorkflowDTO;
@@ -445,7 +449,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
             case ROLE_TRAVEL_DESK:
             case ROLE_HR:
             case ROLE_FINANCE:
-                return determineRoleBasedApprover(step, employeeId);
+                return determineRoleBasedApprover(step, travelRequest); // ✅ Fixed
             default:
                 log.warn("Unknown approver role: {}", step.getApproverRole());
                 return getSystemAdminIdFallback();
@@ -475,14 +479,114 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         }
     }
 
-    private UUID determineRoleBasedApprover(WorkflowConfiguration step, UUID employeeId) {
-        // For non-manager roles, you might want to implement role-based assignment
-        // For now, return a system user as fallback
-        UUID approverId = getSystemAdminIdFallback();
-        logApproverAssignment(step.getStepName(), step.getApproverRole(), approverId, employeeId, "System fallback");
-        return approverId;
+    private UUID determineRoleBasedApprover(WorkflowConfiguration step, TravelRequestProxyDTO travelRequest) {
+        String role = step.getApproverRole();
+        UUID employeeId = travelRequest.employeeId();
+        
+        log.info("🔍 Determining approver for role: {} (Employee: {})", role, employeeId);
+        
+        switch (role) {
+            case ROLE_TRAVEL_DESK:
+                return findFirstAvailableNonManagerApprover(ROLE_TRAVEL_DESK, employeeId);
+            case ROLE_HR:
+                return findFirstAvailableNonManagerApprover(ROLE_HR, employeeId);
+            case ROLE_FINANCE:
+                return findFirstAvailableNonManagerApprover(ROLE_FINANCE, employeeId);
+            default:
+                log.warn("Unknown approver role: {}", role);
+                return getSystemAdminIdFallback();
+        }
     }
 
+    private UUID findFirstAvailableNonManagerApprover(String role, UUID employeeId) {
+        try {
+            List<EmployeeProxyDTO> availableApprovers = employeeClient.getEmployeesByRole(role);
+            
+            if (availableApprovers == null || availableApprovers.isEmpty()) {
+                log.warn("⚠️ No {} users found, using system fallback", role);
+                return getSystemAdminIdFallback();
+            }
+            
+            // Filter out managers
+            List<EmployeeProxyDTO> nonManagerApprovers = availableApprovers.stream()
+                    .filter(emp -> !isManager(emp))
+                    .collect(Collectors.toList());
+            
+            if (nonManagerApprovers.isEmpty()) {
+                log.warn("⚠️ No non-manager {} users found, using all available users", role);
+                nonManagerApprovers = availableApprovers;
+            }
+            
+            Map<UUID, Long> approverWorkload = getApproverWorkload(nonManagerApprovers);
+            
+            EmployeeProxyDTO selectedApprover = nonManagerApprovers.stream()
+                    .min(Comparator.comparing(emp -> approverWorkload.getOrDefault(emp.getEmployeeId(), 0L)))
+                    .orElse(nonManagerApprovers.get(0));
+            
+            log.info("✅ Assigned {} role to {} (ID: {}) - Workload: {} pending approvals", 
+                    role, selectedApprover.getFullName(), selectedApprover.getEmployeeId(), 
+                    approverWorkload.getOrDefault(selectedApprover.getEmployeeId(), 0L));
+            
+            return selectedApprover.getEmployeeId();
+            
+        } catch (Exception e) {
+            log.error("❌ Failed to find {} approver: {}", role, e.getMessage());
+            return getSystemAdminIdFallback();
+        }
+    }
+
+    private boolean isManager(EmployeeProxyDTO employee) {
+        if (employee == null) return false;
+        
+        // Check roles for MANAGER
+        if (employee.getRoles() != null && employee.getRoles().contains("MANAGER")) {
+            return true;
+        }
+        
+        // Check level for management indicators
+        if (employee.getLevel() != null) {
+            String level = employee.getLevel().toUpperCase();
+            if (level.contains("MGR") || level.contains("MANAGER") || 
+                (level.startsWith("M") && level.length() > 1 && Character.isDigit(level.charAt(1)))) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    private Map<UUID, Long> getApproverWorkload(List<EmployeeProxyDTO> approvers) {
+        Map<UUID, Long> workload = new HashMap<>();
+        
+        if (approvers == null || approvers.isEmpty()) {
+            return workload;
+        }
+        
+        try {
+            List<UUID> approverIds = approvers.stream()
+                    .map(EmployeeProxyDTO::getEmployeeId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            
+            if (!approverIds.isEmpty()) {
+                Map<UUID, Long> pendingCounts = workflowRepository.getPendingApprovalsCountByApproverIds(approverIds);
+                workload.putAll(pendingCounts);
+            }
+            
+        } catch (Exception e) {
+            log.warn("Failed to fetch workload data: {}", e.getMessage());
+        }
+        
+        // Ensure all approvers have an entry
+        for (EmployeeProxyDTO approver : approvers) {
+            if (approver != null && approver.getEmployeeId() != null) {
+                workload.putIfAbsent(approver.getEmployeeId(), 0L);
+            }
+        }
+        
+        return workload;
+    }
+    
     private UUID getSystemAdminIdFallback() {
         return UUID.fromString("ff78684e-ed8d-4696-bccf-582ecf1ab900");
     }
@@ -1390,4 +1494,74 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         if (details == null) return "Unknown Rental Company";
         return details.split("-")[0].trim();
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApprovalHistoryDTO> getApprovalHistory(UUID approverId, LocalDateTime startDate, LocalDateTime endDate) {
+        // Set default values if dates are not provided
+        if (startDate == null) {
+            startDate = LocalDateTime.now().minusDays(30); // Default: last 30 days
+        }
+        if (endDate == null) {
+            endDate = LocalDateTime.now(); // Default: current time
+        }
+        
+        // Validate date range
+        if (startDate.isAfter(endDate)) {
+            throw new WorkflowException("Start date cannot be after end date");
+        }
+        
+        // Optional: Set maximum date range (e.g., 1 year)
+        if (startDate.isBefore(LocalDateTime.now().minusYears(1))) {
+            startDate = LocalDateTime.now().minusYears(1);
+            log.warn("Date range limited to maximum 1 year for performance reasons");
+        }
+        
+        List<ApprovalAction> actions = actionRepository.findByApproverIdAndActionTakenAtBetween(
+                approverId, startDate, endDate);
+        
+        log.info("Retrieved {} approval actions for approver {} between {} and {}", 
+                actions.size(), approverId, startDate, endDate);
+        
+        return actions.stream()
+                .map(this::mapToApprovalHistoryDTO)
+                .sorted((a1, a2) -> a2.getActionTakenAt().compareTo(a1.getActionTakenAt())) // Most recent first
+                .toList();
+    }
+
+    private ApprovalHistoryDTO mapToApprovalHistoryDTO(ApprovalAction action) {
+        ApprovalWorkflow workflow = workflowRepository.findById(action.getWorkflowId()).orElse(null);
+        TravelRequestProxyDTO travelRequest = null;
+        EmployeeProxyDTO employee = null;
+        
+        if (workflow != null) {
+            try {
+                travelRequest = fetchTravelRequestSafe(workflow.getTravelRequestId());
+                if (travelRequest != null) {
+                    employee = fetchEmployeeSafe(travelRequest.employeeId());
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch details for action {}: {}", action.getActionId(), e.getMessage());
+            }
+        }
+        
+        return ApprovalHistoryDTO.builder()
+                .actionId(action.getActionId())
+                .workflowId(action.getWorkflowId())
+                .travelRequestId(action.getTravelRequestId())
+                .approverRole(action.getApproverRole())
+                .action(action.getAction())
+                .step(action.getStep())
+                .comments(action.getComments())
+                .actionTakenAt(action.getActionTakenAt())
+                .employeeName(employee != null ? employee.getFullName() : "Unknown Employee")
+                .travelPurpose(travelRequest != null ? travelRequest.purpose() : "Unknown Purpose")
+                .estimatedCost(workflow != null ? workflow.getEstimatedCost() : null)
+                .amountApproved(action.getAmountApproved())
+                .escalationReason(action.getEscalationReason())
+                .build();
+    }
+
+    // Remove the old getManagerApprovalHistory method and replace it with the generic one
+    
 }

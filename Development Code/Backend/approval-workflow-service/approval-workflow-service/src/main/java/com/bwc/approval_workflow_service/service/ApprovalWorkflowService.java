@@ -1,8 +1,20 @@
 package com.bwc.approval_workflow_service.service;
 
-import com.bwc.approval_workflow_service.dto.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import com.bwc.approval_workflow_service.dto.ApprovalActionDTO;
+import com.bwc.approval_workflow_service.dto.ApprovalRequestDTO;
+import com.bwc.approval_workflow_service.dto.ApprovalStatsDTO;
+import com.bwc.approval_workflow_service.dto.ApprovalWorkflowDTO;
+import com.bwc.approval_workflow_service.dto.BookingDetailsDTO;
+import com.bwc.approval_workflow_service.dto.BookingSummaryDTO;
+import com.bwc.approval_workflow_service.dto.ApprovalHistoryDTO; // Renamed
+import com.bwc.approval_workflow_service.dto.TravelBookingDTO;
+import com.bwc.approval_workflow_service.dto.TravelRequestProxyDTO;
+import com.bwc.approval_workflow_service.dto.WorkflowBookingStatsDTO;
+import com.bwc.approval_workflow_service.dto.WorkflowMetricsDTO;
 
 public interface ApprovalWorkflowService {
 
@@ -47,8 +59,6 @@ public interface ApprovalWorkflowService {
     
     ApprovalWorkflowDTO uploadBills(UUID workflowId, Double actualCost, UUID uploadedBy);
     
- // Add these methods to your ApprovalWorkflowService interface
-
     /**
      * Mark bookings as completed and progress workflow to next step
      */
@@ -64,16 +74,12 @@ public interface ApprovalWorkflowService {
      */
     ApprovalWorkflowDTO updateBookingDetails(UUID workflowId, UUID updatedBy, BookingDetailsDTO bookingDetails, String comments);
     
-    
-    
     // Booking Management Methods
     TravelBookingDTO addBookingToWorkflow(UUID workflowId, UUID travelDeskId, TravelBookingDTO bookingDTO);
     List<TravelBookingDTO> getBookingsForWorkflow(UUID workflowId);
     TravelBookingDTO updateBookingStatus(UUID workflowId, UUID bookingId, String status, UUID travelDeskId);
     void deleteBookingFromWorkflow(UUID workflowId, UUID bookingId, UUID travelDeskId);
     WorkflowBookingStatsDTO getWorkflowBookingStats(UUID workflowId);
-    
-    
     
     /**
      * Record booking-related actions in workflow
@@ -90,4 +96,8 @@ public interface ApprovalWorkflowService {
      */
     List<ApprovalWorkflowDTO> getWorkflowsByStatusAndStep(String status, String step);
     
+    /**
+     * Get approval history for any approver (generic for all roles)
+     */
+    List<ApprovalHistoryDTO> getApprovalHistory(UUID approverId, LocalDateTime startDate, LocalDateTime endDate);
 }

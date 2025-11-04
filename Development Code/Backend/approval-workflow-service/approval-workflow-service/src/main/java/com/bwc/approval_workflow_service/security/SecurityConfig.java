@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
@@ -14,19 +15,26 @@ public class SecurityConfig {
 
     private final GatewaySecurityFilter gatewaySecurityFilter;
     private final GatewayAuthHeaderVerifier gatewayAuthHeaderVerifier;
+    private final CorsConfigurationSource corsConfigurationSource; // Add this
 
     public SecurityConfig(GatewaySecurityFilter gatewaySecurityFilter,
-                          GatewayAuthHeaderVerifier gatewayAuthHeaderVerifier) {
+                         GatewayAuthHeaderVerifier gatewayAuthHeaderVerifier,
+                         CorsConfigurationSource corsConfigurationSource) { // Add this parameter
         this.gatewaySecurityFilter = gatewaySecurityFilter;
         this.gatewayAuthHeaderVerifier = gatewayAuthHeaderVerifier;
+        this.corsConfigurationSource = corsConfigurationSource; // Initialize
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource)) // Add CORS support
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // 🟢 Allow ALL OPTIONS requests for CORS preflight
+                .requestMatchers(request -> "OPTIONS".equals(request.getMethod())).permitAll()
+                
                 // 🟢 Public endpoints (no auth)
                 .requestMatchers(
                     "/swagger-ui/**",

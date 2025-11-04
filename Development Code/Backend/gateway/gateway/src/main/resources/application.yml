@@ -20,7 +20,7 @@ spring:
               - "http://bwc-72.brainwaveconsulting.co.in:3000"
               - "http://bwc-72.brainwaveconsulting.co.in:3001"
               - "http://bwc-72.brainwaveconsulting.co.in:3003"
-              - "http://localhost:3000"
+              - "http://bwc-97.brainwaveconsulting.co.in:3003"
               - "http://localhost:3001"
               - "http://localhost:3002"
               - "http://localhost:3003"

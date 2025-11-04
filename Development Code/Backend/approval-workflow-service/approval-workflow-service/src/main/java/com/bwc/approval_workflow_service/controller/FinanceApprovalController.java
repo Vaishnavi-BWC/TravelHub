@@ -3,15 +3,19 @@ package com.bwc.approval_workflow_service.controller;
 import com.bwc.approval_workflow_service.dto.ApprovalRequestDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalWorkflowDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalStatsDTO;
+import com.bwc.approval_workflow_service.dto.ApprovalHistoryDTO;
 import com.bwc.approval_workflow_service.service.ApprovalWorkflowService;
+import com.bwc.approval_workflow_service.exception.AuthenticationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,12 +52,22 @@ public class FinanceApprovalController {
         return ResponseEntity.ok(workflowService.processApproval(approvalRequest));
     }
 
-    @Operation(summary = "Get Finance approval statistics")
-    @GetMapping("/stats")
+    @Operation(summary = "Get Finance approval history")
+    @GetMapping("/history")
     @PreAuthorize("hasRole('FINANCE')")
-    public ResponseEntity<List<ApprovalStatsDTO>> getApprovalStats(HttpServletRequest request) {
+    public ResponseEntity<List<ApprovalHistoryDTO>> getFinanceApprovalHistory(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            HttpServletRequest request) {
+
         String financeIdHeader = request.getHeader("X-User-Id");
-        UUID financeId = financeIdHeader != null ? UUID.fromString(financeIdHeader) : null;
-        return ResponseEntity.ok(workflowService.getApprovalStatsByApprover(financeId));
+        if (financeIdHeader == null) {
+            throw new AuthenticationException("Finance ID not found in request headers");
+        }
+        
+        UUID financeId = UUID.fromString(financeIdHeader);
+        List<ApprovalHistoryDTO> history = workflowService.getApprovalHistory(financeId, startDate, endDate);
+
+        return ResponseEntity.ok(history);
     }
 }

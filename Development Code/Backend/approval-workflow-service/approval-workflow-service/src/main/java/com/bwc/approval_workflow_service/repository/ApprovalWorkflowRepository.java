@@ -1,13 +1,17 @@
 package com.bwc.approval_workflow_service.repository;
 
-import com.bwc.approval_workflow_service.entity.ApprovalWorkflow;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+
+import com.bwc.approval_workflow_service.entity.ApprovalWorkflow;
 
 @Repository
 public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkflow, UUID> {
@@ -32,4 +36,21 @@ public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkfl
     
     // Add this method for metrics
     long count();
+    
+    
+    
+
+    @Query("SELECT w.currentApproverId, COUNT(w) FROM ApprovalWorkflow w " +
+            "WHERE w.currentApproverId IN :approverIds AND w.status = 'PENDING' " +
+            "GROUP BY w.currentApproverId")
+     List<Object[]> countPendingApprovalsByApproverIds(@Param("approverIds") List<UUID> approverIds);
+     
+     default Map<UUID, Long> getPendingApprovalsCountByApproverIds(List<UUID> approverIds) {
+         List<Object[]> results = countPendingApprovalsByApproverIds(approverIds);
+         return results.stream()
+                 .collect(Collectors.toMap(
+                     obj -> (UUID) obj[0],
+                     obj -> (Long) obj[1]
+                 ));
+     }
 }

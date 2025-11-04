@@ -1,7 +1,12 @@
 package com.bwc.travel_request_management.service.impl;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.bwc.travel_request_management.client.WorkflowServiceClient;
-import com.bwc.travel_request_management.client.dto.CreateWorkflowRequest;
 import com.bwc.travel_request_management.dto.TravelExpenseDTO;
 import com.bwc.travel_request_management.entity.TravelExpense;
 import com.bwc.travel_request_management.entity.TravelRequest;
@@ -10,16 +15,9 @@ import com.bwc.travel_request_management.mapper.TravelExpenseMapper;
 import com.bwc.travel_request_management.repository.TravelExpenseRepository;
 import com.bwc.travel_request_management.repository.TravelRequestRepository;
 import com.bwc.travel_request_management.service.TravelExpenseService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
