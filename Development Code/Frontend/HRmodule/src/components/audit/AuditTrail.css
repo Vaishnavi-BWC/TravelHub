@@ -186,13 +186,16 @@
 .table-container {
   overflow-x: auto;
   background: transparent;
+  padding-top: 2%;
 }
 
 .request-history-table {
-  width: 100%;
+  width: 96%;
   border-collapse: collapse;
   font-size: 16px;
+  padding: 20px;
   background: transparent;
+  margin: auto;
 }
 
 .request-history-table th {
