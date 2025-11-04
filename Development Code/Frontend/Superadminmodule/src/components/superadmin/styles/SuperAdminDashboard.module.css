@@ -1,0 +1,22 @@
+/* styles/SuperAdminDashboard.module.css */
+.dashboardbody
+{
+  padding: 30px;
+}
+.dashboardbody h2
+{
+  margin-bottom: 20px;
+}
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}

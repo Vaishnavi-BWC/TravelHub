@@ -1,0 +1,167 @@
+/* styles/SuperAdminHeader.module.css */
+.header {
+  background: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  /* height: 90px; */
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+}
+
+.mobileMenuBtn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  margin-right: 15px;
+  cursor: pointer;
+  color: #555;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 15px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+/* .userProfile:hover {
+  background: #f5f7fa;
+} */
+
+.userProfile img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  margin-right: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e9ecef;
+}
+
+
+.userProfile div {
+  line-height: 1.4;
+}
+
+.userProfile div:first-child {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.userProfile small {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+/* Add these styles to your existing CSS file */
+
+/* Logout button specific styles */
+.userProfile .logoutbutton {
+    /* margin-left:15px;
+    padding-left: 15px; */
+    /* border-left: 1px solid #e9ecef; */
+    /* border: 1px solid #000; */
+    margin-left: 10px;
+    border-radius: 100%;
+      background-color: lightcyan;
+}
+
+.userProfile .logoutbutton button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 7px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* Mobile responsive for logout button */
+@media (max-width: 768px) {
+    .userProfile .logoutbutton {
+        margin-left: 10px;
+        padding-left: 10px;
+    }
+    
+    .userProfile .logoutbutton button {
+        padding: 6px;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    text-align: center;
+    padding: 15px;
+    gap: 15px;
+  }
+  
+  .headerLeft {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .userInfo {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .mobileMenuBtn {
+    display: block;
+  }
+}
+.modernTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2c3e50;
+  position: relative;
+  padding-left: 15px;
+  /* border: 1px solid #000;
+   */
+}
+
+.modernTitle::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 70%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 2px;
+}
+
+.accentWord {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
