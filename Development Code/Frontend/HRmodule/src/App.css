@@ -1,0 +1,23 @@
+/* App.css - Main imports and global styles */
+@import './styles/variable.css';
+@import './styles/globals.css';
+@import './styles/layout.css';
+@import './styles/sidebar.css';
+@import './styles/header.css';
+
+@import './styles/cards.css';
+@import './styles/tables.css';
+@import './styles/forms.css';
+@import './styles/buttons.css';
+@import './styles/stats.css';
+@import './styles/responsive.css';
+@import './styles/Profile.css';
+@import './styles/helpandsupport.css';
+@import './styles/logout.css';
+@import './styles//pagination.css';
+*
+{
+  margin: 0px;
+  padding: 0px;
+  box-sizing: border-box;
+}

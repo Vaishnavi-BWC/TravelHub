@@ -1,0 +1,150 @@
+.header {
+  background: white;
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  /* border: 1px solid #000; */
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+}
+
+.mobileMenuBtn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+.modernTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2c3e50;
+  position: relative;
+  padding-left: 15px;
+}
+
+.modernTitle::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 70%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 2px;
+}
+
+.accentWord {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.notificationBtn {
+  position: relative;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.notificationBtn:hover {
+  background: #f5f7fa;
+  color: #2c3e50;
+}
+
+.notificationBadge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  background: #dc3545;
+  border-radius: 50%;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 15px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.userProfile:hover {
+  background: #f5f7fa;
+}
+
+.userProfile img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  margin-right: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e9ecef;
+}
+
+.userProfile:hover img {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: scale(1.05);
+}
+
+.userProfile div {
+  line-height: 1.4;
+}
+
+.userProfile div:first-child {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.userProfile small {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+.p-3
+{
+  background-color: white;
+  border: none;
+  /* border: 1px solid #000; */
+  transform: translateY(-5PX);
+  background-color: lightcyan;
+  padding: 5px;
+  border-radius: 100%;
+  border: none;
+  cursor: pointer;
+}
+
+.logoutbutton
+{
+  transform: translateX(10px);
+}
