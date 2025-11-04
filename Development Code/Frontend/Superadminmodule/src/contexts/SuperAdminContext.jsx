@@ -240,19 +240,73 @@ export const SuperAdminProvider = ({ children }) => {
     },
 
     // SLA Settings
-    loadSlaSettings: async () => {
+    loadSlaSettings: async (workflowType = 'PRE_TRAVEL') => {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
-        const settings = await superAdminService.getSlaSettings();
+        const settings = await superAdminService.getSlaSettings(workflowType);
         dispatch({ type: ACTION_TYPES.SET_SLA_SETTINGS, payload: settings });
       } catch (error) {
         dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
       }
     },
 
-    updateSlaSettings: async (settings) => {
+    updateStepSLA: async (configId, slaData) => {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
-        await superAdminService.updateSlaSettings(settings);
-        await actions.loadSlaSettings(); // Reload settings
+        const result = await superAdminService.updateStepSLA(configId, slaData);
+        // Reload SLA settings to get updated data
+        await actions.loadSlaSettings();
+        return result;
+      } catch (error) {
+        dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
+        throw error;
+      }
+    },
+
+    updateBulkSLA: async (workflowType, bulkData) => {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
+      try {
+        const result = await superAdminService.updateBulkSLA(workflowType, bulkData);
+        // Reload SLA settings to get updated data
+        await actions.loadSlaSettings(workflowType);
+        return result;
+      } catch (error) {
+        dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
+        throw error;
+      }
+    },
+
+    toggleStepActivation: async (configId, activationData) => {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
+      try {
+        const result = await superAdminService.toggleStepActivation(configId, activationData);
+        // Reload SLA settings to get updated data
+        await actions.loadSlaSettings();
+        return result;
+      } catch (error) {
+        dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
+        throw error;
+      }
+    },
+
+    updateStepSequence: async (configId, sequenceData) => {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
+      try {
+        const result = await superAdminService.updateStepSequence(configId, sequenceData);
+        // Reload SLA settings to get updated data
+        await actions.loadSlaSettings();
+        return result;
+      } catch (error) {
+        dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
+        throw error;
+      }
+    },
+
+    updateSlaSettings: async (workflowType, settings) => {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
+      try {
+        await superAdminService.updateSlaSettings(workflowType, settings);
+        await actions.loadSlaSettings(workflowType); // Reload settings
       } catch (error) {
         dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
         throw error;

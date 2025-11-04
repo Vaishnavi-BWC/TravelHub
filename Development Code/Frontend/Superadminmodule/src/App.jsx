@@ -17,11 +17,10 @@ import './App.css';
 function App() {
   return (
     <AppProvider>
-      <Router>
-        <div className="App">
-          <SuperAdminProvider>
+      <SuperAdminProvider>
+        <Router>
+          <div className="App">
             <Routes>
-              {/* Layout route with nested routes */}
               <Route path="/" element={<SuperAdminLayout />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<SuperAdminDashboard />} />
@@ -33,13 +32,12 @@ function App() {
                 <Route path="logs" element={<SystemLogs />} />
                 <Route path="override" element={<OverrideApproval />} />
                 <Route path="profile" element={<ProfilePage />} />
-                {/* Catch all route - redirect to dashboard */}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Routes>
-          </SuperAdminProvider>
-        </div>
-      </Router>
+          </div>
+        </Router>
+      </SuperAdminProvider>
     </AppProvider>
   );
 }

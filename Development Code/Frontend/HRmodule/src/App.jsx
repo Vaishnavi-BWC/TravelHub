@@ -11,7 +11,7 @@ import { Notification } from './components/common/Notification';
 import { EmployeeForm } from './components/employees/EmployeeForm';
 import { ExceptionsManagement } from './components/exceptions/ExceptionsManagement';
 import { ReimbursementsManagement } from './components/reiumbursement/ReimbursementsManagement';
-import { AuditTrail } from './components/audit/AuditTrail';
+import AuditTrail  from './components/audit/AuditTrail';
 import { HelpSupport } from './components/help/helpSupport';
 import { Logout } from './components/logout/Logout';
 import { useApp } from './contexts/AppContext';
