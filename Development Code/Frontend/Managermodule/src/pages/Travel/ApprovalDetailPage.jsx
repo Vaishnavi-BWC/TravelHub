@@ -49,6 +49,7 @@ const ApprovalDetailPage = () => {
           );
           
           if (apiRequest) {
+            console.log('Fetched request from API:', apiRequest);
             setRequest(apiRequest);
           } else {
             throw new Error('Request not found');

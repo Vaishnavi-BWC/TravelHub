@@ -19,6 +19,9 @@ const EmployeeDetail = ({ onEdit, onBack }) => {
         try {
           setDetailLoading(true);
           const employeeData = await getEmployeeById(employeeId);
+          console.log('📊 Full employee data:', employeeData);
+          console.log('🔍 employee._original.roles:', employeeData._original?.roles);
+          console.log('🔍 employee._original.projects:', employeeData._original?.projects);
           setEmployee(employeeData);
         } catch (err) {
           console.error('Error fetching employee:', err);
@@ -36,10 +39,8 @@ const EmployeeDetail = ({ onEdit, onBack }) => {
       console.log('🔍 Employee data for editing:', employee);
       
       if (onEdit) {
-        // Pass the employee data to parent component
         onEdit(employee);
       } else {
-        // Fallback to navigation
         const empId = employee.user_id || employee.id;
         if (empId) {
           navigate(`/employees/${empId}/edit`);
@@ -78,7 +79,42 @@ const EmployeeDetail = ({ onEdit, onBack }) => {
     );
   }
 
+  // Extract data from the correct locations
   const originalData = employee._original || {};
+  const mainData = employee;
+  
+  console.log('🎯 Original data roles:', originalData.roles);
+  console.log('🎯 Original data projects:', originalData.projects);
+
+  // Extract projects
+  let projects = [];
+  let projectNames = [];
+  
+  if (originalData.projects) {
+    projects = originalData.projects;
+  }
+
+  // Extract project names
+  if (projects && projects.length > 0) {
+    projectNames = projects.map(project => 
+      project.projectName || project.name || `Project ${project.projectId || project.id}`
+    );
+  }
+
+  // Extract and format roles - NOW FROM employee._original.roles
+  let roleDisplayNames = [];
+  
+  if (originalData.roles && originalData.roles.length > 0) {
+    console.log('🎯 Raw roles from _original:', originalData.roles);
+    roleDisplayNames = originalData.roles.map(role => {
+      // Convert "FINANCE" to "Finance", "MANAGER" to "Manager", etc.
+      if (typeof role === 'string') {
+        return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+      }
+      return role;
+    });
+    console.log('🎯 Formatted roles:', roleDisplayNames);
+  }
 
   return (
     <div className="content">
@@ -89,13 +125,13 @@ const EmployeeDetail = ({ onEdit, onBack }) => {
       <div className="card">
         <div className="cardHeaderFlex">
           <div>
-            <h3>{employee.first_name} {employee.last_name}</h3>
-            <p>Employee ID: {employee.employee_code}</p>
-            <p>Department: {employee.department}</p>
+            <h3>{mainData.fullName || `${mainData.first_name} ${mainData.last_name}`}</h3>
+            <p>Employee ID: {mainData.employee_code || originalData.employeeId}</p>
+            <p>Department: {mainData.department || originalData.department}</p>
           </div>
           <div>
-            <Badge variant={employee.status}>
-              {employee.status ? employee.status.charAt(0).toUpperCase() + employee.status.slice(1) : 'Unknown'}
+            <Badge variant={mainData.status || (originalData.active ? 'active' : 'inactive')}>
+              {mainData.status ? mainData.status.charAt(0).toUpperCase() + mainData.status.slice(1) : (originalData.active ? 'Active' : 'Inactive')}
             </Badge>
           </div>
         </div>
@@ -106,15 +142,15 @@ const EmployeeDetail = ({ onEdit, onBack }) => {
             <div className="detailList">
               <div className="detailItem">
                 <span>Full Name:</span>
-                <span>{originalData.fullName || 'N/A'}</span>
+                <span>{mainData.fullName || `${mainData.first_name} ${mainData.last_name}` || 'N/A'}</span>
               </div>
               <div className="detailItem">
                 <span>Email:</span>
-                <span>{employee.email}</span>
+                <span>{mainData.email || originalData.email || 'N/A'}</span>
               </div>
               <div className="detailItem">
                 <span>Phone:</span>
-                <span>{originalData.phoneNumber || 'N/A'}</span>
+                <span>{mainData.phone_number || originalData.phoneNumber || 'N/A'}</span>
               </div>
               <div className="detailItem">
                 <span>Manager Name:</span>
@@ -127,25 +163,38 @@ const EmployeeDetail = ({ onEdit, onBack }) => {
             <div className="detailList">
               <div className="detailItem">
                 <span>Department:</span>
-                <span>{employee.department || 'N/A'}</span>
+                <span>{mainData.department || originalData.department || 'N/A'}</span>
               </div>
               <div className="detailItem">
                 <span>Level:</span>
-                <span>{originalData.level || 'N/A'}</span>
+                <span>{mainData.grade || originalData.level || 'N/A'}</span>
               </div>
               <div className="detailItem">
                 <span>Employee Code:</span>
-                <span>{employee.employee_code || 'N/A'}</span>
+                <span>{mainData.employee_code || originalData.employeeId || 'N/A'}</span>
               </div>
               <div className="detailItem">
                 <span>Status:</span>
-                <span>{originalData.active ? 'Active' : 'Inactive'}</span>
+                <span>{mainData.status ? mainData.status.charAt(0).toUpperCase() + mainData.status.slice(1) : (originalData.active ? 'Active' : 'Inactive')}</span>
               </div>
               <div className="detailItem">
-                <span>Project IDs:</span>
+                <span>Projects:</span>
                 <span>
-                  {originalData.projectIds && originalData.projectIds.length > 0 
-                    ? originalData.projectIds.join(', ') 
+                  {projectNames.length > 0 
+                    ? projectNames.join(', ')
+                    : originalData.projectIds && originalData.projectIds.length > 0 
+                    ? `Project IDs: ${originalData.projectIds.join(', ')}`
+                    : 'No projects assigned'
+                  }
+                </span>
+              </div>
+              <div className="detailItem">
+                <span>Roles:</span>
+                <span>
+                  {roleDisplayNames.length > 0 
+                    ? roleDisplayNames.join(', ')
+                    : originalData.roles && originalData.roles.length > 0 
+                    ? originalData.roles.join(', ')
                     : 'N/A'
                   }
                 </span>
@@ -162,7 +211,7 @@ const EmployeeDetail = ({ onEdit, onBack }) => {
         <button
           onClick={handleEdit}
           className="btn btnPrimary"
-          disabled={!employee.user_id}
+          disabled={!mainData.user_id}
         >
           <i className="fas fa-edit"></i> Edit Employee
         </button>

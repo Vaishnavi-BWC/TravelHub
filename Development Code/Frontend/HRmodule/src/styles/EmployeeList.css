@@ -1,6 +1,5 @@
 /* components/employees/EmployeeList.css */
 
-/* Reset conflicting animations that cause jumps */
 .employeeTable,
 .employeeTable *,
 .employeeTable td,
@@ -11,7 +10,6 @@
   transform: none !important;
 }
 
-/* Keep your original table styles exactly as they are */
 .employeeTable {
   width: 100%;
   border-collapse: collapse;
@@ -19,7 +17,6 @@
   cursor: default;
 }
 
-/* Fixed column widths - KEEP YOUR EXACT MEASUREMENTS */
 .employeeTable th:nth-child(1) { width: 120px; }
 .employeeTable th:nth-child(2) { width: 200px; }
 .employeeTable th:nth-child(3) { width: 200px; }
@@ -47,7 +44,7 @@
   vertical-align: middle;
 }
 
-/* Table row hover - KEEP YOUR ORIGINAL STYLES */
+/* Table row hover */
 .employeeTable tbody tr {
   transition: background-color 0.15s ease;
 }
@@ -60,7 +57,7 @@
   background-color: transparent !important;
 }
 
-/* Status Badges - KEEP YOUR GRADIENTS AND COLORS */
+/* Status Badges */
 .employeeTable .status {
   padding: 6px 12px;
   border-radius: var(--radius-xl);
@@ -90,7 +87,7 @@
   border: 1px solid #ffeaa7;
 }
 
-/* Status cell - KEEP YOUR LAYOUT */
+/* Status cell*/
 .status-cell {
   display: flex;
   align-items: center;
@@ -114,7 +111,7 @@
   background-color: transparent !important;
 }
 
-/* Action buttons - KEEP YOUR STYLES */
+/* Action buttons*/
 .actionButtons {
   display: flex;
   align-items: center;
@@ -140,7 +137,7 @@
   background-color: var(--gray-200);
 }
 
-/* Card and container styles - KEEP YOUR STYLES */
+/* Card and container styles*/
 .card {
   position: relative;
   overflow: hidden;
@@ -170,7 +167,7 @@
   max-height: 600px;
 }
 
-/* Pagination controls - KEEP YOUR STYLES */
+/* Pagination controls -*/
 .paginationControls {
   padding: 16px 20px;
   border-top: 1px solid var(--gray-200);
@@ -377,7 +374,6 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Ensure no layout shifts during pagination */
 .table-container {
   min-height: 400px; /* Prevent height jumps */
 }
@@ -386,7 +382,7 @@
   display: table-row-group; /* Maintain table structure */
 }
 
-/* Fix for any remaining jump issues */
+
 .employeeTable {
   transform: translateZ(0); /* Hardware acceleration */
   backface-visibility: hidden;
