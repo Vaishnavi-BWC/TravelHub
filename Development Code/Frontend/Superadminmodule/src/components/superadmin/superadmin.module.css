@@ -168,24 +168,24 @@
 }
 
 /* Table Styles */
-.tableContainer {
+.containersla .tableContainer {
   overflow-x: auto;
 }
 
-.dataTable {
+.containersla .dataTable {
   width: 100%;
   border-collapse: collapse;
   border-radius: 8px;
   overflow: hidden;
 }
 
-.dataTable th, .dataTable td {
+.containersla .dataTable th, .dataTable td {
   padding: 15px;
   text-align: left;
   border-bottom: 1px solid #e9ecef;
 }
 
-.dataTable th {
+.containersla .dataTable th {
   background: #f8f9fa;
   font-weight: 600;
   color: #2c3e50;
@@ -193,11 +193,11 @@
   top: 0;
 }
 
-.dataTable tr {
+.containersla .dataTable tr {
   transition: all 0.2s;
 }
 
-.dataTable tr:hover {
+.containersla .dataTable tr:hover {
   background: #f8f9fa;
   transform: scale(1.0);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -1138,10 +1138,17 @@
 
 .stepName {
   font-size: 12px;
-  background: #e9ecef;
+  /* background: #e9ecef; */
   padding: 4px 8px;
   border-radius: 4px;
-  font-family: monospace;
+  font-weight: 700;
+}
+.numberInput
+{
+  width: 60px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
 .roleCell {
@@ -1149,7 +1156,7 @@
 }
 
 .roleBadge {
-  background: #007bff;
+ background: linear-gradient(135deg, #1a4f8c 0%, #2c3e50 100%);
   color: white;
   padding: 4px 8px;
   border-radius: 12px;
@@ -1210,9 +1217,8 @@
 }
 
 .tabButtonActive {
-  background: #007bff;
+background: linear-gradient(135deg, #1a4f8c 0%, #2c3e50 100%);
   color: white;
-  border-color: #007bff;
 }
 
 .bulkUpdateSection {
@@ -1298,4 +1304,67 @@
   margin: 0;
   font-size: 14px;
   color: #495057;
+}
+.unsavedBadge {
+  background: #ffc107;
+  color: #856404;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.unsavedInput {
+  border: 2px solid #ffc107 !important;
+  background-color: #fffbf0 !important;
+}
+
+.unsavedCheckbox {
+  accent-color: #ffc107;
+}
+
+.saveHighlight {
+  background: #28a745 !important;
+  border-color: #28a745 !important;
+}
+
+.unsavedNote {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #856404;
+}
+
+.unsavedNote i {
+  color: #ffc107;
+}
+
+
+.containersla
+{
+  margin: 15px;
+  margin-top: 50px;
+}
+.containersla .cardHeader
+{
+  /* border: 1px solid #000; */
+  margin-bottom: 30px;
+  padding: 10px;
+}
+.containersla .workflowInfo
+{
+  padding: 10px;
+  border-radius: 20px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+}
+.containersla .cardBody p
+{
+  margin-bottom: 10px;
+  margin-left: 20px;
 }

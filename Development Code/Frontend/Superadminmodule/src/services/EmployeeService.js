@@ -23,8 +23,7 @@ export const EmployeeService = {
         try {
           const errorData = await response.json();
           errorMessage = errorData.message || errorData.error || errorMessage;
-        } 
-        catch (parseError) {
+        } catch (parseError) {
           // Ignore parsing errors
         }
         
