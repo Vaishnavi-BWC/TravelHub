@@ -10,13 +10,13 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
   const { createEmployee, loading: hookLoading, error: hookError } = useEmployees();
   const { roles, loading: rolesLoading, error: rolesError } = useRoles();
   const { managers, loading: managersLoading, error: managersError } = useManagers();
-  const { 
-    managerProjects, 
-    loading: projectsLoading, 
+  const {
+    managerProjects,
+    loading: projectsLoading,
     loadManagerProjects,
-    error: projectsError 
+    error: projectsError
   } = useProjects();
-  
+
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -76,12 +76,12 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
     const loadProjectsForManager = async () => {
       if (formData.managerId && formData.managerId !== lastManagerId) {
         console.log('🔄 Loading projects for NEW manager:', formData.managerId);
-        
+
         // Find the selected manager
         const manager = managers.find(m => m.managerId === formData.managerId);
         setSelectedManager(manager);
         setLastManagerId(formData.managerId);
-        
+
         // Load projects for this manager
         try {
           await loadManagerProjects(formData.managerId);
@@ -118,7 +118,7 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === 'managerId') {
       // Clear selected projects when manager changes
       setFormData({
@@ -132,20 +132,20 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
         [name]: value
       });
     }
-    
+
     clearMessages();
   };
 
   const handleRoleToggle = (roleId) => {
     const currentRoleIds = [...formData.roleIds];
     const roleIndex = currentRoleIds.indexOf(roleId);
-    
+
     if (roleIndex > -1) {
       currentRoleIds.splice(roleIndex, 1);
     } else {
       currentRoleIds.push(roleId);
     }
-    
+
     setFormData({
       ...formData,
       roleIds: currentRoleIds
@@ -155,18 +155,18 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
   const handleProjectToggle = (projectId) => {
     const currentProjectIds = [...formData.projectIds];
     const projectIndex = currentProjectIds.indexOf(projectId);
-    
+
     if (projectIndex > -1) {
       currentProjectIds.splice(projectIndex, 1);
     } else {
       currentProjectIds.push(projectId);
     }
-    
+
     setFormData({
       ...formData,
       projectIds: currentProjectIds
     });
-    
+
     console.log('✅ Selected Projects:', currentProjectIds);
     console.log('✅ Available Projects:', managerProjects);
   };
@@ -185,7 +185,7 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
       const role = roles.find(r => r.roleId === roleId);
       return role ? role.roleName : '';
     }).filter(name => name);
-    
+
     return selectedNames.join(', ');
   };
 
@@ -194,11 +194,11 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
       const project = managerProjects.find(p => p.projectId === projectId);
       return project ? project.projectName : '';
     }).filter(name => name);
-    
+
     console.log('🎯 Selected Projects Display:', selectedNames);
     console.log('🎯 Form Data Project IDs:', formData.projectIds);
     console.log('🎯 Available Manager Projects:', managerProjects);
-    
+
     return selectedNames.join(', ');
   };
 
@@ -245,7 +245,7 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
       } else {
         await createEmployee(employeeData);
         setAutoDismissMessage(setSuccessMessage, `Employee "${employeeData.fullName}" created successfully!`);
-        
+
         // Reset form
         setFormData({
           fullName: '',
@@ -405,7 +405,7 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
             <div className="formGroup">
               <label htmlFor="roles">Roles <span>*</span></label>
               <div className="dropdownContainer" ref={rolesDropdownRef}>
-                <div 
+                <div
                   className={`dropdownTrigger ${dropdownOpen.roles ? 'dropdownOpen' : ''}`}
                   onClick={() => toggleDropdown('roles')}
                   disabled={isLoadingState || rolesLoading}
@@ -415,7 +415,7 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
                   </span>
                   <i className={`fas fa-chevron-${dropdownOpen.roles ? 'up' : 'down'}`}></i>
                 </div>
-                
+
                 {dropdownOpen.roles && (
                   <div className="dropdownMenu">
                     {rolesLoading ? (
@@ -456,18 +456,18 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
               <div className="formGroup">
                 <label htmlFor="projects">Project Name</label>
                 <div className="dropdownContainer" ref={projectsDropdownRef}>
-                  <div 
+                  <div
                     className={`dropdownTrigger ${dropdownOpen.projects ? 'dropdownOpen' : ''}`}
                     onClick={() => toggleDropdown('projects')}
                     disabled={isLoadingState || projectsLoading}
                   >
                     <span className="dropdownPlaceholder">
-                      {projectsLoading ? `Loading projects...` : 
-                       formData.projectIds.length > 0 ? getSelectedProjectNames() : 'Select projects...'}
+                      {projectsLoading ? `Loading projects...` :
+                        formData.projectIds.length > 0 ? getSelectedProjectNames() : 'Select projects...'}
                     </span>
                     <i className={`fas fa-chevron-${dropdownOpen.projects ? 'up' : 'down'}`}></i>
                   </div>
-                  
+
                   {dropdownOpen.projects && (
                     <div className="dropdownMenu">
                       {projectsLoading ? (
@@ -520,9 +520,9 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
         </div>
 
         <div className="formActions">
-          <button 
-            type="button" 
-            className="btn btnSecondary" 
+          <button
+            type="button"
+            className="btn btnSecondary"
             onClick={handleCancelClick}
             disabled={isLoadingState}
           >

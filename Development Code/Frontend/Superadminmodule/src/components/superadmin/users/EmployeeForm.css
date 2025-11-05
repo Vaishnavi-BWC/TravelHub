@@ -4,7 +4,7 @@
   --primary-blue: #1a4f8c;
   --primary-blue-light: #3a7bb8;
   --primary-gradient: linear-gradient(135deg, #1a4f8c 0%, #3a7bb8 100%);
-  
+
   /* Neutral Colors */
   --white: #ffffff;
   --gray-50: #fafbfc;
@@ -17,7 +17,7 @@
   --gray-700: #4a5568;
   --gray-800: #2d3748;
   --gray-900: #1a202c;
-  
+
   /* Semantic Colors */
   --success: #48bb78;
   --success-light: #f0fff4;
@@ -27,20 +27,20 @@
   --error-border: #feb2b2;
   --warning: #ed8936;
   --info: #4299e1;
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   --shadow-blue: 0 4px 15px rgba(58, 123, 184, 0.3);
-  
+
   /* Border Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
-  
+
   /* Spacing */
   --space-xs: 8px;
   --space-sm: 12px;
@@ -48,7 +48,7 @@
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 40px;
-  
+
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-base: 0.3s ease;
@@ -143,6 +143,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -185,9 +186,11 @@
   font-size: 0.95rem;
   transition: color var(--transition-base);
 }
+
 .formGroup label span {
   color: var(--error);
 }
+
 /* ===== Form Controls ===== */
 .formControl {
   width: 100%;
@@ -359,8 +362,13 @@ select.formControl {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* ===== Form States ===== */
@@ -381,27 +389,27 @@ select.formControl {
     margin: var(--space-md);
     border-radius: var(--radius-lg);
   }
-  
+
   /* On mobile, switch rows to single column */
   .formRow {
     flex-direction: column;
     gap: var(--space-lg);
   }
-  
+
   .formTitle {
     font-size: 1.6rem;
   }
-  
+
   .formActions {
     flex-direction: column;
     gap: var(--space-sm);
   }
-  
+
   .btn {
     width: 100%;
     justify-content: center;
   }
-  
+
   .successMessage,
   .errorMessage {
     padding: var(--space-md);
@@ -415,15 +423,15 @@ select.formControl {
     margin: var(--space-sm);
     border-radius: var(--radius-md);
   }
-  
+
   .formTitle {
     font-size: 1.4rem;
   }
-  
+
   .formGrid {
     gap: var(--space-md);
   }
-  
+
   .successMessage,
   .errorMessage {
     padding: var(--space-sm) var(--space-md);
@@ -437,15 +445,15 @@ select.formControl {
     box-shadow: none;
     border: 1px solid var(--gray-400);
   }
-  
+
   .btn {
     display: none;
   }
-  
+
   .formActions {
     display: none;
   }
-  
+
   .successMessage,
   .errorMessage {
     display: none;
@@ -461,11 +469,11 @@ select.formControl {
     --success: #006400;
     --error: #8b0000;
   }
-  
+
   .formControl {
     border-width: 3px;
   }
-  
+
   .successMessage,
   .errorMessage {
     border-width: 2px;
@@ -479,11 +487,11 @@ select.formControl {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   .btn::before {
     display: none;
   }
-  
+
   .successMessage,
   .errorMessage {
     animation: none;
@@ -784,7 +792,7 @@ select.formControl {
     flex-direction: column;
     gap: var(--space-lg);
   }
-  
+
   /* Ensure dropdown menus are visible on mobile */
   .dropdownMenu {
     position: fixed;
@@ -796,7 +804,7 @@ select.formControl {
     border-radius: 10px 10px 0 0;
     margin-top: 0;
   }
-  
+
   .dropdownTrigger {
     min-height: 48px;
   }
