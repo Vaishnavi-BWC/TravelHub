@@ -5,7 +5,7 @@ const AUTH_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8081/api/auth
 const getCurrentUserInfo = async () => {
   try {
     console.log('🔍 Fetching current user info from auth API...');
-    
+
     const response = await fetch(`${AUTH_API_BASE_URL}/me`, {
       method: 'GET',
       headers: {
@@ -19,7 +19,7 @@ const getCurrentUserInfo = async () => {
     if (response.ok) {
       const userData = await response.json();
       console.log('✅ User data from auth API:', userData);
-      
+
       // Extract name from email (e.g., "karen.hall@company.com" -> "Karen Hall")
       const extractNameFromEmail = (email) => {
         if (!email) return 'User';
@@ -44,7 +44,7 @@ const getCurrentUserInfo = async () => {
   } catch (error) {
     console.error('❌ Error fetching user info from auth API:', error);
   }
-  
+
   // Fallback values - try localStorage as backup
   try {
     const userData = localStorage.getItem('user_data');
@@ -61,7 +61,7 @@ const getCurrentUserInfo = async () => {
   } catch (fallbackError) {
     console.error('Error getting fallback user info:', fallbackError);
   }
-  
+
   // Final fallback values
   return {
     id: 'unknown-user-id',
@@ -79,11 +79,11 @@ export const travelService = {
   async createTravelRequest(requestData) {
     try {
       console.log('✈️ Making travel request API call to:', TRAVEL_API_BASE_URL);
-      
+
       // Get current user info to ensure we have the correct employeeId
       const userInfo = await getCurrentUserInfo();
       console.log('👤 Current user info:', userInfo);
-      
+
       // Enhance request data with user information
       const enhancedRequestData = {
         ...requestData,
@@ -93,7 +93,7 @@ export const travelService = {
       };
 
       console.log('📦 Enhanced request data:', enhancedRequestData);
-      
+
       const response = await fetch(TRAVEL_API_BASE_URL, {
         method: 'POST',
         headers: {
@@ -104,7 +104,7 @@ export const travelService = {
       });
 
       console.log('📊 Travel API Response status:', response.status);
-      
+
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         try {
@@ -121,16 +121,16 @@ export const travelService = {
 
       const data = await response.json();
       console.log('✅ Travel request created successfully:', data);
-      
+
       return data.data || data;
-      
+
     } catch (error) {
       console.error('❌ Error creating travel request:', error);
-      
+
       if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         throw new Error('Cannot connect to travel service. Please check your connection.');
       }
-      
+
       throw error;
     }
   },
@@ -141,10 +141,10 @@ export const travelService = {
   async createTravelRequestWithUser(requestData) {
     try {
       console.log('🚀 Creating travel request with automatic user ID...');
-      
+
       // Get user info first
       const userInfo = await getCurrentUserInfo();
-      
+
       if (!userInfo.id || userInfo.id === 'unknown-user-id') {
         throw new Error('Unable to authenticate user. Please login again.');
       }
@@ -172,7 +172,7 @@ export const travelService = {
 
       // Call the main create method
       return await this.createTravelRequest(completeRequestData);
-      
+
     } catch (error) {
       console.error('❌ Error in createTravelRequestWithUser:', error);
       throw error;
@@ -187,7 +187,7 @@ export const travelService = {
       // Get user info first to ensure we're authenticated
       const userInfo = await getCurrentUserInfo();
       console.log('👤 Fetching travel requests for user:', userInfo.id);
-      
+
       const response = await fetch(`${TRAVEL_API_BASE_URL}/my-requests`, {
         method: 'GET',
         headers: {
@@ -202,7 +202,7 @@ export const travelService = {
 
       const data = await response.json();
       return data.data || data;
-      
+
     } catch (error) {
       console.error('Error fetching travel requests:', error);
       throw new Error(`Failed to fetch travel requests: ${error.message}`);
@@ -228,7 +228,7 @@ export const travelService = {
 
       const data = await response.json();
       return data.data || data;
-      
+
     } catch (error) {
       console.error('Error fetching travel request:', error);
       throw new Error(`Failed to fetch travel request: ${error.message}`);
@@ -241,107 +241,107 @@ export const travelService = {
   /**
  * Update travel request
  */
-async updateTravelRequest(requestId, updateData) {
-  try {
-    console.log('✏️ Updating travel request:', requestId);
-    
-    // Ensure travelRequestId is included in the update data
-    const updatePayload = {
-      ...updateData,
-      travelRequestId: requestId // Add this to match API expectation
-    };
+  async updateTravelRequest(requestId, updateData) {
+    try {
+      console.log('✏️ Updating travel request:', requestId);
 
-    console.log('📦 Update payload:', updatePayload);
-    
-    const response = await fetch(`${TRAVEL_API_BASE_URL}/${requestId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatePayload),
-      credentials: 'include'
-    });
+      // Ensure travelRequestId is included in the update data
+      const updatePayload = {
+        ...updateData,
+        travelRequestId: requestId // Add this to match API expectation
+      };
 
-    console.log('📊 Update API Response status:', response.status);
-    
-    if (!response.ok) {
-      let errorMessage = `HTTP error! status: ${response.status}`;
-      try {
-        const errorData = await response.text();
-        if (errorData) {
-          const parsedError = JSON.parse(errorData);
-          errorMessage = parsedError.message || errorMessage;
+      console.log('📦 Update payload:', updatePayload);
+
+      const response = await fetch(`${TRAVEL_API_BASE_URL}/${requestId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatePayload),
+        credentials: 'include'
+      });
+
+      console.log('📊 Update API Response status:', response.status);
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.text();
+          if (errorData) {
+            const parsedError = JSON.parse(errorData);
+            errorMessage = parsedError.message || errorMessage;
+          }
+        } catch {
+          // Ignore parsing errors
         }
-      } catch {
-        // Ignore parsing errors
+        throw new Error(errorMessage);
       }
-      throw new Error(errorMessage);
-    }
 
-    const data = await response.json();
-    console.log('✅ Travel request updated successfully:', data);
-    
-    return data.data || data;
-    
-  } catch (error) {
-    console.error('❌ Error updating travel request:', error);
-    throw new Error(`Failed to update travel request: ${error.message}`);
-  }
-},
+      const data = await response.json();
+      console.log('✅ Travel request updated successfully:', data);
+
+      return data.data || data;
+
+    } catch (error) {
+      console.error('❌ Error updating travel request:', error);
+      throw new Error(`Failed to update travel request: ${error.message}`);
+    }
+  },
 
   /**
    * Delete travel request
    */
- /**
- * Delete travel request
- */
-async deleteTravelRequest(requestId) {
-  try {
-    console.log('🗑️ Deleting travel request:', requestId);
-    
-    const response = await fetch(`${TRAVEL_API_BASE_URL}/${requestId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include'
-    });
+  /**
+  * Delete travel request
+  */
+  async deleteTravelRequest(requestId) {
+    try {
+      console.log('🗑️ Deleting travel request:', requestId);
 
-    console.log('📊 Delete API Response status:', response.status);
-    
-    if (!response.ok) {
-      let errorMessage = `HTTP error! status: ${response.status}`;
-      try {
-        const errorData = await response.text();
-        if (errorData) {
-          const parsedError = JSON.parse(errorData);
-          errorMessage = parsedError.message || errorMessage;
+      const response = await fetch(`${TRAVEL_API_BASE_URL}/${requestId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      console.log('📊 Delete API Response status:', response.status);
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.text();
+          if (errorData) {
+            const parsedError = JSON.parse(errorData);
+            errorMessage = parsedError.message || errorMessage;
+          }
+        } catch {
+          // Ignore parsing errors for error response
         }
-      } catch {
-        // Ignore parsing errors for error response
+        throw new Error(errorMessage);
       }
-      throw new Error(errorMessage);
-    }
 
-    // Check if response has content before trying to parse JSON
-    const contentLength = response.headers.get('content-length');
-    const contentType = response.headers.get('content-type');
-    
-    if (contentLength && parseInt(contentLength) > 0 && contentType && contentType.includes('application/json')) {
-      const data = await response.json();
-      console.log('✅ Travel request deleted successfully with response:', data);
-      return data.data || data;
-    } else {
-      // Empty response or non-JSON response - common for DELETE operations
-      console.log('✅ Travel request deleted successfully (empty response)');
-      return { success: true, message: 'Request deleted successfully' };
+      // Check if response has content before trying to parse JSON
+      const contentLength = response.headers.get('content-length');
+      const contentType = response.headers.get('content-type');
+
+      if (contentLength && parseInt(contentLength) > 0 && contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        console.log('✅ Travel request deleted successfully with response:', data);
+        return data.data || data;
+      } else {
+        // Empty response or non-JSON response - common for DELETE operations
+        console.log('✅ Travel request deleted successfully (empty response)');
+        return { success: true, message: 'Request deleted successfully' };
+      }
+
+    } catch (error) {
+      console.error('❌ Error deleting travel request:', error);
+      throw new Error(`Failed to delete travel request: ${error.message}`);
     }
-    
-  } catch (error) {
-    console.error('❌ Error deleting travel request:', error);
-    throw new Error(`Failed to delete travel request: ${error.message}`);
-  }
-},
+  },
 
   /**
    * Get current user info (exposed for components that need it)

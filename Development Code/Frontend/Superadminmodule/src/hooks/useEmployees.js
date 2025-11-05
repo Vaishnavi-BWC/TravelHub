@@ -9,7 +9,7 @@ export const useEmployees = () => {
   const [loading, setLoading] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   const [pagination, setPagination] = useState({
     currentPage: 0,
     totalPages: 0,
@@ -59,14 +59,14 @@ export const useEmployees = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log('🔄 [loadEmployees] Loading fresh data from API...');
-      
+
       const response = await EmployeeService.getAllEmployees(page, size);
-      
+
       let employeesData = [];
       let totalElements = 0;
-      
+
       if (response.employees && Array.isArray(response.employees)) {
         employeesData = response.employees;
         totalElements = response.pagination?.totalElements || employeesData.length;
@@ -85,24 +85,24 @@ export const useEmployees = () => {
       }
 
       console.log('🔍 [loadEmployees] Raw employees from API:', employeesData);
-      
+
       const mappedEmployees = employeesData.map(mapEmployeeData);
-      
+
       console.log('🔍 [loadEmployees] Mapped employees with status:', mappedEmployees);
-      
+
       const newPagination = {
         currentPage: page,
         pageSize: size,
         totalElements: totalElements,
         totalPages: response.pagination?.totalPages || Math.ceil(totalElements / size)
       };
-      
+
       setEmployees(mappedEmployees);
       setTotalEmployees(totalElements);
       setPagination(newPagination);
-      
+
       return mappedEmployees;
-      
+
     } catch (err) {
       console.error('Error loading paginated employees:', err);
       setError(err.message);
@@ -119,30 +119,30 @@ export const useEmployees = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log('🔄 [deactivateEmployee] Calling API for employee:', employeeId);
       const result = await EmployeeService.deactivateEmployee(employeeId);
       console.log('✅ [deactivateEmployee] API call successful:', result);
-      
+
       // Check if the API returned the updated employee data
       if (result && result.employeeId) {
         console.log('🔄 [deactivateEmployee] Using returned employee data to update immediately');
         const mappedEmployee = mapEmployeeData(result);
-        
+
         // Update the employee in the local state immediately
-        setEmployees(prev => prev.map(emp => 
+        setEmployees(prev => prev.map(emp =>
           emp.user_id === employeeId ? mappedEmployee : emp
         ));
-        
+
         console.log('✅ [deactivateEmployee] Local state updated with:', mappedEmployee);
       } else {
         // If no employee data returned, reload from API
         console.log('🔄 [deactivateEmployee] No employee data returned, reloading from API');
         await loadEmployees(pagination.currentPage, pagination.pageSize);
       }
-      
+
       return result;
-      
+
     } catch (err) {
       console.error('❌ [deactivateEmployee] Error:', err);
       setError(err.message);
@@ -157,30 +157,30 @@ export const useEmployees = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log('🔄 [activateEmployee] Calling API for employee:', employeeId);
       const result = await EmployeeService.activateEmployee(employeeId);
       console.log('✅ [activateEmployee] API call successful:', result);
-      
+
       // Check if the API returned the updated employee data
       if (result && result.employeeId) {
         console.log('🔄 [activateEmployee] Using returned employee data to update immediately');
         const mappedEmployee = mapEmployeeData(result);
-        
+
         // Update the employee in the local state immediately
-        setEmployees(prev => prev.map(emp => 
+        setEmployees(prev => prev.map(emp =>
           emp.user_id === employeeId ? mappedEmployee : emp
         ));
-        
+
         console.log('✅ [activateEmployee] Local state updated with:', mappedEmployee);
       } else {
         // If no employee data returned, reload from API
         console.log('🔄 [activateEmployee] No employee data returned, reloading from API');
         await loadEmployees(pagination.currentPage, pagination.pageSize);
       }
-      
+
       return result;
-      
+
     } catch (err) {
       console.error('❌ [activateEmployee] Error:', err);
       setError(err.message);
@@ -196,11 +196,11 @@ export const useEmployees = () => {
   const loadAllEmployeesForDashboard = useCallback(async () => {
     try {
       setDashboardLoading(true);
-      
+
       const response = await EmployeeService.getAllEmployees(0, 1000);
-      
+
       let allEmployeesData = [];
-      
+
       if (response.employees && Array.isArray(response.employees)) {
         allEmployeesData = response.employees;
       } else if (response.data && response.data.content && Array.isArray(response.data.content)) {
@@ -212,10 +212,10 @@ export const useEmployees = () => {
       } else if (Array.isArray(response)) {
         allEmployeesData = response;
       }
-      
+
       const mappedAllEmployees = allEmployeesData.map(mapEmployeeData);
       setAllEmployees(mappedAllEmployees);
-      
+
       return mappedAllEmployees;
     } catch (err) {
       console.error('Error loading all employees for dashboard:', err);
@@ -233,16 +233,16 @@ export const useEmployees = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const updatedEmployee = await EmployeeService.updateEmployee(employeeId, employeeData);
       const mappedEmployee = mapEmployeeData(updatedEmployee);
-      
-      setEmployees(prev => prev.map(emp => 
+
+      setEmployees(prev => prev.map(emp =>
         emp.user_id === employeeId ? mappedEmployee : emp
       ));
-      
+
       return mappedEmployee;
-      
+
     } catch (err) {
       console.error('Error updating employee:', err);
       setError(err.message);
@@ -256,14 +256,14 @@ export const useEmployees = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const newEmployee = await EmployeeService.createEmployee(employeeData);
       const mappedEmployee = mapEmployeeData(newEmployee);
-      
+
       await loadEmployees(pagination.currentPage, pagination.pageSize);
-      
+
       return mappedEmployee;
-      
+
     } catch (err) {
       console.error('Error creating employee:', err);
       setError(err.message);
@@ -325,21 +325,21 @@ export const useEmployees = () => {
     dashboardLoading,
     error,
     pagination,
-    
+
     // Computed values
     activeEmployeesCount: getActiveEmployeesCount(),
-    
+
     // CRUD Operations
     createEmployee,
     getEmployeeById,
     updateEmployee,
     deactivateEmployee,
     activateEmployee,
-    
+
     // Data loading
     loadEmployees,
     loadAllEmployeesForDashboard,
-    
+
     // Pagination actions
     goToPage,
     goToNextPage,

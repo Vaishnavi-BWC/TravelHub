@@ -6,6 +6,8 @@ import CardKPI from '../../common/CardKPI';
 import { FaUsers, FaUserCheck, FaClipboardList, FaExclamationTriangle, FaFileInvoiceDollar } from 'react-icons/fa';
 import styles from '../superadmin.module.css';
 
+//stats card component
+
 const DashboardStats = () => {
   const { state, actions } = useSuperAdmin();
   const { dashboardStats, loading, error } = state;
@@ -19,28 +21,36 @@ const DashboardStats = () => {
     }
   }, [actions, hasLoaded]);
 
+
+  //to navigate to users page with filter
+
   const handleViewEmployees = (filter = '') => {
-    navigate('/users', { 
-      state: { filter: filter || 'all' } 
+    navigate('/users', {
+      state: { filter: filter || 'all' }
     });
   };
+
+  //to navigate to override page
 
   const handleViewApprovals = () => {
     navigate('/override');
   };
 
+  //to navigate to logs page with exceptions filter
+
   const handleViewExceptions = () => {
-    navigate('/logs', { 
-      state: { filter: 'exceptions' } 
+    navigate('/logs', {
+      state: { filter: 'exceptions' }
     });
   };
+
+  //to navigate to reports page with reimbursements filter
 
   const handleViewReimbursements = () => {
-    navigate('/reports', { 
-      state: { filter: 'reimbursements' } 
+    navigate('/reports', {
+      state: { filter: 'reimbursements' }
     });
   };
-
   const stats = [
     {
       icon: <FaUsers />,
@@ -80,7 +90,7 @@ const DashboardStats = () => {
   ];
 
   return (
-    <div className="statsContainer" style={{display: 'flex', gap: '20px', marginBottom: '30px'}}>
+    <div className="statsContainer" style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
       {stats.map((stat, index) => (
         <CardKPI
           key={index}

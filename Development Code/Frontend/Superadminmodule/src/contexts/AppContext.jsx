@@ -1,7 +1,7 @@
 // contexts/AppContext.js
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { useEmployees } from '../hooks/useEmployees';
-import { useApprovals } from '../hooks/useApprovals';
+// import { useApprovals } from '../hooks/useApprovals';
 
 const AppContext = createContext();
 
@@ -62,8 +62,8 @@ const appReducer = (state, action) => {
     case ACTION_TYPES.SET_SIDEBAR_OPEN:
       return { ...state, sidebarOpen: action.payload };
     case ACTION_TYPES.SET_ACTIVE_VIEW:
-      return { 
-        ...state, 
+      return {
+        ...state,
         activeView: action.payload.view,
         selectedEmployeeId: action.payload.employeeId || null,
         selectedRequestId: action.payload.requestId || null,
@@ -93,8 +93,8 @@ const appReducer = (state, action) => {
     case ACTION_TYPES.UPDATE_AUDIT_TRAIL:
       return { ...state, auditTrail: action.payload };
     case ACTION_TYPES.ADD_AUDIT_ENTRY:
-      return { 
-        ...state, 
+      return {
+        ...state,
         auditTrail: [...state.auditTrail, action.payload]
       };
     default:
@@ -104,9 +104,9 @@ const appReducer = (state, action) => {
 
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
-  
+
   const employeesHook = useEmployees();
-  const approvalsHook = useApprovals();
+  // const approvalsHook = useApprovals();
 
   const setLoading = useCallback((loading) => {
     dispatch({ type: ACTION_TYPES.SET_LOADING, payload: loading });
@@ -125,8 +125,8 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   const navigateTo = useCallback((view, options = {}) => {
-    dispatch({ 
-      type: ACTION_TYPES.SET_ACTIVE_VIEW, 
+    dispatch({
+      type: ACTION_TYPES.SET_ACTIVE_VIEW,
       payload: {
         view,
         employeeId: options.employeeId,
@@ -191,15 +191,15 @@ export const AppProvider = ({ children }) => {
   }, [state.auditTrail.length]);
 
   const showNotification = useCallback((message, type = 'info') => {
-    const notification = { 
-      message, 
-      type, 
+    const notification = {
+      message,
+      type,
       id: Date.now(),
       timestamp: new Date().toISOString()
     };
-    
+
     dispatch({ type: ACTION_TYPES.SET_NOTIFICATION, payload: notification });
-    
+
     setTimeout(() => {
       dispatch({ type: ACTION_TYPES.CLEAR_NOTIFICATION });
     }, 5000);
@@ -265,41 +265,41 @@ export const AppProvider = ({ children }) => {
     }
   }, [employeesHook, setLoading, showNotification, addAuditEntry]);
 
-  const approveRequest = useCallback(async (requestId, remarks, approvedBy) => {
-    setLoading(true);
-    try {
-      await approvalsHook.approveRequest(requestId, remarks, approvedBy);
-      addAuditEntry({
-        action: "Request Approved",
-        user: "HR Manager",
-        remark: `${requestId} - ${remarks}`
-      });
-      showNotification('Request approved successfully!', 'success');
-    } catch (error) {
-      showNotification(`Failed to approve request: ${error.message}`, 'error');
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [approvalsHook, setLoading, showNotification, addAuditEntry]);
+  // const approveRequest = useCallback(async (requestId, remarks, approvedBy) => {
+  //   setLoading(true);
+  //   try {
+  //     await approvalsHook.approveRequest(requestId, remarks, approvedBy);
+  //     addAuditEntry({
+  //       action: "Request Approved",
+  //       user: "HR Manager",
+  //       remark: `${requestId} - ${remarks}`
+  //     });
+  //     showNotification('Request approved successfully!', 'success');
+  //   } catch (error) {
+  //     showNotification(`Failed to approve request: ${error.message}`, 'error');
+  //     throw error;
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [approvalsHook, setLoading, showNotification, addAuditEntry]);
 
-  const rejectRequest = useCallback(async (requestId, remarks, approvedBy) => {
-    setLoading(true);
-    try {
-      await approvalsHook.rejectRequest(requestId, remarks, approvedBy);
-      addAuditEntry({
-        action: "Request Rejected",
-        user: "HR Manager",
-        remark: `${requestId} - ${remarks}`
-      });
-      showNotification('Request rejected successfully!', 'success');
-    } catch (error) {
-      showNotification(`Failed to reject request: ${error.message}`, 'error');
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [approvalsHook, setLoading, showNotification, addAuditEntry]);
+  // const rejectRequest = useCallback(async (requestId, remarks, approvedBy) => {
+  //   setLoading(true);
+  //   try {
+  //     await approvalsHook.rejectRequest(requestId, remarks, approvedBy);
+  //     addAuditEntry({
+  //       action: "Request Rejected",
+  //       user: "HR Manager",
+  //       remark: `${requestId} - ${remarks}`
+  //     });
+  //     showNotification('Request rejected successfully!', 'success');
+  //   } catch (error) {
+  //     showNotification(`Failed to reject request: ${error.message}`, 'error');
+  //     throw error;
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [approvalsHook, setLoading, showNotification, addAuditEntry]);
 
   const refreshAllData = useCallback(async () => {
     setLoading(true);
@@ -307,7 +307,7 @@ export const AppProvider = ({ children }) => {
     try {
       await Promise.all([
         employeesHook.refetchAll(),
-        approvalsHook.refetch()
+        // approvalsHook.refetch()
       ]);
       showNotification('Data refreshed successfully!', 'success');
     } catch (error) {
@@ -317,15 +317,15 @@ export const AppProvider = ({ children }) => {
       setLoading(false);
       setDashboardLoading(false);
     }
-  }, [employeesHook, approvalsHook, setLoading, setDashboardLoading, showNotification]);
+  }, [employeesHook, setLoading, setDashboardLoading, showNotification]);
 
   const selectedEmployee = state.employees.find(emp => emp.user_id === state.selectedEmployeeId);
   const selectedRequest = state.approvals.find(req => req.id === state.selectedRequestId);
   const selectedException = state.exceptionRequests.find(ex => ex.id === state.selectedExceptionId);
   const selectedReimbursement = state.reimbursements.find(r => r.id === state.selectedReimbursementId);
-  
+
   const exceptionCount = state.exceptionRequests.filter(e => e.status === 'pending').length;
-  const reimbursementPendingCount = state.reimbursements.filter(r => 
+  const reimbursementPendingCount = state.reimbursements.filter(r =>
     r.status === 'submitted' || r.status === 'pending'
   ).length;
 
@@ -336,15 +336,15 @@ export const AppProvider = ({ children }) => {
 
   // Optimized sync effects
   useEffect(() => {
-    if (employeesHook.employees && employeesHook.employees.length > 0 && 
-        JSON.stringify(state.employees) !== JSON.stringify(employeesHook.employees)) {
+    if (employeesHook.employees && employeesHook.employees.length > 0 &&
+      JSON.stringify(state.employees) !== JSON.stringify(employeesHook.employees)) {
       updateEmployees(employeesHook.employees);
     }
   }, [employeesHook.employees, state.employees, updateEmployees]);
 
   useEffect(() => {
     if (employeesHook.allEmployees && employeesHook.allEmployees.length > 0 &&
-        JSON.stringify(state.allEmployees) !== JSON.stringify(employeesHook.allEmployees)) {
+      JSON.stringify(state.allEmployees) !== JSON.stringify(employeesHook.allEmployees)) {
       updateAllEmployees(employeesHook.allEmployees);
     }
   }, [employeesHook.allEmployees, state.allEmployees, updateAllEmployees]);
@@ -355,12 +355,12 @@ export const AppProvider = ({ children }) => {
     }
   }, [employeesHook.totalEmployees, state.totalEmployees, updateTotalEmployees]);
 
-  useEffect(() => {
-    if (approvalsHook.approvals && approvalsHook.approvals.length > 0 &&
-        JSON.stringify(state.approvals) !== JSON.stringify(approvalsHook.approvals)) {
-      updateApprovals(approvalsHook.approvals);
-    }
-  }, [approvalsHook.approvals, state.approvals, updateApprovals]);
+  // useEffect(() => {
+  //   if (approvalsHook.approvals && approvalsHook.approvals.length > 0 &&
+  //       JSON.stringify(state.approvals) !== JSON.stringify(approvalsHook.approvals)) {
+  //     updateApprovals(approvalsHook.approvals);
+  //   }
+  // }, [approvalsHook.approvals, state.approvals, updateApprovals]);
 
   useEffect(() => {
     if (employeesHook.loading !== state.loading) {
@@ -378,10 +378,10 @@ export const AppProvider = ({ children }) => {
     if (employeesHook.error && employeesHook.error !== state.error) {
       setError(employeesHook.error);
     }
-    if (approvalsHook.error && approvalsHook.error !== state.error) {
-      setError(approvalsHook.error);
-    }
-  }, [employeesHook.error, approvalsHook.error, state.error, setError]);
+    // if (approvalsHook.error && approvalsHook.error !== state.error) {
+    //   setError(approvalsHook.error);
+    // }
+  }, [employeesHook.error, state.error, setError]);
 
   const value = {
     ...state,
@@ -392,10 +392,10 @@ export const AppProvider = ({ children }) => {
     exceptionCount,
     reimbursementPendingCount,
     activeEmployeesCount,
-    
+
     employeesData: employeesHook,
-    approvalsData: approvalsHook,
-    
+    // approvalsData: approvalsHook,
+
     setLoading,
     setDashboardLoading,
     setError,
@@ -416,12 +416,12 @@ export const AppProvider = ({ children }) => {
     showNotification,
     clearNotification,
     refreshAllData,
-    
+
     createEmployee,
     updateEmployee,
     deactivateEmployee,
-    approveRequest,
-    rejectRequest,
+    // approveRequest,
+    // rejectRequest,
   };
 
   return (

@@ -1,12 +1,11 @@
-
-.container
-{
+.container {
   padding: 30px;
 }
-.container h2
-{
+
+.container h2 {
   margin-bottom: 20px;
 }
+
 .card {
   background: white;
   border-radius: 12px;
@@ -43,7 +42,7 @@
 }
 
 .searchBox input {
-   padding: 12px 24px;
+  padding: 12px 24px;
   border: 1px solid #ddd;
   border-radius: 10px;
   font-size: 14px;
@@ -51,7 +50,10 @@
 }
 
 /* Button Styles */
-.primaryBtn, .secondaryBtn, .successBtn, .dangerBtn {
+.primaryBtn,
+.secondaryBtn,
+.successBtn,
+.dangerBtn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -66,7 +68,7 @@
 }
 
 .primaryBtn {
- background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
 
 }
 
@@ -168,24 +170,25 @@
 }
 
 /* Table Styles */
-.tableContainer {
+.containersla .tableContainer {
   overflow-x: auto;
 }
 
-.dataTable {
+.containersla .dataTable {
   width: 100%;
   border-collapse: collapse;
   border-radius: 8px;
   overflow: hidden;
 }
 
-.dataTable th, .dataTable td {
+.containersla .dataTable th,
+.dataTable td {
   padding: 15px;
   text-align: left;
   border-bottom: 1px solid #e9ecef;
 }
 
-.dataTable th {
+.containersla .dataTable th {
   background: #f8f9fa;
   font-weight: 600;
   color: #2c3e50;
@@ -193,11 +196,11 @@
   top: 0;
 }
 
-.dataTable tr {
+.containersla .dataTable tr {
   transition: all 0.2s;
 }
 
-.dataTable tr:hover {
+.containersla .dataTable tr:hover {
   background: #f8f9fa;
   transform: scale(1.0);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -263,7 +266,8 @@
 }
 
 /* Condition and action cells */
-.conditionCell, .actionCell {
+.conditionCell,
+.actionCell {
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -299,8 +303,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .noData {
@@ -378,26 +387,26 @@
   .statsContainer {
     flex-direction: column;
   }
-  
+
   .cardHeader,
   .cardHeaderFlex {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .headerActions {
     width: 100%;
   }
-  
+
   .searchBox {
     width: 100%;
   }
-  
+
   .searchBox input {
     width: 100%;
   }
-  
+
   .quickActionGrid {
     grid-template-columns: 1fr;
   }
@@ -407,12 +416,12 @@
   .statsContainer {
     grid-template-columns: 1fr;
   }
-  
+
   .actionButtons {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .iconBtn {
     justify-content: center;
     margin: 3px 0;
@@ -557,7 +566,7 @@
 
 /* Button Styles for Modal */
 .primaryBtn {
- background-color: linear-gradient(135deg, #1a4f8c 0%, #153d6c 100%);
+  background-color: linear-gradient(135deg, #1a4f8c 0%, #153d6c 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -609,14 +618,24 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Modal Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -624,6 +643,7 @@
     opacity: 0;
     transform: translateY(30px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -636,24 +656,24 @@
     width: 95%;
     margin: 20px;
   }
-  
+
   .modalHeader {
     padding: 16px 20px;
   }
-  
+
   .modalHeader h3 {
     font-size: 1.3rem;
   }
-  
+
   .modalBody {
     padding: 20px;
   }
-  
+
   .modalFooter {
     padding: 16px 20px;
     flex-direction: column-reverse;
   }
-  
+
   .primaryBtn,
   .secondaryBtn {
     width: 100%;
@@ -697,7 +717,9 @@
 .formGroup select:invalid:focus,
 .formGroup textarea:invalid:focus {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}/* File Upload Styles */
+}
+
+/* File Upload Styles */
 .fileUploadArea {
   border: 2px dashed #d1d5db;
   border-radius: 8px;
@@ -833,11 +855,11 @@
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .fileInfo {
     width: 100%;
   }
-  
+
   .removeFileBtn {
     align-self: flex-end;
   }
@@ -1042,8 +1064,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Pagination */
@@ -1086,7 +1113,7 @@
     flex-wrap: wrap;
     gap: 16px;
   }
-  
+
   .summaryItem {
     flex: 1;
     min-width: 120px;
@@ -1098,23 +1125,275 @@
     flex-wrap: wrap;
     gap: 12px;
   }
-  
+
   .searchBox {
     order: -1;
     width: 100%;
   }
-  
+
   .bulkActions {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .actionButtons {
     flex-wrap: wrap;
   }
 }
-.slaInfo
-{
+
+.slaInfo {
   margin-top: 5%;
+}
+
+.workflowInfo {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #007bff;
+}
+
+.workflowInfo p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.stepCell {
+  font-weight: 600;
+  color: #495057;
+}
+
+.stepName {
+  font-size: 12px;
+  /* background: #e9ecef; */
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.numberInput {
+  width: 60px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.roleCell {
+  font-weight: 500;
+}
+
+.roleBadge {
+  background: linear-gradient(135deg, #1a4f8c 0%, #2c3e50 100%);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sequenceCell {
+  text-align: center;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.statusBadge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.statusActive {
+  background: #d4edda;
+  color: #155724;
+}
+
+.statusInactive {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.workflowSelect {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-left: 15px;
+  background: white;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.tabButtons {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.tabButton {
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tabButtonActive {
+  background: linear-gradient(135deg, #1a4f8c 0%, #2c3e50 100%);
+  color: white;
+}
+
+.bulkUpdateSection {
+  background: #f8f9fa;
+  padding: 30px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.bulkForm {
+  max-width: 500px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.primaryBtnSmall,
+.secondaryBtnSmall {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.primaryBtnSmall {
+  background: #28a745;
+  color: white;
+}
+
+.primaryBtnSmall:hover {
+  background: #218838;
+}
+
+.secondaryBtnSmall {
+  background: #6c757d;
+  color: white;
+}
+
+.secondaryBtnSmall:hover {
+  background: #5a6268;
+}
+
+.statusToggle {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sequenceSelect {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+}
+
+.bulkInfo {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e7f3ff;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+}
+
+.bulkInfo p {
+  margin: 0;
+  font-size: 14px;
+  color: #495057;
+}
+
+.unsavedBadge {
+  background: #ffc107;
+  color: #856404;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.unsavedInput {
+  border: 2px solid #ffc107 !important;
+  background-color: #fffbf0 !important;
+}
+
+.unsavedCheckbox {
+  accent-color: #ffc107;
+}
+
+.saveHighlight {
+  background: #28a745 !important;
+  border-color: #28a745 !important;
+}
+
+.unsavedNote {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #856404;
+}
+
+.unsavedNote i {
+  color: #ffc107;
+}
+
+
+.containersla {
+  margin: 15px;
+  margin-top: 50px;
+}
+
+.containersla .cardHeader {
+  /* border: 1px solid #000; */
+  margin-bottom: 30px;
+  padding: 10px;
+}
+
+.containersla .workflowInfo {
+  padding: 10px;
+  border-radius: 20px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+}
+
+.containersla .cardBody p {
+  margin-bottom: 10px;
+  margin-left: 20px;
 }

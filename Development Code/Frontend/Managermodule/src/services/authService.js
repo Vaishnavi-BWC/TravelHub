@@ -10,7 +10,7 @@ export const authService = {
   async logout() {
     try {
       console.log('🚪 Starting logout with cookie clearing...');
-      
+
       // Call logout API to clear server-side session AND cookies
       const response = await fetch(`${AUTH_API_BASE_URL}/logout`, {
         method: 'POST',
@@ -21,16 +21,16 @@ export const authService = {
       });
 
       console.log('📊 Logout API response:', response.status);
-      
+
       // Clear client-side storage regardless of API response
       this.clearAuthStorage();
-      
+
       // Clear cookies by setting expired cookies
       this.clearAllCookies();
-      
+
       console.log('✅ Logout completed with cookie clearing');
       return true;
-      
+
     } catch (error) {
       console.error('❌ Logout error:', error);
       // Still clear everything even if API fails
@@ -44,18 +44,18 @@ export const authService = {
   clearAllCookies() {
     try {
       console.log('🍪 Clearing all authentication cookies...');
-      
+
       const cookieNames = [
         'token', 'auth-token', 'refresh-token', 'session',
         'JSESSIONID', 'auth_session', 'user_session'
       ];
-      
+
       // Clear by setting expired dates
       cookieNames.forEach(cookieName => {
         document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.brainwaveconsulting.co.in;`;
         document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
       });
-      
+
       console.log('✅ Cookies cleared');
     } catch (error) {
       console.error('❌ Error clearing cookies:', error);
@@ -68,12 +68,12 @@ export const authService = {
       'auth_token', 'token', 'user_data', 'auth_transfer',
       'userData', 'refreshToken', 'userRole', 'userId'
     ];
-    
+
     authKeys.forEach(key => {
       localStorage.removeItem(key);
       sessionStorage.removeItem(key);
     });
-    
+
     console.log('🧹 Auth storage cleared');
   },
 

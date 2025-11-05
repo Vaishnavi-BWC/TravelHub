@@ -8,7 +8,7 @@ const WORKFLOW_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/
 const getCurrentUserInfo = async () => {
   try {
     console.log('🔍 Fetching current user info from auth API...');
-    
+
     const response = await fetch(`${AUTH_API_BASE_URL}/me`, {
       method: 'GET',
       headers: {
@@ -22,7 +22,7 @@ const getCurrentUserInfo = async () => {
     if (response.ok) {
       const userData = await response.json();
       console.log('✅ User data from auth API:', userData);
-      
+
       const extractNameFromEmail = (email) => {
         if (!email) return 'Manager';
         const namePart = email.split('@')[0];
@@ -46,7 +46,7 @@ const getCurrentUserInfo = async () => {
   } catch (error) {
     console.error('❌ Error fetching user info from auth API:', error);
   }
-  
+
   // Fallback values
   try {
     const userData = localStorage.getItem('user_data');
@@ -63,7 +63,7 @@ const getCurrentUserInfo = async () => {
   } catch (fallbackError) {
     console.error('Error getting fallback user info:', fallbackError);
   }
-  
+
   return {
     id: 'unknown-user-id',
     name: 'Manager',
@@ -77,7 +77,7 @@ const getCurrentUserInfo = async () => {
 const getWorkflowStatus = async (travelRequestId) => {
   try {
     console.log(`🔍 Fetching workflow status for travel request: ${travelRequestId}`);
-    
+
     const response = await fetch(`${WORKFLOW_API_BASE_URL}/travel-request/${travelRequestId}`, {
       method: 'GET',
       headers: {
@@ -99,7 +99,7 @@ const getWorkflowStatus = async (travelRequestId) => {
       } catch {
         // Ignore parsing errors
       }
-      
+
       // Don't throw error for 404 or other statuses, just return null
       console.warn(`⚠️ Workflow API returned ${response.status} for ${travelRequestId}`);
       return null;
@@ -107,16 +107,16 @@ const getWorkflowStatus = async (travelRequestId) => {
 
     const data = await response.json();
     console.log(`✅ Workflow status fetched for ${travelRequestId}:`, data);
-    
+
     return data;
-    
+
   } catch (error) {
     console.error(`❌ Error fetching workflow status for ${travelRequestId}:`, error);
-    
+
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
       console.warn('⚠️ Cannot connect to workflow service');
     }
-    
+
     // Return null instead of throwing to avoid breaking the UI
     return null;
   }
@@ -126,7 +126,7 @@ const getWorkflowStatus = async (travelRequestId) => {
 const getAllTravelRequests = async () => {
   try {
     console.log('🔍 Fetching all travel requests...');
-    
+
     const response = await fetch(`${TRAVEL_API_BASE_URL}/travel-requests`, {
       method: 'GET',
       headers: {
@@ -153,16 +153,16 @@ const getAllTravelRequests = async () => {
 
     const data = await response.json();
     console.log('✅ Travel requests fetched successfully:', data.length);
-    
+
     return Array.isArray(data) ? data : [];
-    
+
   } catch (error) {
     console.error('❌ Error fetching travel requests:', error);
-    
+
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
       throw new Error('Cannot connect to travel service. Please check if the service is running.');
     }
-    
+
     throw error;
   }
 };
@@ -171,11 +171,11 @@ const getAllTravelRequests = async () => {
 const getTravelRequestsFilteredByEmployee = async () => {
   try {
     console.log('🔍 Starting filtered travel requests fetch...');
-    
+
     // Step 1: Get current user info from /me API
     const userInfo = await getCurrentUserInfo();
     console.log('✅ Current user info obtained:', userInfo);
-    
+
     if (!userInfo.id || userInfo.id === 'unknown-user-id') {
       throw new Error('Unable to get valid user ID from authentication');
     }
@@ -195,7 +195,7 @@ const getTravelRequestsFilteredByEmployee = async () => {
 
     console.log(`✅ Filtered ${filteredRequests.length} requests for employee ID: ${userInfo.id}`);
     return filteredRequests;
-    
+
   } catch (error) {
     console.error('❌ Error fetching filtered travel requests:', error);
     throw error;
@@ -206,10 +206,10 @@ const getTravelRequestsFilteredByEmployee = async () => {
 const getManagerProfileData = async () => {
   try {
     console.log('🔍 Fetching manager profile data...');
-    
+
     const userInfo = await getCurrentUserInfo();
     console.log('✅ User info obtained:', userInfo);
-    
+
     const response = await fetch(`${EMPLOYEE_API_BASE_URL}/${userInfo.id}`, {
       method: 'GET',
       headers: {
@@ -223,10 +223,10 @@ const getManagerProfileData = async () => {
     if (response.ok) {
       const employeeData = await response.json();
       console.log('✅ Employee details fetched successfully:', employeeData);
-      
+
       if (employeeData.success && employeeData.data) {
         const data = employeeData.data;
-        
+
         return {
           id: data.employeeId,
           name: data.fullName,
@@ -260,10 +260,10 @@ const getManagerProfileData = async () => {
 const updateManagerProfileData = async (profileData) => {
   try {
     console.log('🔍 Updating manager profile data...');
-    
+
     const userInfo = await getCurrentUserInfo();
     console.log('✅ User info obtained for update:', userInfo);
-    
+
     const currentResponse = await fetch(`${EMPLOYEE_API_BASE_URL}/${userInfo.id}`, {
       method: 'GET',
       headers: {
@@ -325,7 +325,7 @@ export const managerService = {
   async getTeamRequests() {
     try {
       console.log('🔍 Making API call to:', `${MANAGER_API_BASE_URL}/approvals/pending`);
-      
+
       const response = await fetch(`${MANAGER_API_BASE_URL}/approvals/pending`, {
         method: 'GET',
         headers: {
@@ -335,15 +335,15 @@ export const managerService = {
       });
 
       console.log('📊 Manager API Response status:', response.status);
-      
+
       if (response.status === 403) {
         throw new Error('Access forbidden. Manager permissions required.');
       }
-      
+
       if (response.status === 401) {
         throw new Error('Authentication failed. Please login again.');
       }
-      
+
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         try {
@@ -360,7 +360,7 @@ export const managerService = {
 
       const data = await response.json();
       console.log('✅ Manager API Response:', data);
-      
+
       if (data.data) {
         return Array.isArray(data.data) ? data.data : [data.data];
       } else if (Array.isArray(data)) {
@@ -371,14 +371,14 @@ export const managerService = {
         console.warn('Unexpected response structure:', data);
         return [];
       }
-      
+
     } catch (error) {
       console.error('❌ Error fetching team requests:', error);
-      
+
       if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         throw new Error('Cannot connect to manager service. Please check if the service is running.');
       }
-      
+
       throw error;
     }
   },
@@ -423,11 +423,11 @@ export const managerService = {
    */
   async approveTeamRequest(requestId, remarks, workflowId, requestData) {
     try {
-      console.log('✅ Approving request:', { 
-        requestId, 
-        workflowId, 
-        remarks, 
-        requestData 
+      console.log('✅ Approving request:', {
+        requestId,
+        workflowId,
+        remarks,
+        requestData
       });
 
       const userInfo = await getCurrentUserInfo();
@@ -469,7 +469,7 @@ export const managerService = {
             try {
               const parsedError = JSON.parse(errorText);
               errorMessage = parsedError.message || parsedError.error || errorMessage;
-              
+
               if (parsedError.errors) {
                 console.error('🔍 Validation errors:', parsedError.errors);
                 errorMessage += ` - ${JSON.stringify(parsedError.errors)}`;
@@ -487,7 +487,7 @@ export const managerService = {
       const data = await response.json();
       console.log('✅ Request approved successfully:', data);
       return data.data || data;
-      
+
     } catch (error) {
       console.error('Error approving team request:', error);
       throw new Error(`Failed to approve team request: ${error.message}`);
@@ -499,11 +499,11 @@ export const managerService = {
    */
   async rejectTeamRequest(requestId, remarks, workflowId, requestData) {
     try {
-      console.log('❌ Rejecting request:', { 
-        requestId, 
-        workflowId, 
-        remarks, 
-        requestData 
+      console.log('❌ Rejecting request:', {
+        requestId,
+        workflowId,
+        remarks,
+        requestData
       });
 
       const userInfo = await getCurrentUserInfo();
@@ -558,7 +558,7 @@ export const managerService = {
       const data = await response.json();
       console.log('✅ Request rejected successfully:', data);
       return data.data || data;
-      
+
     } catch (error) {
       console.error('Error rejecting team request:', error);
       throw new Error(`Failed to reject team request: ${error.message}`);
@@ -584,7 +584,7 @@ export const managerService = {
 
       const data = await response.json();
       return data.data || data;
-      
+
     } catch (error) {
       console.error('Error fetching team members:', error);
       throw new Error(`Failed to fetch team members: ${error.message}`);
