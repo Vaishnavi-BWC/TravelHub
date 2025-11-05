@@ -3,8 +3,8 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEmployees } from '../../../hooks/useEmployees';
 import { useApp } from '../../../contexts/AppContext';
-import { 
-  FaSearch, FaSync, FaPlus, FaEye, FaEdit, 
+import {
+  FaSearch, FaSync, FaPlus, FaEye, FaEdit,
   FaToggleOn, FaToggleOff, FaSpinner,
   FaAngleLeft, FaAngleRight, FaAngleDoubleLeft, FaAngleDoubleRight
 } from 'react-icons/fa';
@@ -14,10 +14,10 @@ import '../styles/UserManagement.css';
 const UserManagement = () => {
   const navigate = useNavigate();
   const { showNotification } = useApp();
-  
-  const { 
-    employees, 
-    loading, 
+
+  const {
+    employees,
+    loading,
     error,
     deactivateEmployee,
     activateEmployee,
@@ -38,7 +38,7 @@ const UserManagement = () => {
   const handleStatusUpdate = useCallback(async (employeeId, currentStatus) => {
     try {
       setStatusUpdateLoading(employeeId);
-      
+
       setStatusAnimations(prev => ({
         ...prev,
         [employeeId]: 'updating'
@@ -52,7 +52,7 @@ const UserManagement = () => {
         result = await activateEmployee(employeeId);
         showNotification('Employee activated successfully!', 'success');
       }
-      
+
       setStatusAnimations(prev => ({
         ...prev,
         [employeeId]: 'success'
@@ -65,11 +65,11 @@ const UserManagement = () => {
           return newState;
         });
       }, 1500);
-      
+
     } catch (error) {
       console.error('❌ Error updating employee status:', error);
       showNotification('Failed to update employee status: ' + error.message, 'error');
-      
+
       setStatusAnimations(prev => ({
         ...prev,
         [employeeId]: 'error'
@@ -89,16 +89,16 @@ const UserManagement = () => {
 
   const filteredEmployees = useMemo(() => {
     let filtered = employees;
-    
+
     if (employeeFilter !== "All") {
       filtered = filtered.filter(e => {
         const status = e.status?.toLowerCase();
         return status === employeeFilter.toLowerCase();
       });
     }
-    
+
     if (searchTerm) {
-      filtered = filtered.filter(e => 
+      filtered = filtered.filter(e =>
         e.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -106,7 +106,7 @@ const UserManagement = () => {
         e.employee_code?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     return filtered;
   }, [employees, employeeFilter, searchTerm]);
 
@@ -193,7 +193,7 @@ const UserManagement = () => {
         <FaPlus className={styles.btnIcon} />
         Add Employee
       </button>
-      
+
       <div className={`${styles.card} maincard`}>
         <div className="cardheaderuser">
           <div className="filterButtons">
@@ -207,20 +207,20 @@ const UserManagement = () => {
               </button>
             ))}
           </div>
-          
+
           <div className="headerActions">
             <div className={styles.searchBox}>
               <FaSearch className={styles.searchIcon} />
-              <input 
-                type="text" 
-                placeholder="Search employees..." 
+              <input
+                type="text"
+                placeholder="Search employees..."
                 className="searchInput"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
-            <button 
+
+            <button
               onClick={handleRefresh}
               className={`${styles.secondaryBtn} btnSecondary smooth-transition`}
               disabled={loading}
@@ -262,10 +262,10 @@ const UserManagement = () => {
                       const currentStatus = emp.status;
                       const isUpdating = statusUpdateLoading === emp.user_id;
                       const animationClass = getStatusAnimationClass(emp.user_id);
-                      
+
                       return (
-                        <tr 
-                          key={emp.user_id} 
+                        <tr
+                          key={emp.user_id}
                           className={`table-row smooth-fade-in row-animation-${index % 5}`}
                           style={{ animationDelay: `${(index % 10) * 0.05}s` }}
                         >
@@ -300,9 +300,9 @@ const UserManagement = () => {
                                 {isUpdating ? (
                                   <FaSpinner className="fas fa-spinner fa-spin pulse-animation" />
                                 ) : currentStatus === 'active' ? (
-                                  <FaToggleOn className="toggle-icon" style={{color: '#28a745', fontSize: '16px'}} />
+                                  <FaToggleOn className="toggle-icon" style={{ color: '#28a745', fontSize: '16px' }} />
                                 ) : (
-                                  <FaToggleOff className="toggle-icon" style={{color: '#6c757d', fontSize: '16px'}} />
+                                  <FaToggleOff className="toggle-icon" style={{ color: '#6c757d', fontSize: '16px' }} />
                                 )}
                               </button>
                             </div>
@@ -333,13 +333,13 @@ const UserManagement = () => {
                   </tbody>
                 </table>
               </div>
-              
+
               {filteredEmployees.length === 0 && !isTransitioning && (
                 <div className="noData smooth-fade-in">
                   <i className="fas fa-users"></i>
                   <p>No employees found</p>
                   {searchTerm && (
-                    <button 
+                    <button
                       onClick={() => setSearchTerm("")}
                       className="btn btnSecondary smooth-transition"
                     >
@@ -359,8 +359,8 @@ const UserManagement = () => {
               <span>
                 Showing {filteredEmployees.length} of {pagination.totalElements} employees
                 {pagination.pageSize && (
-                  <select 
-                    value={pagination.pageSize} 
+                  <select
+                    value={pagination.pageSize}
                     onChange={(e) => handleItemsPerPageChange(e.target.value)}
                     className="pageSizeSelect"
                     disabled={loading || isTransitioning}
@@ -373,7 +373,7 @@ const UserManagement = () => {
                 )}
               </span>
             </div>
-            
+
             <div className="paginationButtons">
               <button
                 onClick={() => handlePageChange(1)}
@@ -389,7 +389,7 @@ const UserManagement = () => {
               >
                 <FaAngleLeft />
               </button>
-              
+
               {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                 let pageNum;
                 if (pagination.totalPages <= 5) {
@@ -401,7 +401,7 @@ const UserManagement = () => {
                 } else {
                   pageNum = pagination.currentPage - 2 + i;
                 }
-                
+
                 return (
                   <button
                     key={pageNum}
@@ -413,7 +413,7 @@ const UserManagement = () => {
                   </button>
                 );
               })}
-              
+
               <button
                 onClick={handleNextPage}
                 disabled={pagination.currentPage >= pagination.totalPages - 1 || loading || isTransitioning}

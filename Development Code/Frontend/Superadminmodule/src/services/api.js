@@ -15,15 +15,15 @@ const getAuthHeaders = () => {
 };
 
 export const api = {
-  get: (endpoint) => 
+  get: (endpoint) =>
     fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeaders()
       }
     }).then(handleResponse),
-  
-  post: (endpoint, data) => 
+
+  post: (endpoint, data) =>
     fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
@@ -32,8 +32,8 @@ export const api = {
       },
       body: JSON.stringify(data)
     }).then(handleResponse),
-  
-  put: (endpoint, data) => 
+
+  put: (endpoint, data) =>
     fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'PUT',
       headers: {
@@ -42,8 +42,8 @@ export const api = {
       },
       body: JSON.stringify(data)
     }).then(handleResponse),
-  
-  delete: (endpoint) => 
+
+  delete: (endpoint) =>
     fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
       headers: {
