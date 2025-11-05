@@ -1,7 +1,7 @@
 // contexts/AppContext.js
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { useEmployees } from '../hooks/useEmployees';
-import { useApprovals } from '../hooks/useApprovals';
+// import { useApprovals } from '../hooks/useApprovals';
 
 const AppContext = createContext();
 
@@ -106,7 +106,7 @@ export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
   
   const employeesHook = useEmployees();
-  const approvalsHook = useApprovals();
+  // const approvalsHook = useApprovals();
 
   const setLoading = useCallback((loading) => {
     dispatch({ type: ACTION_TYPES.SET_LOADING, payload: loading });
@@ -265,41 +265,41 @@ export const AppProvider = ({ children }) => {
     }
   }, [employeesHook, setLoading, showNotification, addAuditEntry]);
 
-  const approveRequest = useCallback(async (requestId, remarks, approvedBy) => {
-    setLoading(true);
-    try {
-      await approvalsHook.approveRequest(requestId, remarks, approvedBy);
-      addAuditEntry({
-        action: "Request Approved",
-        user: "HR Manager",
-        remark: `${requestId} - ${remarks}`
-      });
-      showNotification('Request approved successfully!', 'success');
-    } catch (error) {
-      showNotification(`Failed to approve request: ${error.message}`, 'error');
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [approvalsHook, setLoading, showNotification, addAuditEntry]);
+  // const approveRequest = useCallback(async (requestId, remarks, approvedBy) => {
+  //   setLoading(true);
+  //   try {
+  //     await approvalsHook.approveRequest(requestId, remarks, approvedBy);
+  //     addAuditEntry({
+  //       action: "Request Approved",
+  //       user: "HR Manager",
+  //       remark: `${requestId} - ${remarks}`
+  //     });
+  //     showNotification('Request approved successfully!', 'success');
+  //   } catch (error) {
+  //     showNotification(`Failed to approve request: ${error.message}`, 'error');
+  //     throw error;
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [approvalsHook, setLoading, showNotification, addAuditEntry]);
 
-  const rejectRequest = useCallback(async (requestId, remarks, approvedBy) => {
-    setLoading(true);
-    try {
-      await approvalsHook.rejectRequest(requestId, remarks, approvedBy);
-      addAuditEntry({
-        action: "Request Rejected",
-        user: "HR Manager",
-        remark: `${requestId} - ${remarks}`
-      });
-      showNotification('Request rejected successfully!', 'success');
-    } catch (error) {
-      showNotification(`Failed to reject request: ${error.message}`, 'error');
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [approvalsHook, setLoading, showNotification, addAuditEntry]);
+  // const rejectRequest = useCallback(async (requestId, remarks, approvedBy) => {
+  //   setLoading(true);
+  //   try {
+  //     await approvalsHook.rejectRequest(requestId, remarks, approvedBy);
+  //     addAuditEntry({
+  //       action: "Request Rejected",
+  //       user: "HR Manager",
+  //       remark: `${requestId} - ${remarks}`
+  //     });
+  //     showNotification('Request rejected successfully!', 'success');
+  //   } catch (error) {
+  //     showNotification(`Failed to reject request: ${error.message}`, 'error');
+  //     throw error;
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [approvalsHook, setLoading, showNotification, addAuditEntry]);
 
   const refreshAllData = useCallback(async () => {
     setLoading(true);
@@ -307,7 +307,7 @@ export const AppProvider = ({ children }) => {
     try {
       await Promise.all([
         employeesHook.refetchAll(),
-        approvalsHook.refetch()
+        // approvalsHook.refetch()
       ]);
       showNotification('Data refreshed successfully!', 'success');
     } catch (error) {
@@ -317,7 +317,7 @@ export const AppProvider = ({ children }) => {
       setLoading(false);
       setDashboardLoading(false);
     }
-  }, [employeesHook, approvalsHook, setLoading, setDashboardLoading, showNotification]);
+  }, [employeesHook, setLoading, setDashboardLoading, showNotification]);
 
   const selectedEmployee = state.employees.find(emp => emp.user_id === state.selectedEmployeeId);
   const selectedRequest = state.approvals.find(req => req.id === state.selectedRequestId);
@@ -355,12 +355,12 @@ export const AppProvider = ({ children }) => {
     }
   }, [employeesHook.totalEmployees, state.totalEmployees, updateTotalEmployees]);
 
-  useEffect(() => {
-    if (approvalsHook.approvals && approvalsHook.approvals.length > 0 &&
-        JSON.stringify(state.approvals) !== JSON.stringify(approvalsHook.approvals)) {
-      updateApprovals(approvalsHook.approvals);
-    }
-  }, [approvalsHook.approvals, state.approvals, updateApprovals]);
+  // useEffect(() => {
+  //   if (approvalsHook.approvals && approvalsHook.approvals.length > 0 &&
+  //       JSON.stringify(state.approvals) !== JSON.stringify(approvalsHook.approvals)) {
+  //     updateApprovals(approvalsHook.approvals);
+  //   }
+  // }, [approvalsHook.approvals, state.approvals, updateApprovals]);
 
   useEffect(() => {
     if (employeesHook.loading !== state.loading) {
@@ -378,10 +378,10 @@ export const AppProvider = ({ children }) => {
     if (employeesHook.error && employeesHook.error !== state.error) {
       setError(employeesHook.error);
     }
-    if (approvalsHook.error && approvalsHook.error !== state.error) {
-      setError(approvalsHook.error);
-    }
-  }, [employeesHook.error, approvalsHook.error, state.error, setError]);
+    // if (approvalsHook.error && approvalsHook.error !== state.error) {
+    //   setError(approvalsHook.error);
+    // }
+  }, [employeesHook.error, state.error, setError]);
 
   const value = {
     ...state,
@@ -394,7 +394,7 @@ export const AppProvider = ({ children }) => {
     activeEmployeesCount,
     
     employeesData: employeesHook,
-    approvalsData: approvalsHook,
+    // approvalsData: approvalsHook,
     
     setLoading,
     setDashboardLoading,
@@ -420,8 +420,8 @@ export const AppProvider = ({ children }) => {
     createEmployee,
     updateEmployee,
     deactivateEmployee,
-    approveRequest,
-    rejectRequest,
+    // approveRequest,
+    // rejectRequest,
   };
 
   return (

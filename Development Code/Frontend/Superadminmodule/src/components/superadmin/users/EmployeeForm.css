@@ -71,7 +71,6 @@
   box-shadow: var(--shadow-lg);
   /* border: 1px solid var(--gray-200); */
   height: 100vh;
-  /* border: 1px solid #000; */
 }
 
 /* ===== Form Header ===== */
@@ -173,7 +172,7 @@
 }
 
 /* Full width form groups */
-.formGroupFull {
+.formGroup.fullWidth {
   flex: 1 1 100%;
 }
 
@@ -192,7 +191,8 @@
 /* ===== Form Controls ===== */
 .formControl {
   width: 100%;
-  padding: var(--space-md) var(--space-lg);
+  /* padding: var(--space-md) var(--space-lg); */
+  padding-left: 10px;
   border: 2px solid var(--gray-300);
   border-radius: var(--radius-md);
   font-size: 1rem;
@@ -490,8 +490,6 @@ select.formControl {
   }
 }
 
-
-
 /* Dropdown styles */
 .formControl[multiple] {
   min-height: 80px;
@@ -595,13 +593,6 @@ select.formControl {
   border-bottom: 1px solid #f8f9fa;
   transition: background-color 0.2s ease;
 }
-.dropdownItem:hover
-{
-  
-}
-.dropdownItem:last-child {
-  border-bottom: none;
-}
 
 .dropdownItem:hover {
   background-color: #f8f9fa;
@@ -681,4 +672,165 @@ select.formControl {
 
 .dropdownTrigger[disabled]:hover {
   border-color: #ddd;
+}
+
+/* Additional styles for dropdowns */
+.dropdownLoading {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.selectedRolesBadge {
+  margin-top: 0.5rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: #e9ecef;
+  color: #495057;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Ensure dropdown menus have proper z-index */
+.dropdownMenu {
+  z-index: 1000;
+}
+
+/* Style for select dropdown */
+.formControl select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+/* ===== Manager Projects Specific Styles ===== */
+.managerProjectsLabel {
+  font-weight: normal;
+  color: var(--gray-600);
+  font-size: 0.875rem;
+  margin-left: 0.5rem;
+}
+
+.helperText {
+  font-size: 0.75rem;
+  color: var(--gray-600);
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+/* ===== Dropdown Height Consistency ===== */
+.dropdownTrigger {
+  min-height: 44px;
+  align-items: center;
+}
+
+/* ===== Dropdown Item Height Consistency ===== */
+.dropdownItem {
+  padding: 8px 12px;
+  min-height: 44px;
+  align-items: center;
+}
+
+.roleCheckbox {
+  margin-top: 0;
+}
+
+/* ===== Form Row Consistency ===== */
+.formRow .formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure all form groups in a row have equal height */
+.formRow {
+  align-items: flex-start;
+}
+
+/* ===== Specific styling for roles and projects row ===== */
+/* This ensures roles and projects appear in the same row */
+.formRow:has(.formGroup:first-child:has(.dropdownContainer)) {
+  display: flex;
+  gap: var(--space-xl);
+  width: 100%;
+}
+
+/* Make sure dropdown containers take full width of their form group */
+.formGroup .dropdownContainer {
+  width: 100%;
+}
+
+/* ===== Debug border for layout testing (remove in production) ===== */
+/* .formGroup {
+  border: 1px dashed #ccc;
+  padding: 8px;
+  border-radius: 4px;
+} */
+
+/* ===== Ensure consistent spacing for all form rows ===== */
+.formGrid .formRow {
+  margin-bottom: 0;
+}
+
+/* ===== Mobile responsiveness for dropdown rows ===== */
+@media (max-width: 768px) {
+  .formRow:has(.formGroup:first-child:has(.dropdownContainer)) {
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+  
+  /* Ensure dropdown menus are visible on mobile */
+  .dropdownMenu {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 50vh;
+    border-radius: 10px 10px 0 0;
+    margin-top: 0;
+  }
+  
+  .dropdownTrigger {
+    min-height: 48px;
+  }
+}
+
+/* ===== Enhanced dropdown styling ===== */
+.dropdownMenu {
+  background: var(--white);
+  border: 1px solid var(--gray-300);
+  box-shadow: var(--shadow-xl);
+}
+
+.dropdownItem:hover {
+  background-color: var(--gray-100);
+}
+
+.dropdownItem.selected {
+  background-color: var(--primary-blue-light);
+  color: var(--white);
+}
+
+.dropdownItem.selected .roleName,
+.dropdownItem.selected .roleDescription {
+  color: var(--white);
+}
+
+.dropdownItem.selected .roleCheckbox i {
+  color: var(--white);
+}
+
+/* ===== Improved badge styling ===== */
+.badge {
+  background: var(--primary-blue);
+  color: var(--white);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
 }

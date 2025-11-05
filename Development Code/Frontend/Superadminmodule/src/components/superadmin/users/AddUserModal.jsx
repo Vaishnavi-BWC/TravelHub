@@ -22,6 +22,12 @@ const AddEmployee = () => {
 
   return (
     <div className="content">
+      {/* <div className="detailHeader">
+        <h2>Add New Employee</h2>
+        <button onClick={handleCancel} className="btn btnSecondary">
+          <span className="btnIconSvg">←</span> Back to Employees
+        </button>
+      </div> */}
 
       <EmployeeForm
         mode="create"
