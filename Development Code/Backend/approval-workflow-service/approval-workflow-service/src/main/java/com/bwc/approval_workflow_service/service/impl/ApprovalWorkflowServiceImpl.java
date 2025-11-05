@@ -1815,7 +1815,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         
         // For POST_TRAVEL workflow, go to Finance approval after Travel Desk review
         WorkflowConfiguration nextStep = configs.stream()
-                .filter(c -> "FINANCE_APPROVAL".equals(c.getStepName()))
+                .filter(c -> "FINANCE_REIMBURSEMENT".equals(c.getStepName()))
                 .findFirst()
                 .orElseThrow(() -> new WorkflowException("Finance approval step not found"));
         
