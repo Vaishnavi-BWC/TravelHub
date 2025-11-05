@@ -30,4 +30,28 @@ public interface ApprovalActionRepository extends JpaRepository<ApprovalAction, 
         @Param("approverId") UUID approverId,
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate);
+    
+    
+    // Travel desk specific queries
+    List<ApprovalAction> findByApproverRoleAndApproverIdOrderByActionTakenAtDesc(String approverRole, UUID approverId);
+    
+    List<ApprovalAction> findByApproverRoleAndActionTakenAtBetweenOrderByActionTakenAtDesc(
+        String approverRole, LocalDateTime startDate, LocalDateTime endDate);
+    
+    List<ApprovalAction> findByApproverRoleAndTravelRequestIdOrderByActionTakenAtDesc(
+        String approverRole, UUID travelRequestId);
+    
+    @Query("SELECT a FROM ApprovalAction a WHERE a.approverRole = 'TRAVEL_DESK' AND a.approverId = :travelDeskId AND a.actionTakenAt BETWEEN :startDate AND :endDate ORDER BY a.actionTakenAt DESC")
+    List<ApprovalAction> findTravelDeskActionsByUserAndDateRange(
+            @Param("travelDeskId") UUID travelDeskId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT a FROM ApprovalAction a WHERE a.approverRole = 'TRAVEL_DESK' AND a.actionTakenAt BETWEEN :startDate AND :endDate ORDER BY a.actionTakenAt DESC")
+    List<ApprovalAction> findTravelDeskActionsByDateRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+    
+    
+    
 }

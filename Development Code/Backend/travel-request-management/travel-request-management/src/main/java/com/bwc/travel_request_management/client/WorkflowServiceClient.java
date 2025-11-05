@@ -3,8 +3,11 @@ package com.bwc.travel_request_management.client;
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.bwc.travel_request_management.client.dto.CreateWorkflowRequest;
@@ -30,4 +33,12 @@ public interface WorkflowServiceClient {
     // ✅ NEW: Notify workflow service about booking upload
     @PostMapping("/api/workflows/{workflowId}/upload-booking")
     void markBookingUploaded(@RequestParam UUID uploadedBy);
+    
+    
+
+    @PostMapping("/api/workflows/{workflowId}/progress-to-travel-desk")
+    ResponseEntity<Void> progressToTravelDeskReview(
+            @PathVariable UUID workflowId,
+            @RequestHeader("X-User-Id") UUID employeeId,
+            @RequestParam String action);
 }

@@ -37,4 +37,18 @@ public class ApprovalWorkflowDTO {
     
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime completedAt;
+    
+    private TravelRequestProxyDTO travelRequestDetails;
+    private EmployeeProxyDTO employeeDetails;
+    
+    // Getters and setters
+    public TravelRequestProxyDTO getTravelRequestDetails() { return travelRequestDetails; }
+    public void setTravelRequestDetails(TravelRequestProxyDTO travelRequestDetails) { 
+        this.travelRequestDetails = travelRequestDetails; 
+    }
+    
+    public EmployeeProxyDTO getEmployeeDetails() { return employeeDetails; }
+    public void setEmployeeDetails(EmployeeProxyDTO employeeDetails) { 
+        this.employeeDetails = employeeDetails; 
+    }
 }

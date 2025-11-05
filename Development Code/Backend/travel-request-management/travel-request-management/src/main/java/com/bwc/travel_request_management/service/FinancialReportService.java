@@ -1,24 +1,34 @@
 // FinancialReportService.java
 package com.bwc.travel_request_management.service;
 
-import com.bwc.travel_request_management.dto.*;
-import com.bwc.travel_request_management.entity.TravelRequest;
-import com.bwc.travel_request_management.entity.TravelExpense;
-import com.bwc.travel_request_management.entity.TravelBooking;
-import com.bwc.travel_request_management.repository.TravelRequestRepository;
-import com.bwc.travel_request_management.repository.TravelExpenseRepository;
-import com.bwc.travel_request_management.repository.TravelBookingRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bwc.travel_request_management.dto.BudgetVsActualItemDTO;
+import com.bwc.travel_request_management.dto.BudgetVsActualReportDTO;
+import com.bwc.travel_request_management.dto.CashFlowMonthlySummary;
+import com.bwc.travel_request_management.dto.CashFlowReportDTO;
+import com.bwc.travel_request_management.dto.CostAnalysisReportDTO;
+import com.bwc.travel_request_management.dto.DepartmentExpenseReportDTO;
+import com.bwc.travel_request_management.dto.DepartmentExpenseSummary;
+import com.bwc.travel_request_management.dto.ExpenseSummaryReportDTO;
+import com.bwc.travel_request_management.dto.TaxComplianceReportDTO;
+import com.bwc.travel_request_management.entity.TravelRequest;
+import com.bwc.travel_request_management.repository.TravelBookingRepository;
+import com.bwc.travel_request_management.repository.TravelExpenseRepository;
+import com.bwc.travel_request_management.repository.TravelRequestRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service

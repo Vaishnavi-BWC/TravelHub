@@ -16,7 +16,8 @@ import com.bwc.approval_workflow_service.dto.TravelBookingDTO;
 import com.bwc.approval_workflow_service.dto.TravelRequestProxyDTO;
 
 @FeignClient(
-    name = "travel-request-service", 
+    name = "travel-request-service",
+    contextId = "travelRequestClient",  // ✅ Unique context ID added
     url = "${services.travel-request.url:http://localhost:8090/travel-management}",
     configuration = FeignMultipartConfig.class
 )
@@ -49,7 +50,7 @@ public interface TravelRequestServiceClient {
     // ==========================================================
 
     @PostMapping(
-        value = "/api/bookings/{bookingId}/documents/upload", 
+        value = "/api/bookings/{bookingId}/documents/upload",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     ResponseEntity<BookingDocumentDTO> uploadBookingDocument(

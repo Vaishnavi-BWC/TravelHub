@@ -53,4 +53,16 @@ public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkfl
                      obj -> (Long) obj[1]
                  ));
      }
+     
+     
+     // ✅ Add this method to find workflows by current step and status
+     List<ApprovalWorkflow> findByCurrentStepAndStatus(String currentStep, String status);
+     
+     // ✅ Add this method to find Travel Desk pending bill reviews
+     @Query("SELECT w FROM ApprovalWorkflow w WHERE w.currentStep = 'TRAVEL_DESK_BILL_REVIEW' AND w.status = 'PENDING_BILL_REVIEW' AND w.currentApproverRole = 'TRAVEL_DESK'")
+     List<ApprovalWorkflow> findPendingBillReviewsForTravelDesk();
+     
+     // ✅ Add this method to find specific Travel Desk user's pending bill reviews
+     @Query("SELECT w FROM ApprovalWorkflow w WHERE w.currentStep = 'TRAVEL_DESK_BILL_REVIEW' AND w.status = 'PENDING_BILL_REVIEW' AND w.currentApproverId = :travelDeskId")
+     List<ApprovalWorkflow> findPendingBillReviewsByTravelDeskId(@Param("travelDeskId") UUID travelDeskId);
 }

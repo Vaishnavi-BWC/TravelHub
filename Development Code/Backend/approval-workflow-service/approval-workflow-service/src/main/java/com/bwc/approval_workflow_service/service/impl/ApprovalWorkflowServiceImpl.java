@@ -29,6 +29,8 @@ import com.bwc.approval_workflow_service.dto.BookingSummaryDTO;
 import com.bwc.approval_workflow_service.dto.EmployeeProxyDTO;
 import com.bwc.approval_workflow_service.dto.NotificationRequestDTO;
 import com.bwc.approval_workflow_service.dto.TravelBookingDTO;
+import com.bwc.approval_workflow_service.dto.TravelDeskHistoryDTO;
+import com.bwc.approval_workflow_service.dto.TravelDeskStatsDTO;
 import com.bwc.approval_workflow_service.dto.TravelRequestProxyDTO;
 import com.bwc.approval_workflow_service.dto.WorkflowBookingStatsDTO;
 import com.bwc.approval_workflow_service.dto.WorkflowMetricsDTO;
@@ -1562,6 +1564,315 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .build();
     }
 
-    // Remove the old getManagerApprovalHistory method and replace it with the generic one
+ // Add to your ApprovalWorkflowServiceImpl
+    @Override
+    @Transactional(readOnly = true)
+    public List<TravelDeskHistoryDTO> getTravelDeskHistory(UUID travelDeskId, LocalDateTime startDate, LocalDateTime endDate) {
+        // Set default date range if not provided
+        if (startDate == null) {
+            startDate = LocalDateTime.now().minusDays(30);
+        }
+        if (endDate == null) {
+            endDate = LocalDateTime.now();
+        }
+        
+        List<ApprovalAction> actions = actionRepository.findTravelDeskActionsByUserAndDateRange(
+                travelDeskId, startDate, endDate);
+        
+        log.info("Retrieved {} travel desk actions for user {} between {} and {}", 
+                actions.size(), travelDeskId, startDate, endDate);
+        
+        return actions.stream()
+                .map(this::mapToTravelDeskHistoryDTO)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TravelDeskHistoryDTO> getTravelDeskActionsByRequest(UUID travelRequestId) {
+        List<ApprovalAction> actions = actionRepository.findByApproverRoleAndTravelRequestIdOrderByActionTakenAtDesc(
+                "TRAVEL_DESK", travelRequestId);
+        
+        return actions.stream()
+                .map(this::mapToTravelDeskHistoryDTO)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TravelDeskHistoryDTO> getAllTravelDeskActivities(LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate == null) {
+            startDate = LocalDateTime.now().minusDays(30);
+        }
+        if (endDate == null) {
+            endDate = LocalDateTime.now();
+        }
+        
+        List<ApprovalAction> actions = actionRepository.findTravelDeskActionsByDateRange(startDate, endDate);
+        
+        return actions.stream()
+                .map(this::mapToTravelDeskHistoryDTO)
+                .toList();
+    }
+
+    private TravelDeskHistoryDTO mapToTravelDeskHistoryDTO(ApprovalAction action) {
+        // Fetch additional context
+        ApprovalWorkflow workflow = workflowRepository.findById(action.getWorkflowId()).orElse(null);
+        TravelRequestProxyDTO travelRequest = null;
+        EmployeeProxyDTO employee = null;
+        
+        if (workflow != null) {
+            try {
+                travelRequest = fetchTravelRequestSafe(workflow.getTravelRequestId());
+                if (travelRequest != null) {
+                    employee = fetchEmployeeSafe(travelRequest.employeeId());
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch details for action {}: {}", action.getActionId(), e.getMessage());
+            }
+        }
+        
+        return TravelDeskHistoryDTO.builder()
+                .actionId(action.getActionId())
+                .workflowId(action.getWorkflowId())
+                .travelRequestId(action.getTravelRequestId())
+                .approverName(action.getApproverName())
+                .action(action.getAction())
+                .step(action.getStep())
+                .comments(action.getComments())
+                .actionTakenAt(action.getActionTakenAt())
+                .isEscalated(action.getIsEscalated())
+                .escalationReason(action.getEscalationReason())
+                .amountApproved(action.getAmountApproved())
+                .reimbursementAmount(action.getReimbursementAmount())
+                .employeeName(employee != null ? employee.getFullName() : "Unknown Employee")
+                .travelPurpose(travelRequest != null ? travelRequest.purpose() : "Unknown Purpose")
+                .estimatedCost(workflow != null ? workflow.getEstimatedCost() : null)
+                .build();
+    }
+
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public TravelDeskStatsDTO getTravelDeskStats(UUID travelDeskId, LocalDateTime startDate, LocalDateTime endDate) {
+        // Set default date range if not provided
+        if (startDate == null) {
+            startDate = LocalDateTime.now().minusDays(30);
+        }
+        if (endDate == null) {
+            endDate = LocalDateTime.now();
+        }
+        
+        List<ApprovalAction> actions = actionRepository.findTravelDeskActionsByUserAndDateRange(
+                travelDeskId, startDate, endDate);
+        
+        if (actions.isEmpty()) {
+            return TravelDeskStatsDTO.builder()
+                    .travelDeskId(travelDeskId)
+                    .totalActions(0L)
+                    .approvals(0L)
+                    .rejections(0L)
+                    .bookingsCompleted(0L)
+                    .overpricedMarkings(0L)
+                    .build();
+        }
+        
+        long approvals = actions.stream().filter(a -> "APPROVE".equals(a.getAction())).count();
+        long rejections = actions.stream().filter(a -> "REJECT".equals(a.getAction())).count();
+        long bookingsCompleted = actions.stream().filter(a -> "COMPLETE_BOOKING".equals(a.getAction())).count();
+        long overpricedMarkings = actions.stream()
+                .filter(a -> a.getComments() != null && a.getComments().toLowerCase().contains("overpriced"))
+                .count();
+        
+        LocalDateTime firstAction = actions.stream()
+                .map(ApprovalAction::getActionTakenAt)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+        LocalDateTime lastAction = actions.stream()
+                .map(ApprovalAction::getActionTakenAt)
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
+        
+        return TravelDeskStatsDTO.builder()
+                .travelDeskId(travelDeskId)
+                .totalActions((long) actions.size())
+                .approvals(approvals)
+                .rejections(rejections)
+                .bookingsCompleted(bookingsCompleted)
+                .overpricedMarkings(overpricedMarkings)
+                .firstAction(firstAction)
+                .lastAction(lastAction)
+                .build();
+    }
+    
+    
+    @Override
+    @Transactional
+    public ApprovalWorkflowDTO progressToTravelDeskReview(UUID workflowId, UUID submittedBy, String action) {
+        log.info("Progressing workflow {} to Travel Desk for bill review, submitted by: {}", workflowId, submittedBy);
+        
+        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
+                .orElseThrow(() -> new ResourceNotFoundException("Workflow not found: " + workflowId));
+        
+        // Validate current state - should be in employee bill submission stage
+        if (!"EMPLOYEE_BILL_UPLOAD".equals(workflow.getCurrentStep())) {
+            throw new IllegalStateException("Workflow not in bill submission stage. Current step: " + workflow.getCurrentStep());
+        }
+        
+        // Progress to Travel Desk bill review step
+        workflow.setCurrentStep("TRAVEL_DESK_BILL_REVIEW");
+        workflow.setStatus("PENDING_BILL_REVIEW"); // ✅ Fixed: Use 'status' instead of 'currentStatus'
+        workflow.setCurrentApproverRole("TRAVEL_DESK");
+        
+        // Determine Travel Desk approver
+        TravelRequestProxyDTO travelRequest = fetchTravelRequestSafe(workflow.getTravelRequestId());
+        UUID travelDeskApproverId = determineApproverId(
+            WorkflowConfiguration.builder()
+                .approverRole("TRAVEL_DESK")
+                .stepName("TRAVEL_DESK_BILL_REVIEW")
+                .build(),
+            travelRequest
+        );
+        workflow.setCurrentApproverId(travelDeskApproverId);
+        
+        // Record the action in history
+        ApprovalAction approvalAction = ApprovalAction.builder()
+                .workflowId(workflow.getWorkflowId()) // ✅ Fixed: Use workflowId
+                .travelRequestId(workflow.getTravelRequestId())
+                .approverRole("EMPLOYEE")
+                .approverId(submittedBy)
+                .action("BILLS_SUBMITTED")
+                .step("TRAVEL_DESK_BILL_REVIEW")
+                .comments("Bills submitted for Travel Desk review")
+                .actionTakenAt(LocalDateTime.now())
+                .build();
+        actionRepository.save(approvalAction);
+        
+        ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
+        
+        // Send notification to Travel Desk
+        sendNextApprovalNotification(updatedWorkflow);
+        
+        log.info("Workflow {} progressed to Travel Desk bill review successfully. Assigned to: {}", 
+                workflowId, travelDeskApproverId);
+        
+        return mapper.toDto(updatedWorkflow);
+    }
+    
+    @Override
+    @Transactional
+    public ApprovalWorkflowDTO reviewBills(UUID workflowId, UUID travelDeskId, boolean approved, String comments) {
+        log.info("Travel Desk {} reviewing bills for workflow {}: approved={}", travelDeskId, workflowId, approved);
+        
+        ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
+                .orElseThrow(() -> new ResourceNotFoundException("Workflow not found: " + workflowId));
+        
+        // Validate current state - should be in Travel Desk bill review stage
+        if (!"TRAVEL_DESK_BILL_REVIEW".equals(workflow.getCurrentStep())) {
+            throw new IllegalStateException("Workflow not in Travel Desk bill review stage");
+        }
+        
+        // Validate Travel Desk authorization
+        if (!travelDeskId.equals(workflow.getCurrentApproverId())) {
+            throw new WorkflowException("Travel Desk user not authorized to review these bills");
+        }
+        
+        String action = approved ? "APPROVE_BILLS" : "REJECT_BILLS";
+        String reviewComments = comments != null ? comments : 
+            (approved ? "Bills approved by Travel Desk" : "Bills rejected by Travel Desk");
+        
+        // Record the review action
+        ApprovalAction approvalAction = ApprovalAction.builder()
+                .workflowId(workflow.getWorkflowId())
+                .travelRequestId(workflow.getTravelRequestId())
+                .approverRole("TRAVEL_DESK")
+                .approverId(travelDeskId)
+                .action(action)
+                .step("TRAVEL_DESK_BILL_REVIEW")
+                .comments(reviewComments)
+                .actionTakenAt(LocalDateTime.now())
+                .build();
+        actionRepository.save(approvalAction);
+        
+        if (approved) {
+            // Progress to next step (Finance approval for bills)
+            progressToNextStepAfterBillReview(workflow);
+        } else {
+            // Reject the bills and return to employee
+            handleBillRejection(workflow, reviewComments);
+        }
+        
+        ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
+        log.info("Travel Desk bill review completed for workflow {}: {}", workflowId, approved ? "APPROVED" : "REJECTED");
+        
+        return mapper.toDto(updatedWorkflow);
+    }
+
+    private void progressToNextStepAfterBillReview(ApprovalWorkflow workflow) {
+        List<WorkflowConfiguration> configs = configRepository
+                .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflow.getWorkflowType());
+        
+        // For POST_TRAVEL workflow, go to Finance approval after Travel Desk review
+        WorkflowConfiguration nextStep = configs.stream()
+                .filter(c -> "FINANCE_APPROVAL".equals(c.getStepName()))
+                .findFirst()
+                .orElseThrow(() -> new WorkflowException("Finance approval step not found"));
+        
+        workflow.setPreviousStep(workflow.getCurrentStep());
+        workflow.setCurrentStep(nextStep.getStepName());
+        workflow.setCurrentApproverRole(nextStep.getApproverRole());
+        workflow.setCurrentApproverId(determineApproverId(nextStep, fetchTravelRequestSafe(workflow.getTravelRequestId())));
+        workflow.setNextStep(getNextStep(configs, findCurrentStepIndex(configs, nextStep.getStepName())));
+        workflow.setDueDate(calculateDueDate(nextStep));
+        workflow.setStatus("PENDING");
+        
+        sendNextApprovalNotification(workflow);
+    }
+
+    private void handleBillRejection(ApprovalWorkflow workflow, String comments) {
+        // Return to employee for bill correction
+        workflow.setCurrentStep("EMPLOYEE_BILL_UPLOAD");
+        workflow.setCurrentApproverRole("EMPLOYEE");
+        workflow.setCurrentApproverId(workflow.getTravelRequestId()); // Employee who submitted
+        workflow.setStatus("RETURNED_FOR_CORRECTION");
+        
+        // Notify employee about bill rejection
+        sendBillRejectionNotification(workflow, comments);
+    }
+
+    @Async
+    void sendBillRejectionNotification(ApprovalWorkflow workflow, String comments) {
+        try {
+            NotificationRequestDTO notification = NotificationRequestDTO.builder()
+                    .userId(workflow.getCurrentApproverId()) // Employee ID
+                    .subject("Bills Returned for Correction")
+                    .message("Your submitted bills require correction. Comments: " + comments)
+                    .notificationType("BILLS_RETURNED")
+                    .referenceId(workflow.getTravelRequestId())
+                    .referenceType("TRAVEL_REQUEST")
+                    .build();
+            notificationClient.sendNotification(notification);
+        } catch (Exception e) {
+            log.warn("Failed to send bill rejection notification: {}", e.getMessage());
+        }
+    }
+    
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApprovalWorkflowDTO> getPendingBillReviewsForTravelDesk() {
+        List<ApprovalWorkflow> workflows = workflowRepository.findPendingBillReviewsForTravelDesk();
+        log.info("Found {} pending bill reviews for Travel Desk", workflows.size());
+        return workflows.stream().map(mapper::toDto).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApprovalWorkflowDTO> getPendingBillReviewsByTravelDeskId(UUID travelDeskId) {
+        List<ApprovalWorkflow> workflows = workflowRepository.findPendingBillReviewsByTravelDeskId(travelDeskId);
+        log.info("Found {} pending bill reviews for Travel Desk user {}", workflows.size(), travelDeskId);
+        return workflows.stream().map(mapper::toDto).toList();
+    }
     
 }

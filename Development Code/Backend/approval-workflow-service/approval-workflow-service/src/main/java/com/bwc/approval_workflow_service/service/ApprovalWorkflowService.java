@@ -5,13 +5,15 @@ import java.util.List;
 import java.util.UUID;
 
 import com.bwc.approval_workflow_service.dto.ApprovalActionDTO;
+import com.bwc.approval_workflow_service.dto.ApprovalHistoryDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalRequestDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalStatsDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalWorkflowDTO;
 import com.bwc.approval_workflow_service.dto.BookingDetailsDTO;
 import com.bwc.approval_workflow_service.dto.BookingSummaryDTO;
-import com.bwc.approval_workflow_service.dto.ApprovalHistoryDTO; // Renamed
 import com.bwc.approval_workflow_service.dto.TravelBookingDTO;
+import com.bwc.approval_workflow_service.dto.TravelDeskHistoryDTO;
+import com.bwc.approval_workflow_service.dto.TravelDeskStatsDTO;
 import com.bwc.approval_workflow_service.dto.TravelRequestProxyDTO;
 import com.bwc.approval_workflow_service.dto.WorkflowBookingStatsDTO;
 import com.bwc.approval_workflow_service.dto.WorkflowMetricsDTO;
@@ -100,4 +102,40 @@ public interface ApprovalWorkflowService {
      * Get approval history for any approver (generic for all roles)
      */
     List<ApprovalHistoryDTO> getApprovalHistory(UUID approverId, LocalDateTime startDate, LocalDateTime endDate);
+    
+    /**
+     * Get travel desk approval history for a specific travel desk user
+     */
+    List<TravelDeskHistoryDTO> getTravelDeskHistory(UUID travelDeskId, LocalDateTime startDate, LocalDateTime endDate);
+    
+    /**
+     * Get travel desk actions for a specific travel request
+     */
+    List<TravelDeskHistoryDTO> getTravelDeskActionsByRequest(UUID travelRequestId);
+    
+    /**
+     * Get all travel desk activities across all travel desk users
+     */
+    List<TravelDeskHistoryDTO> getAllTravelDeskActivities(LocalDateTime startDate, LocalDateTime endDate);
+    
+    /**
+     * Get travel desk statistics
+     */
+    TravelDeskStatsDTO getTravelDeskStats(UUID travelDeskId, LocalDateTime startDate, LocalDateTime endDate);
+
+	ApprovalWorkflowDTO progressToTravelDeskReview(UUID workflowId, UUID submittedBy, String action);
+
+	ApprovalWorkflowDTO reviewBills(UUID workflowId, UUID travelDeskId, boolean approved, String comments);
+
+
+	  /**
+     * Get pending bill reviews for Travel Desk
+     */
+    List<ApprovalWorkflowDTO> getPendingBillReviewsForTravelDesk();
+    
+    /**
+     * Get pending bill reviews assigned to specific Travel Desk user
+     */
+    List<ApprovalWorkflowDTO> getPendingBillReviewsByTravelDeskId(UUID travelDeskId);
+
 }

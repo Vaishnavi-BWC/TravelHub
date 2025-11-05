@@ -1,6 +1,7 @@
 package com.bwc.approval_workflow_service.controller;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,20 +14,28 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.bwc.approval_workflow_service.client.EmployeeServiceClient;
 import com.bwc.approval_workflow_service.client.TravelRequestServiceClient;
+import com.bwc.approval_workflow_service.dto.ApprovalActionDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalRequestDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalWorkflowDTO;
+import com.bwc.approval_workflow_service.dto.BillReviewDetailsDTO;
 import com.bwc.approval_workflow_service.dto.BookingDocumentDTO;
 import com.bwc.approval_workflow_service.dto.BookingSummaryDTO;
+import com.bwc.approval_workflow_service.dto.EmployeeProxyDTO;
 import com.bwc.approval_workflow_service.dto.TravelBookingDTO;
+import com.bwc.approval_workflow_service.dto.TravelRequestProxyDTO;
+import com.bwc.approval_workflow_service.exception.WorkflowException;
 import com.bwc.approval_workflow_service.service.ApprovalWorkflowService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -42,7 +51,8 @@ public class TravelDeskApprovalController {
 
     private final ApprovalWorkflowService workflowService;
     private final TravelRequestServiceClient travelClient;
-
+    private final EmployeeServiceClient employeeClient;
+    
     // ==========================================================
     // 🧩 APPROVAL WORKFLOW ENDPOINTS
     // ==========================================================
@@ -241,6 +251,116 @@ public class TravelDeskApprovalController {
         return UUID.fromString(id);
     }
     
+    
+    @Operation(summary = "Review bills by Travel Desk")
+    @PostMapping("/{workflowId}/review-bills")
+    public ResponseEntity<ApprovalWorkflowDTO> reviewBills(
+            @Parameter(description = "Workflow ID") @PathVariable UUID workflowId,
+            @RequestHeader("X-User-Id") UUID travelDeskId,
+            @RequestParam boolean approved,
+            @RequestParam(required = false) String comments) {
+        
+        return ResponseEntity.ok(workflowService.reviewBills(workflowId, travelDeskId, approved, comments));
+    }
+    
+    @Operation(summary = "Get pending bill reviews for Travel Desk")
+    @GetMapping("/pending-bill-reviews")
+    @PreAuthorize("hasRole('TRAVEL_DESK')")
+    public ResponseEntity<List<ApprovalWorkflowDTO>> getPendingBillReviews(HttpServletRequest request) {
+        UUID travelDeskId = parseUserId(request);
+        log.info("Fetching pending bill reviews for Travel Desk user: {}", travelDeskId);
+        
+        List<ApprovalWorkflowDTO> pendingReviews = workflowService.getPendingBillReviewsByTravelDeskId(travelDeskId);
+        
+        // Enrich with travel request details
+        List<ApprovalWorkflowDTO> enrichedReviews = pendingReviews.stream()
+                .map(this::enrichWithTravelRequestDetails)
+                .toList();
+        
+        log.info("Returning {} pending bill reviews for Travel Desk user {}", enrichedReviews.size(), travelDeskId);
+        return ResponseEntity.ok(enrichedReviews);
+    }
+
+    @Operation(summary = "Get all pending bill reviews (for all Travel Desk users)")
+    @GetMapping("/pending-bill-reviews/all")
+    @PreAuthorize("hasRole('TRAVEL_DESK')")
+    public ResponseEntity<List<ApprovalWorkflowDTO>> getAllPendingBillReviews() {
+        log.info("Fetching all pending bill reviews for Travel Desk");
+        
+        List<ApprovalWorkflowDTO> pendingReviews = workflowService.getPendingBillReviewsForTravelDesk();
+        
+        // Enrich with travel request details
+        List<ApprovalWorkflowDTO> enrichedReviews = pendingReviews.stream()
+                .map(this::enrichWithTravelRequestDetails)
+                .toList();
+        
+        log.info("Returning {} total pending bill reviews", enrichedReviews.size());
+        return ResponseEntity.ok(enrichedReviews);
+    }
+
+    @Operation(summary = "Get bill review details for a specific workflow")
+    @GetMapping("/{workflowId}/bill-review-details")
+    @PreAuthorize("hasRole('TRAVEL_DESK')")
+    public ResponseEntity<BillReviewDetailsDTO> getBillReviewDetails(@PathVariable UUID workflowId) {
+        log.info("Fetching bill review details for workflow: {}", workflowId);
+        
+        ApprovalWorkflowDTO workflow = workflowService.getWorkflow(workflowId);
+        
+        // Validate that this is actually a bill review workflow
+        if (!"TRAVEL_DESK_BILL_REVIEW".equals(workflow.getCurrentStep())) {
+            throw new WorkflowException("Workflow is not in bill review stage");
+        }
+        
+        // Fetch travel request details
+        TravelRequestProxyDTO travelRequest = travelClient.getTravelRequest(workflow.getTravelRequestId());
+        
+        // Fetch employee details
+        EmployeeProxyDTO employee = employeeClient.getEmployee(travelRequest.employeeId());
+        
+        // Fetch bill-related actions
+        List<ApprovalActionDTO> billActions = workflowService.getWorkflowHistory(workflow.getTravelRequestId())
+                .stream()
+                .filter(action -> action.getStep().contains("BILL") || "UPLOAD_BILLS".equals(action.getAction()))
+                .toList();
+        
+        BillReviewDetailsDTO reviewDetails = BillReviewDetailsDTO.builder()
+                .workflow(workflow)
+                .travelRequest(travelRequest)
+                .employee(employee)
+                .billActions(billActions)
+                .actualCost(workflow.getActualCost())
+                .estimatedCost(workflow.getEstimatedCost())
+                .submittedAt(findBillSubmissionDate(billActions))
+                .build();
+        
+        return ResponseEntity.ok(reviewDetails);
+    }
+
+    // Helper method to enrich workflow with travel request details
+    private ApprovalWorkflowDTO enrichWithTravelRequestDetails(ApprovalWorkflowDTO workflow) {
+        try {
+            TravelRequestProxyDTO travelRequest = travelClient.getTravelRequest(workflow.getTravelRequestId());
+            EmployeeProxyDTO employee = employeeClient.getEmployee(travelRequest.employeeId());
+            
+            // Create enriched DTO (you might want to create a separate enriched DTO class)
+            workflow.setTravelRequestDetails(travelRequest);
+            workflow.setEmployeeDetails(employee);
+            
+        } catch (Exception e) {
+            log.warn("Failed to enrich workflow {} with travel request details: {}", 
+                    workflow.getWorkflowId(), e.getMessage());
+        }
+        return workflow;
+    }
+
+    // Helper method to find when bills were submitted
+    private LocalDateTime findBillSubmissionDate(List<ApprovalActionDTO> billActions) {
+        return billActions.stream()
+                .filter(action -> "UPLOAD_BILLS".equals(action.getAction()))
+                .map(ApprovalActionDTO::getActionTakenAt)
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
+    }
     
     
 }

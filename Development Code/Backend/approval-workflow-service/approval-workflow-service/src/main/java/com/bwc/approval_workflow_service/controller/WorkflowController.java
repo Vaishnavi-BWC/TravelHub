@@ -4,7 +4,15 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.bwc.approval_workflow_service.dto.ApprovalActionDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalRequestDTO;
@@ -14,12 +22,15 @@ import com.bwc.approval_workflow_service.dto.WorkflowMetricsDTO;
 import com.bwc.approval_workflow_service.service.ApprovalWorkflowService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/workflows")
 @RequiredArgsConstructor
@@ -123,6 +134,44 @@ public class WorkflowController {
     @Operation(summary = "Get workflow metrics")
     public ResponseEntity<WorkflowMetricsDTO> getWorkflowMetrics() {
         return ResponseEntity.ok(workflowService.getWorkflowMetrics());
+    }
+
+    @Operation(summary = "Progress workflow to Travel Desk for bill review")
+    @PostMapping("/{workflowId}/progress-to-travel-desk")
+    public ResponseEntity<ApprovalWorkflowDTO> progressToTravelDeskReview(
+            @Parameter(description = "Workflow ID") @PathVariable UUID workflowId,
+            @RequestParam(defaultValue = "BILLS_SUBMITTED") String action) {
+        
+        // Get user ID from security context instead of request header
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String principal = authentication.getName();
+        
+        log.debug("🔍 [WorkflowController] Security context principal: {}", principal);
+        log.debug("🔍 [WorkflowController] Authentication authorities: {}", authentication.getAuthorities());
+        
+        UUID submittedBy;
+        if (principal.startsWith("service-")) {
+            // Extract user ID from service principal (e.g., "service-5cc38721-6220-456d-9fea-ad6c2b2ce8cd")
+            submittedBy = UUID.fromString(principal.substring(8));
+            log.debug("🟢 [WorkflowController] Extracted user ID from service principal: {}", submittedBy);
+        } else if (!principal.equals("internal-service") && !principal.equals("anonymous")) {
+            // Regular user principal
+            submittedBy = UUID.fromString(principal);
+            log.debug("🟢 [WorkflowController] Using regular user principal: {}", submittedBy);
+        } else {
+            // Fallback - try to get from headers if available (for backward compatibility)
+            // This should not happen with the updated gateway filter
+            log.warn("⚠️ [WorkflowController] Using generic service principal, unable to extract specific user ID");
+            submittedBy = UUID.fromString("00000000-0000-0000-0000-000000000000"); // Fallback UUID
+        }
+
+        log.info("🔄 Progressing workflow {} to Travel Desk for action: {} by user: {}", 
+                workflowId, action, submittedBy);
+
+        ApprovalWorkflowDTO updatedWorkflow = workflowService.progressToTravelDeskReview(
+                workflowId, submittedBy, action);
+        
+        return ResponseEntity.ok(updatedWorkflow);
     }
 
     // 🧩 Inner DTO for initiating workflow

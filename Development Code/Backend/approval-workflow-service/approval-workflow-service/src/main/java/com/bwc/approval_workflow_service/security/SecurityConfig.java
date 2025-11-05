@@ -15,21 +15,21 @@ public class SecurityConfig {
 
     private final GatewaySecurityFilter gatewaySecurityFilter;
     private final GatewayAuthHeaderVerifier gatewayAuthHeaderVerifier;
-    private final CorsConfigurationSource corsConfigurationSource; // Add this
+    private final CorsConfigurationSource corsConfigurationSource;
 
     public SecurityConfig(GatewaySecurityFilter gatewaySecurityFilter,
                          GatewayAuthHeaderVerifier gatewayAuthHeaderVerifier,
-                         CorsConfigurationSource corsConfigurationSource) { // Add this parameter
+                         CorsConfigurationSource corsConfigurationSource) {
         this.gatewaySecurityFilter = gatewaySecurityFilter;
         this.gatewayAuthHeaderVerifier = gatewayAuthHeaderVerifier;
-        this.corsConfigurationSource = corsConfigurationSource; // Initialize
+        this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource)) // Add CORS support
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // 🟢 Allow ALL OPTIONS requests for CORS preflight
@@ -43,11 +43,14 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/webjars/**",
                     "/swagger-resources/**",
-                    "/management/**",
-                    // ✅ Allow both initiation endpoints (for internal service calls)
-                    "/api/workflows/initiate",
-                    "/api/workflows/initiate-with-travel-request"
+                    "/management/**"
                 ).permitAll()
+
+                // 🟢 Allow workflow progression endpoints for internal service calls
+                .requestMatchers("/api/workflows/*/progress-to-travel-desk").hasAnyRole("SERVICE", "USER", "MANAGER", "TRAVEL_DESK")
+                .requestMatchers("/api/workflows/initiate").hasAnyRole("SERVICE", "USER", "MANAGER")
+                .requestMatchers("/api/workflows/initiate-with-travel-request").hasAnyRole("SERVICE", "USER", "MANAGER")
+                .requestMatchers("/api/workflows/*/upload-booking").hasAnyRole("SERVICE", "USER", "MANAGER", "TRAVEL_DESK")
 
                 // 🟢 Role-based endpoints
                 .requestMatchers("/api/manager/**").hasRole("MANAGER")
@@ -56,8 +59,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/travel-desk/**").hasRole("TRAVEL_DESK")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // 🟡 Authenticated workflows
-                .requestMatchers("/api/workflows/**").authenticated()
+                // 🟡 Authenticated workflows - allow SERVICE role for internal calls
+                .requestMatchers("/api/workflows/**").hasAnyRole("SERVICE", "USER", "MANAGER", "FINANCE", "HR", "TRAVEL_DESK", "ADMIN")
 
                 // 🔒 Everything else requires auth
                 .anyRequest().authenticated()
