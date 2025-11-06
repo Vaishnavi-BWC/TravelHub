@@ -104,7 +104,7 @@ textarea.formControl {
   gap: var(--space-lg);
   margin-top: var(--space-2xl);
   padding-top: var(--space-lg);
-  border-top: 1px solid var(--border-color);
+  /* border-top: 1px solid var(--border-color); */
 }
 
 /* Form Validation */

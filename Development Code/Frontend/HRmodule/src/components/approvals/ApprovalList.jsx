@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Badge from '../common/Badge';
 import { LoadingSpinner } from '../common/LoadingSpinner';
-
+import '../../components/audit/AuditTrail.css'
 const ApprovalList = ({
   approvals,
   onRequestSelect,
@@ -22,7 +22,7 @@ const ApprovalList = ({
 
     // Apply status filter
     if (requestFilter !== "All") {
-      filtered = filtered.filter(r => 
+      filtered = filtered.filter(r =>
         r.status?.toLowerCase() === requestFilter.toLowerCase()
       );
     }
@@ -76,7 +76,7 @@ const ApprovalList = ({
 
     const reason = prompt(`Please enter reason for rejecting request ${request.id}:`);
     if (reason === null) return; // User cancelled
-    
+
     if (!reason.trim()) {
       alert("Please provide a reason for rejection.");
       return;
@@ -128,9 +128,16 @@ const ApprovalList = ({
 
   return (
     <div className="card">
+      <div className="card-header">
+        <div className="header-content">
+          <h3>Pending Request</h3>
+          <h6 style={{ color: 'gray', fontSize: '15px', fontWeight: '400' }}>Manage all employee requests awaiting your approval in one place.</h6>
+        </div>
+      </div>
+
       <div className="cardHeaderFlex">
         <div className="filterButtons">
-          {["All", "pending", "approved", "rejected"].map((filter) => (
+          {/* {["All", "pending", "approved", "rejected"].map((filter) => (
             <button
               key={filter}
               onClick={() => setRequestFilter(filter)}
@@ -144,9 +151,9 @@ const ApprovalList = ({
                 </span>
               )}
             </button>
-          ))}
+          ))} */}
         </div>
-        
+
         <div className="searchAndControls">
           <div className="searchBox">
             <i className="fas fa-search searchIcon"></i>
@@ -168,7 +175,7 @@ const ApprovalList = ({
               </button>
             )}
           </div>
-          
+
           <button
             onClick={onRefresh}
             className="btn btnSecondary"
@@ -198,8 +205,8 @@ const ApprovalList = ({
               </thead>
               <tbody>
                 {filteredRequests.map((request) => (
-                  <tr 
-                    key={request.id} 
+                  <tr
+                    key={request.id}
                     className="table-row clickable-row"
                     onClick={() => handleRowClick(request)}
                   >
@@ -280,7 +287,7 @@ const ApprovalList = ({
             <i className="fas fa-inbox"></i>
             <h3>No HR approval requests found</h3>
             <p>
-              {searchTerm || requestFilter !== "All" 
+              {searchTerm || requestFilter !== "All"
                 ? "Try adjusting your search or filter criteria"
                 : "There are no pending HR approval requests at this time"
               }
