@@ -15,7 +15,7 @@ import com.bwc.approval_workflow_service.entity.ApprovalAction;
 public interface ApprovalActionRepository extends JpaRepository<ApprovalAction, UUID> {
 
     List<ApprovalAction> findByTravelRequestIdOrderByCreatedAtDesc(UUID travelRequestId);
-    List<ApprovalAction> findByWorkflowIdOrderByCreatedAtDesc(UUID workflowId);
+    List<ApprovalAction> findByWorkflow_WorkflowIdOrderByCreatedAtDesc(UUID workflowId);
     List<ApprovalAction> findByTravelRequestIdOrderByActionTakenAtAsc(UUID travelRequestId);
 
     // Date range filtering method

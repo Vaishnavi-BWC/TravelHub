@@ -182,8 +182,13 @@
 		    <artifactId>jackson-datatype-jsr310</artifactId>
 		    <version>2.15.2</version>
 		</dependency>
-		
 
+
+		<dependency>
+			<groupId>com.bwc</groupId>
+			<artifactId>common-lib</artifactId>
+			<version>1.0.0</version>
+		</dependency>
     </dependencies>
 
     <dependencyManagement>

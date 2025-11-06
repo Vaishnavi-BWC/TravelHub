@@ -11,6 +11,7 @@ import com.bwc.approval_workflow_service.dto.ApprovalStatsDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalWorkflowDTO;
 import com.bwc.approval_workflow_service.dto.BookingDetailsDTO;
 import com.bwc.approval_workflow_service.dto.BookingSummaryDTO;
+import com.bwc.approval_workflow_service.dto.ManagerActionRequestDTO;
 import com.bwc.approval_workflow_service.dto.TravelBookingDTO;
 import com.bwc.approval_workflow_service.dto.TravelDeskHistoryDTO;
 import com.bwc.approval_workflow_service.dto.TravelDeskStatsDTO;
@@ -137,5 +138,9 @@ public interface ApprovalWorkflowService {
      * Get pending bill reviews assigned to specific Travel Desk user
      */
     List<ApprovalWorkflowDTO> getPendingBillReviewsByTravelDeskId(UUID travelDeskId);
+    
+    
+    ApprovalWorkflowDTO takeManagerAction(ManagerActionRequestDTO managerRequest);
+
 
 }

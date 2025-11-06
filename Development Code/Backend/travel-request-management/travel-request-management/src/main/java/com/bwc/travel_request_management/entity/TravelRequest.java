@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -30,6 +31,10 @@ public class TravelRequest {
 
     @Column(name = "project_id", nullable = false, columnDefinition = "uuid")
     private UUID projectId;
+    
+    
+    @Column(name = "applied_policy_reference", columnDefinition = "uuid")
+    private UUID policyId;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
@@ -47,9 +52,26 @@ public class TravelRequest {
     @Column(name = "manager_id", columnDefinition = "uuid")
     private UUID managerId;
 
-    // --- New fields ---
+    
     @Column(name = "estimated_budget")
     private Double estimatedBudget;
+    
+    /** Employee has requested an advance */
+    @Column(name = "advanced_money_wanted")
+    private boolean advancedMoneyWanted;
+
+    /** Admin/finance has approved the advance */
+    @Column(name = "advanced_money_granted")
+    private boolean advancedGranted;
+
+    /** Amount of advance requested or taken */
+    @Column(name = "advanced_money")
+    private BigDecimal advancedMoneyTaken;
+
+    
+    @Column(name="total_travel_expense")
+    private BigDecimal totalTravelExpense;
+    
 
     @Column(name = "travel_destination", length = 255)
     private String travelDestination;
@@ -91,7 +113,7 @@ public class TravelRequest {
     @Builder.Default
     private String status = "DRAFT";
     
- // Add this to your existing TravelRequest entity
+    
     @OneToMany(mappedBy = "travelRequest", 
                cascade = CascadeType.ALL, 
                orphanRemoval = true, 

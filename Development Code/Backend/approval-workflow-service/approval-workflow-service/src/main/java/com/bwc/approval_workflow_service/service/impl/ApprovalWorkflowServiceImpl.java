@@ -27,6 +27,7 @@ import com.bwc.approval_workflow_service.dto.BookingDetailsDTO;
 import com.bwc.approval_workflow_service.dto.BookingDocumentDTO;
 import com.bwc.approval_workflow_service.dto.BookingSummaryDTO;
 import com.bwc.approval_workflow_service.dto.EmployeeProxyDTO;
+import com.bwc.approval_workflow_service.dto.ManagerActionRequestDTO;
 import com.bwc.approval_workflow_service.dto.NotificationRequestDTO;
 import com.bwc.approval_workflow_service.dto.TravelBookingDTO;
 import com.bwc.approval_workflow_service.dto.TravelDeskHistoryDTO;
@@ -36,6 +37,7 @@ import com.bwc.approval_workflow_service.dto.WorkflowBookingStatsDTO;
 import com.bwc.approval_workflow_service.dto.WorkflowMetricsDTO;
 import com.bwc.approval_workflow_service.entity.ApprovalAction;
 import com.bwc.approval_workflow_service.entity.ApprovalWorkflow;
+import com.bwc.approval_workflow_service.entity.RaisedExceptions;
 import com.bwc.approval_workflow_service.entity.WorkflowConfiguration;
 import com.bwc.approval_workflow_service.exception.ResourceNotFoundException;
 import com.bwc.approval_workflow_service.exception.WorkflowException;
@@ -97,25 +99,33 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     private final ObjectMapper objectMapper;
 
     // ============ CORE WORKFLOW METHODS ============
-
+    
+    
     @Override
     @Transactional
     public ApprovalWorkflowDTO initiateWorkflow(UUID travelRequestId, String workflowType, Double estimatedCost) {
+        // 🔹 Fetch the travel request first (from TravelRequestService)
         TravelRequestProxyDTO travelRequest = fetchTravelRequestSafe(travelRequestId);
+        
+        // 🔹 Reuse the main overloaded method
         return initiateWorkflow(travelRequest, workflowType, estimatedCost);
     }
-
+    
+    
     @Override
     @Transactional
     public ApprovalWorkflowDTO initiateWorkflow(TravelRequestProxyDTO travelRequest, String workflowType, Double estimatedCost) {
         UUID travelRequestId = travelRequest.travelRequestId();
-        
+
+        // 🔹 1. Prevent duplicate workflow for same travel request and type
         if (workflowRepository.findByTravelRequestIdAndWorkflowType(travelRequestId, workflowType).isPresent()) {
             throw new WorkflowException("Workflow already exists for travel request " + travelRequestId + " and type " + workflowType);
         }
 
+        // 🔹 2. Fetch employee snapshot
         EmployeeProxyDTO employee = fetchEmployeeSafe(travelRequest.employeeId());
 
+        // 🔹 3. Load workflow configuration
         List<WorkflowConfiguration> configs = configRepository
                 .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflowType);
 
@@ -126,9 +136,15 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         WorkflowConfiguration firstStep = configs.get(0);
         UUID approverId = determineApproverId(firstStep, travelRequest);
 
+        // 🔹 4. Create workflow entity
         ApprovalWorkflow workflow = ApprovalWorkflow.builder()
                 .travelRequestId(travelRequestId)
                 .workflowType(workflowType)
+                .employeeId(employee.getEmployeeId())
+                .policyId(travelRequest.policyId())
+                .employeeName(employee.getFullName())
+                .employeeDepartment(employee.getDepartment())
+                .employeeEmail(employee.getEmail())
                 .currentStep(firstStep.getStepName())
                 .currentApproverRole(firstStep.getApproverRole())
                 .currentApproverId(approverId)
@@ -139,19 +155,29 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .dueDate(calculateDueDate(firstStep))
                 .build();
 
+        // 🔹 5. Save workflow (parent)
         ApprovalWorkflow savedWorkflow = workflowRepository.save(workflow);
 
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(savedWorkflow.getWorkflowId())
+        // 🔹 6. Create and attach initial action properly (using workflow reference)
+        ApprovalAction submitAction = ApprovalAction.builder()
+                .workflow(savedWorkflow)  // ✅ Set the actual workflow object
                 .travelRequestId(travelRequestId)
                 .approverRole("SYSTEM")
                 .approverId(travelRequest.employeeId())
+                .approverName(employee.getFullName())
                 .action("SUBMIT")
                 .step("SUBMIT")
                 .comments(workflowType + " workflow initiated")
                 .actionTakenAt(LocalDateTime.now())
-                .build());
+                .build();
 
+        // Attach the action to the workflow (ensures bidirectional sync)
+        savedWorkflow.addAction(submitAction);
+
+        // 🔹 7. Save workflow again (cascade saves action too)
+        workflowRepository.save(savedWorkflow);
+
+        // 🔹 8. Update travel request + send notification
         updateTravelRequestStatus(travelRequestId, "UNDER_REVIEW");
         sendNewApprovalNotification(savedWorkflow, travelRequest, employee);
 
@@ -159,21 +185,26 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         return mapper.toDto(savedWorkflow);
     }
 
+
     @Override
     @Transactional
     public ApprovalWorkflowDTO processApproval(ApprovalRequestDTO approvalRequest) {
+        // 🔹 1. Fetch the workflow
         ApprovalWorkflow workflow = workflowRepository.findById(approvalRequest.getWorkflowId())
                 .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
 
+        // 🔹 2. Validate workflow state
         if (!STATUS_PENDING.equalsIgnoreCase(workflow.getStatus())) {
             throw new WorkflowException("Workflow is not in pending state");
         }
 
+        // 🔹 3. Authorization checks
         validateApproverAuthorization(workflow, approvalRequest);
         validateManagerAuthorization(workflow, approvalRequest);
 
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(workflow.getWorkflowId())
+        // 🔹 4. Create ApprovalAction (using workflow entity directly)
+        ApprovalAction action = ApprovalAction.builder()
+                .workflow(workflow)  // ✅ Set entity reference instead of workflowId
                 .travelRequestId(workflow.getTravelRequestId())
                 .approverRole(approvalRequest.getApproverRole())
                 .approverId(approvalRequest.getApproverId())
@@ -186,27 +217,32 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .amountApproved(approvalRequest.getAmountApproved())
                 .reimbursementAmount(approvalRequest.getReimbursementAmount())
                 .actionTakenAt(LocalDateTime.now())
-                .build());
+                .build();
 
+        // ✅ Attach it to the workflow (maintains bidirectional sync)
+        workflow.addAction(action);
+
+        // 🔹 5. Fetch workflow configurations
         List<WorkflowConfiguration> configs = configRepository
                 .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflow.getWorkflowType());
 
-        String action = approvalRequest.getAction().toUpperCase();
-        if ("APPROVE".equals(action)) {
-            handleApprove(workflow, configs, approvalRequest);
-        } else if ("REJECT".equals(action)) {
-            handleReject(workflow, approvalRequest.getComments());
-        } else if ("RETURN".equals(action)) {
-            handleReturn(workflow, approvalRequest.getComments());
-        } else if ("ESCALATE".equals(action)) {
-            handleEscalate(workflow, approvalRequest.getEscalationReason());
-        } else {
-            throw new WorkflowException("Unknown action: " + action);
+        // 🔹 6. Process based on action type
+        String actionType = approvalRequest.getAction().toUpperCase();
+        switch (actionType) {
+            case "APPROVE" -> handleApprove(workflow, configs, approvalRequest);
+            case "REJECT" -> handleReject(workflow, approvalRequest.getComments());
+            case "RETURN" -> handleReturn(workflow, approvalRequest.getComments());
+            case "ESCALATE" -> handleEscalate(workflow, approvalRequest.getEscalationReason());
+            default -> throw new WorkflowException("Unknown action: " + actionType);
         }
 
+        // 🔹 7. Save workflow (cascade saves the new action)
         ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
+
+        // 🔹 8. Return DTO
         return mapper.toDto(updatedWorkflow);
     }
+
 
     private void handleApprove(ApprovalWorkflow workflow, List<WorkflowConfiguration> configs, ApprovalRequestDTO approvalRequest) {
         int currentIndex = findCurrentStepIndex(configs, workflow.getCurrentStep());
@@ -228,6 +264,73 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
             }
         }
     }
+    
+    @Override
+    @Transactional
+    public ApprovalWorkflowDTO takeManagerAction(ManagerActionRequestDTO managerRequest) {
+        log.info("🎯 Manager action received for workflow {} - Action: {}", 
+                 managerRequest.getWorkflowId(), managerRequest.getAction());
+
+        // 🔹 Convert ManagerActionRequestDTO → ApprovalRequestDTO
+        ApprovalRequestDTO approvalRequest = ApprovalRequestDTO.builder()
+                .workflowId(managerRequest.getWorkflowId())
+                .action(managerRequest.getAction())
+                .approverRole("MANAGER")
+                .approverId(managerRequest.getApproverId())
+                .approverName(managerRequest.getApproverName())
+                .comments(managerRequest.getComments())
+                .amountApproved(managerRequest.getAmountApproved())
+                .reimbursementAmount(managerRequest.getReimbursementAmount())
+                .escalationReason(managerRequest.getEscalationReason())
+                .markOverpriced(managerRequest.getMarkOverpriced())
+                .overpricedReason(managerRequest.getOverpricedReason())
+                .build();
+
+        // 🔹 Reuse main approval flow (handles all logic and saves ApprovalAction)
+        ApprovalWorkflowDTO result = processApproval(approvalRequest);
+
+        // 🔹 If manager raised exception, record it explicitly
+        if (Boolean.TRUE.equals(managerRequest.getIsExceptionRaised())) {
+            recordRaisedException(managerRequest);
+        }
+
+        log.info("✅ Manager action processed for workflow {} successfully", managerRequest.getWorkflowId());
+        return result;
+    }
+
+    private void recordRaisedException(ManagerActionRequestDTO managerRequest) {
+        try {
+            // Load workflow entity
+            ApprovalWorkflow workflow = workflowRepository.findById(managerRequest.getWorkflowId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Workflow not found for ID: " + managerRequest.getWorkflowId()));
+
+            // Get last action (the one just saved)
+            ApprovalAction latestAction = workflow.getActions().stream()
+                    .max(Comparator.comparing(ApprovalAction::getCreatedAt))
+                    .orElse(null);
+
+            // Create RaisedExceptions entry
+            RaisedExceptions exception = RaisedExceptions.builder()
+                    .workflow(workflow)
+                    .action(latestAction)
+                    .isException(true)
+                    .exceptionReason(managerRequest.getExceptionReason())
+                    .raisedById(managerRequest.getApproverId())
+                    .raisedByName(managerRequest.getApproverName())
+                    .raisedByRole("MANAGER")
+                    .build();
+
+            // Link bidirectionally
+            workflow.addException(exception);
+            workflowRepository.save(workflow);
+
+            log.info("⚠️ Exception recorded for workflow {}: {}", managerRequest.getWorkflowId(), managerRequest.getExceptionReason());
+
+        } catch (Exception e) {
+            log.error("❌ Failed to record raised exception: {}", e.getMessage());
+        }
+    }
+
 
     private void handlePreTravelNextStep(ApprovalWorkflow workflow, List<WorkflowConfiguration> configs, int currentIndex) {
         String currentStep = workflow.getCurrentStep();
@@ -896,36 +999,47 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     @Override
     @Transactional
     public void recordBookingAction(UUID workflowId, UUID travelDeskId, String action, String comments) {
+        // 🔹 1. Fetch workflow
         ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
 
-        actionRepository
-                .save(ApprovalAction.builder()
-                        .workflowId(workflowId)
-                        .travelRequestId(workflow.getTravelRequestId())
-                        .approverRole(ROLE_TRAVEL_DESK)
-                        .approverId(travelDeskId)
-                        .action(action)
-                        .step(STEP_TRAVEL_DESK_BOOKING)
-                        .comments(comments)
-                        .actionTakenAt(LocalDateTime.now())
-                        .build());
+        // 🔹 2. Create new booking action
+        ApprovalAction bookingAction = ApprovalAction.builder()
+                .workflow(workflow)  // ✅ Set workflow entity instead of workflowId
+                .travelRequestId(workflow.getTravelRequestId())
+                .approverRole(ROLE_TRAVEL_DESK)
+                .approverId(travelDeskId)
+                .approverName("Travel Desk User") // optional — if you want to record who booked it
+                .action(action)
+                .step(STEP_TRAVEL_DESK_BOOKING)
+                .comments(comments)
+                .actionTakenAt(LocalDateTime.now())
+                .build();
 
-        log.info("Booking action recorded: {} for workflow {}", action, workflowId);
+        // 🔹 3. Attach the action properly
+        workflow.addAction(bookingAction);
+
+        // 🔹 4. Save parent (cascade saves the new action)
+        workflowRepository.save(workflow);
+
+        log.info("✅ Booking action recorded: {} for workflow {}", action, workflowId);
     }
 
     @Override
     @Transactional
     public ApprovalWorkflowDTO markBookingUploaded(UUID workflowId, UUID uploadedBy) {
+        // 🔹 1. Fetch workflow
         ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
 
+        // 🔹 2. Validate current step
         if (!STEP_TRAVEL_DESK_BOOKING.equals(workflow.getCurrentStep())) {
             throw new WorkflowException("Workflow is not in booking upload step");
         }
 
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(workflowId)
+        // 🔹 3. Create the upload action linked to workflow entity
+        ApprovalAction uploadAction = ApprovalAction.builder()
+                .workflow(workflow) // ✅ Use entity, not ID
                 .travelRequestId(workflow.getTravelRequestId())
                 .approverRole(ROLE_TRAVEL_DESK)
                 .approverId(uploadedBy)
@@ -933,8 +1047,12 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .step(STEP_TRAVEL_DESK_BOOKING)
                 .comments("Travel bookings uploaded")
                 .actionTakenAt(LocalDateTime.now())
-                .build());
+                .build();
 
+        // ✅ Maintain bidirectional relationship
+        workflow.addAction(uploadAction);
+
+        // 🔹 4. Determine next workflow step (HR compliance)
         List<WorkflowConfiguration> configs = configRepository
                 .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflow.getWorkflowType());
 
@@ -950,35 +1068,48 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         workflow.setNextStep(getNextStep(configs, configs.indexOf(nextStep)));
         workflow.setDueDate(calculateDueDate(nextStep));
 
+        // 🔹 5. Notify next approver
         sendNextApprovalNotification(workflow);
 
-        return mapper.toDto(workflowRepository.save(workflow));
+        // 🔹 6. Save parent workflow (cascade inserts uploadAction)
+        ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
+
+        log.info("✅ Booking uploaded for workflow {}, moved to HR compliance", workflowId);
+        return mapper.toDto(updatedWorkflow);
     }
+
 
     @Override
     @Transactional
     public ApprovalWorkflowDTO uploadBills(UUID workflowId, Double actualCost, UUID uploadedBy) {
+        // 🔹 1. Fetch the workflow
         ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
 
+        // 🔹 2. Validate workflow type
         if (!WORKFLOW_TYPE_POST_TRAVEL.equals(workflow.getWorkflowType())) {
             throw new WorkflowException("Only post-travel workflows can have bills uploaded");
         }
 
+        // 🔹 3. Set actual cost in workflow
         workflow.setActualCost(actualCost);
 
-        actionRepository
-                .save(ApprovalAction.builder()
-                        .workflowId(workflowId)
-                        .travelRequestId(workflow.getTravelRequestId())
-                        .approverRole("EMPLOYEE")
-                        .approverId(uploadedBy)
-                        .action("UPLOAD_BILLS")
-                        .step("BILL_UPLOAD")
-                        .comments("Travel bills uploaded with actual cost: " + actualCost)
-                        .actionTakenAt(LocalDateTime.now())
-                        .build());
+        // 🔹 4. Create ApprovalAction using entity relationship (NOT ID)
+        ApprovalAction uploadAction = ApprovalAction.builder()
+                .workflow(workflow) // ✅ Set relationship instead of workflowId
+                .travelRequestId(workflow.getTravelRequestId())
+                .approverRole("EMPLOYEE")
+                .approverId(uploadedBy)
+                .action("UPLOAD_BILLS")
+                .step("BILL_UPLOAD")
+                .comments("Travel bills uploaded with actual cost: " + actualCost)
+                .actionTakenAt(LocalDateTime.now())
+                .build();
 
+        // ✅ Maintain bidirectional relationship
+        workflow.addAction(uploadAction);
+
+        // 🔹 5. Move to the next workflow step (Travel Desk Bill Review)
         List<WorkflowConfiguration> configs = configRepository
                 .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflow.getWorkflowType());
 
@@ -995,35 +1126,47 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         workflow.setDueDate(calculateDueDate(nextStep));
         workflow.setStatus(STATUS_PENDING);
 
+        // 🔹 6. Sync actual cost to Travel Request (safe external call)
         try {
             travelRequestClient.updateActualCost(workflow.getTravelRequestId(), actualCost);
         } catch (Exception e) {
-            log.warn("Failed to update actual cost: {}", e.getMessage());
+            log.warn("⚠️ Failed to update actual cost in Travel Request: {}", e.getMessage());
         }
 
+        // 🔹 7. Notify next approver
         sendNextApprovalNotification(workflow);
 
-        return mapper.toDto(workflowRepository.save(workflow));
+        // 🔹 8. Save workflow (cascade inserts the uploadAction automatically)
+        ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
+
+        log.info("✅ Bills uploaded for workflow {}, moved to TRAVEL_DESK_BILL_REVIEW step", workflowId);
+        return mapper.toDto(updatedWorkflow);
     }
 
+
+    
     @Override
     @Transactional
     public ApprovalWorkflowDTO markBookingCompleted(UUID workflowId, UUID travelDeskId, String comments, BookingDetailsDTO bookingDetails) {
+        // ✅ Simply delegate to the main logic
         return markBookingCompleted(workflowId, travelDeskId, comments);
     }
 
     @Override
     @Transactional
     public ApprovalWorkflowDTO markBookingCompleted(UUID workflowId, UUID travelDeskId, String comments) {
+        // 🔹 1. Fetch workflow
         ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
 
+        // 🔹 2. Validate step
         if (!STEP_TRAVEL_DESK_BOOKING.equals(workflow.getCurrentStep())) {
             throw new WorkflowException("Workflow is not in booking upload step. Current step: " + workflow.getCurrentStep());
         }
 
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(workflowId)
+        // 🔹 3. Create a new ApprovalAction linked to the workflow
+        ApprovalAction bookingAction = ApprovalAction.builder()
+                .workflow(workflow) // ✅ Set relationship, not ID
                 .travelRequestId(workflow.getTravelRequestId())
                 .approverRole(ROLE_TRAVEL_DESK)
                 .approverId(travelDeskId)
@@ -1031,10 +1174,15 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .step(STEP_TRAVEL_DESK_BOOKING)
                 .comments(comments != null ? comments : "All travel bookings completed and confirmed")
                 .actionTakenAt(LocalDateTime.now())
-                .build());
+                .build();
 
+        // ✅ Maintain bidirectional consistency
+        workflow.addAction(bookingAction);
+
+        // 🔹 4. Update travel request booking status (remote service call or DB update)
         updateTravelRequestBookingStatus(workflow.getTravelRequestId(), "BOOKED");
 
+        // 🔹 5. Find next workflow step
         List<WorkflowConfiguration> configs = configRepository
                 .findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder(workflow.getWorkflowType());
 
@@ -1043,6 +1191,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .findFirst()
                 .orElseThrow(() -> new WorkflowException("HR compliance step not found"));
 
+        // 🔹 6. Move workflow to next stage
         workflow.setPreviousStep(workflow.getCurrentStep());
         workflow.setCurrentStep(nextStep.getStepName());
         workflow.setCurrentApproverRole(nextStep.getApproverRole());
@@ -1050,11 +1199,13 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         workflow.setNextStep(getNextStep(configs, configs.indexOf(nextStep)));
         workflow.setDueDate(calculateDueDate(nextStep));
 
+        // 🔹 7. Send notification
         sendNextApprovalNotification(workflow);
 
+        // 🔹 8. Save workflow (cascade automatically saves action)
         ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
 
-        log.info("✅ Bookings marked as completed for workflow {}, moved to HR compliance", workflowId);
+        log.info("✅ Booking completed for workflow {}, moved to HR compliance step", workflowId);
         return mapper.toDto(updatedWorkflow);
     }
 
@@ -1085,21 +1236,27 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .build();
     }
 
+    
+    
     @Override
     @Transactional
     public ApprovalWorkflowDTO updateBookingDetails(UUID workflowId, UUID updatedBy, BookingDetailsDTO bookingDetails, String comments) {
+        // 🔹 1. Fetch the workflow
         ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
 
+        // 🔹 2. Validate workflow step
         if (!STEP_TRAVEL_DESK_BOOKING.equals(workflow.getCurrentStep())) {
             throw new WorkflowException("Cannot update booking details. Current step: " + workflow.getCurrentStep());
         }
 
+        // 🔹 3. Update booking details on the workflow entity
         workflow.setBookingDetails(convertBookingDetailsToJson(bookingDetails));
         workflow.setTotalBookingAmount(bookingDetails.getTotalBookingAmount());
 
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(workflowId)
+        // 🔹 4. Create new ApprovalAction linked to workflow
+        ApprovalAction updateAction = ApprovalAction.builder()
+                .workflow(workflow) // ✅ Proper relationship instead of workflowId
                 .travelRequestId(workflow.getTravelRequestId())
                 .approverRole(ROLE_TRAVEL_DESK)
                 .approverId(updatedBy)
@@ -1107,13 +1264,18 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .step(STEP_TRAVEL_DESK_BOOKING)
                 .comments(comments != null ? comments : "Booking details updated")
                 .actionTakenAt(LocalDateTime.now())
-                .build());
+                .build();
 
+        // ✅ Maintain bidirectional link
+        workflow.addAction(updateAction);
+
+        // 🔹 5. Save parent (cascade inserts the action)
         ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
 
         log.info("✅ Booking details updated for workflow {}", workflowId);
         return mapper.toDto(updatedWorkflow);
     }
+
 
     // ============ BOOKING MANAGEMENT HELPER METHODS ============
 
@@ -1171,58 +1333,68 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .toList();
     }
 
+    
+    
     // ============ TRAVEL BOOKING METHODS ============
 
     @Override
     @Transactional
     public TravelBookingDTO addBookingToWorkflow(UUID workflowId, UUID travelDeskId, TravelBookingDTO bookingDTO) {
+        // 🔹 1. Fetch the workflow
         ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException(MSG_WORKFLOW_NOT_FOUND));
 
+        // 🔹 2. Validate the current workflow step
         if (!STEP_TRAVEL_DESK_BOOKING.equals(workflow.getCurrentStep())) {
             throw new WorkflowException("Cannot add booking. Workflow is not in TRAVEL_DESK_BOOKING step. Current step: " + workflow.getCurrentStep());
         }
 
+        // 🔹 3. Get existing booking details (if any)
         BookingDetailsDTO existingBookingDetails = convertJsonToBookingDetails(workflow.getBookingDetails());
         if (existingBookingDetails == null) {
             existingBookingDetails = BookingDetailsDTO.builder().build();
         }
 
+        // 🔹 4. Append the new booking to the correct list based on type
         TravelBookingDTO.BookingType bookingType = bookingDTO.getBookingType();
-        if (bookingType == TravelBookingDTO.BookingType.FLIGHT) {
-            if (existingBookingDetails.getFlightBookings() == null) {
-                existingBookingDetails.setFlightBookings(new ArrayList<>());
+        switch (bookingType) {
+            case FLIGHT -> {
+                if (existingBookingDetails.getFlightBookings() == null)
+                    existingBookingDetails.setFlightBookings(new ArrayList<>());
+                existingBookingDetails.getFlightBookings().add(convertToFlightBooking(bookingDTO));
             }
-            existingBookingDetails.getFlightBookings().add(convertToFlightBooking(bookingDTO));
-        } else if (bookingType == TravelBookingDTO.BookingType.HOTEL) {
-            if (existingBookingDetails.getHotelBookings() == null) {
-                existingBookingDetails.setHotelBookings(new ArrayList<>());
+            case HOTEL -> {
+                if (existingBookingDetails.getHotelBookings() == null)
+                    existingBookingDetails.setHotelBookings(new ArrayList<>());
+                existingBookingDetails.getHotelBookings().add(convertToHotelBooking(bookingDTO));
             }
-            existingBookingDetails.getHotelBookings().add(convertToHotelBooking(bookingDTO));
-        } else if (bookingType == TravelBookingDTO.BookingType.CAR_RENTAL) {
-            if (existingBookingDetails.getCarRentals() == null) {
-                existingBookingDetails.setCarRentals(new ArrayList<>());
+            case CAR_RENTAL -> {
+                if (existingBookingDetails.getCarRentals() == null)
+                    existingBookingDetails.setCarRentals(new ArrayList<>());
+                existingBookingDetails.getCarRentals().add(convertToCarRental(bookingDTO));
             }
-            existingBookingDetails.getCarRentals().add(convertToCarRental(bookingDTO));
-        } else if (bookingType == TravelBookingDTO.BookingType.OTHER) {
-            if (existingBookingDetails.getOtherBookings() == null) {
-                existingBookingDetails.setOtherBookings(new ArrayList<>());
+            case OTHER -> {
+                if (existingBookingDetails.getOtherBookings() == null)
+                    existingBookingDetails.setOtherBookings(new ArrayList<>());
+                existingBookingDetails.getOtherBookings().add(convertToOtherBooking(bookingDTO));
             }
-            existingBookingDetails.getOtherBookings().add(convertToOtherBooking(bookingDTO));
-        } else {
-            throw new WorkflowException("Unknown booking type: " + bookingType);
+            default -> throw new WorkflowException("Unknown booking type: " + bookingType);
         }
 
-        Double currentTotal = existingBookingDetails.getTotalBookingAmount() != null ? 
-                existingBookingDetails.getTotalBookingAmount() : 0.0;
-        Double newBookingAmount = bookingDTO.getBookingAmount() != null ? bookingDTO.getBookingAmount() : 0.0;
+        // 🔹 5. Update total booking amount
+        double currentTotal = existingBookingDetails.getTotalBookingAmount() != null
+                ? existingBookingDetails.getTotalBookingAmount() : 0.0;
+        double newBookingAmount = bookingDTO.getBookingAmount() != null
+                ? bookingDTO.getBookingAmount() : 0.0;
         existingBookingDetails.setTotalBookingAmount(currentTotal + newBookingAmount);
 
+        // 🔹 6. Update workflow booking details
         workflow.setBookingDetails(convertBookingDetailsToJson(existingBookingDetails));
         workflow.setTotalBookingAmount(existingBookingDetails.getTotalBookingAmount());
 
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(workflowId)
+        // 🔹 7. Create a new ApprovalAction linked to the workflow (✅ entity, not ID)
+        ApprovalAction addBookingAction = ApprovalAction.builder()
+                .workflow(workflow)
                 .travelRequestId(workflow.getTravelRequestId())
                 .approverRole(ROLE_TRAVEL_DESK)
                 .approverId(travelDeskId)
@@ -1230,13 +1402,18 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .step(STEP_TRAVEL_DESK_BOOKING)
                 .comments("Added " + bookingDTO.getBookingType() + " booking: " + bookingDTO.getDetails())
                 .actionTakenAt(LocalDateTime.now())
-                .build());
+                .build();
 
+        // ✅ Maintain bidirectional link
+        workflow.addAction(addBookingAction);
+
+        // 🔹 8. Save workflow (cascade inserts ApprovalAction automatically)
         workflowRepository.save(workflow);
-        
-        log.info("✅ Booking added to workflow {} by travel desk {}", workflowId, travelDeskId);
+
+        log.info("✅ Added {} booking to workflow {} by travel desk {}", bookingDTO.getBookingType(), workflowId, travelDeskId);
         return bookingDTO;
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -1284,8 +1461,9 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
             throw new WorkflowException("Cannot update booking status. Workflow is not in TRAVEL_DESK_BOOKING step.");
         }
 
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(workflowId)
+        // Create the action with entity relationship
+        ApprovalAction updateAction = ApprovalAction.builder()
+                .workflow(workflow)
                 .travelRequestId(workflow.getTravelRequestId())
                 .approverRole(ROLE_TRAVEL_DESK)
                 .approverId(travelDeskId)
@@ -1293,14 +1471,16 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .step(STEP_TRAVEL_DESK_BOOKING)
                 .comments("Updated booking status to: " + status)
                 .actionTakenAt(LocalDateTime.now())
-                .build());
+                .build();
+
+        workflow.addAction(updateAction);
+        workflowRepository.save(workflow);
 
         log.info("✅ Booking status updated for workflow {} by travel desk {}", workflowId, travelDeskId);
-        
-        return TravelBookingDTO.builder()
-                .status(status)
-                .build();
+
+        return TravelBookingDTO.builder().status(status).build();
     }
+
 
     @Override
     @Transactional
@@ -1312,19 +1492,23 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
             throw new WorkflowException("Cannot delete booking. Workflow is not in TRAVEL_DESK_BOOKING step.");
         }
 
-        actionRepository.save(ApprovalAction.builder()
-                .workflowId(workflowId)
+        ApprovalAction deleteAction = ApprovalAction.builder()
+                .workflow(workflow)
                 .travelRequestId(workflow.getTravelRequestId())
                 .approverRole(ROLE_TRAVEL_DESK)
                 .approverId(travelDeskId)
                 .action("DELETE_BOOKING")
                 .step(STEP_TRAVEL_DESK_BOOKING)
-                .comments("Deleted booking from workflow")
+                .comments("Deleted booking from workflow (Booking ID: " + bookingId + ")")
                 .actionTakenAt(LocalDateTime.now())
-                .build());
+                .build();
+
+        workflow.addAction(deleteAction);
+        workflowRepository.save(workflow);
 
         log.info("✅ Booking deleted from workflow {} by travel desk {}", workflowId, travelDeskId);
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -1532,10 +1716,14 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     }
 
     private ApprovalHistoryDTO mapToApprovalHistoryDTO(ApprovalAction action) {
-        ApprovalWorkflow workflow = workflowRepository.findById(action.getWorkflowId()).orElse(null);
+        ApprovalWorkflow workflow = action.getWorkflow();
+        if (workflow == null) {
+            workflow = workflowRepository.findById(action.getTravelRequestId()).orElse(null);
+        }
+
         TravelRequestProxyDTO travelRequest = null;
         EmployeeProxyDTO employee = null;
-        
+
         if (workflow != null) {
             try {
                 travelRequest = fetchTravelRequestSafe(workflow.getTravelRequestId());
@@ -1546,10 +1734,10 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 log.warn("Failed to fetch details for action {}: {}", action.getActionId(), e.getMessage());
             }
         }
-        
+
         return ApprovalHistoryDTO.builder()
                 .actionId(action.getActionId())
-                .workflowId(action.getWorkflowId())
+                .workflowId(workflow != null ? workflow.getWorkflowId() : null)
                 .travelRequestId(action.getTravelRequestId())
                 .approverRole(action.getApproverRole())
                 .action(action.getAction())
@@ -1563,6 +1751,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .escalationReason(action.getEscalationReason())
                 .build();
     }
+
 
  // Add to your ApprovalWorkflowServiceImpl
     @Override
@@ -1616,11 +1805,14 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     }
 
     private TravelDeskHistoryDTO mapToTravelDeskHistoryDTO(ApprovalAction action) {
-        // Fetch additional context
-        ApprovalWorkflow workflow = workflowRepository.findById(action.getWorkflowId()).orElse(null);
+        ApprovalWorkflow workflow = action.getWorkflow();
+        if (workflow == null) {
+            workflow = workflowRepository.findById(action.getTravelRequestId()).orElse(null);
+        }
+
         TravelRequestProxyDTO travelRequest = null;
         EmployeeProxyDTO employee = null;
-        
+
         if (workflow != null) {
             try {
                 travelRequest = fetchTravelRequestSafe(workflow.getTravelRequestId());
@@ -1631,10 +1823,10 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 log.warn("Failed to fetch details for action {}: {}", action.getActionId(), e.getMessage());
             }
         }
-        
+
         return TravelDeskHistoryDTO.builder()
                 .actionId(action.getActionId())
-                .workflowId(action.getWorkflowId())
+                .workflowId(workflow != null ? workflow.getWorkflowId() : null)
                 .travelRequestId(action.getTravelRequestId())
                 .approverName(action.getApproverName())
                 .action(action.getAction())
@@ -1650,6 +1842,7 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .estimatedCost(workflow != null ? workflow.getEstimatedCost() : null)
                 .build();
     }
+
 
 
 
@@ -1711,34 +1904,31 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
     @Transactional
     public ApprovalWorkflowDTO progressToTravelDeskReview(UUID workflowId, UUID submittedBy, String action) {
         log.info("Progressing workflow {} to Travel Desk for bill review, submitted by: {}", workflowId, submittedBy);
-        
+
         ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException("Workflow not found: " + workflowId));
-        
-        // Validate current state - should be in employee bill submission stage
+
         if (!"EMPLOYEE_BILL_UPLOAD".equals(workflow.getCurrentStep())) {
             throw new IllegalStateException("Workflow not in bill submission stage. Current step: " + workflow.getCurrentStep());
         }
-        
-        // Progress to Travel Desk bill review step
+
         workflow.setCurrentStep("TRAVEL_DESK_BILL_REVIEW");
-        workflow.setStatus("PENDING_BILL_REVIEW"); // ✅ Fixed: Use 'status' instead of 'currentStatus'
+        workflow.setStatus("PENDING_BILL_REVIEW");
         workflow.setCurrentApproverRole("TRAVEL_DESK");
-        
-        // Determine Travel Desk approver
+
         TravelRequestProxyDTO travelRequest = fetchTravelRequestSafe(workflow.getTravelRequestId());
         UUID travelDeskApproverId = determineApproverId(
-            WorkflowConfiguration.builder()
-                .approverRole("TRAVEL_DESK")
-                .stepName("TRAVEL_DESK_BILL_REVIEW")
-                .build(),
-            travelRequest
+                WorkflowConfiguration.builder()
+                        .approverRole("TRAVEL_DESK")
+                        .stepName("TRAVEL_DESK_BILL_REVIEW")
+                        .build(),
+                travelRequest
         );
         workflow.setCurrentApproverId(travelDeskApproverId);
-        
-        // Record the action in history
+
+        // Create the ApprovalAction with proper JPA mapping
         ApprovalAction approvalAction = ApprovalAction.builder()
-                .workflowId(workflow.getWorkflowId()) // ✅ Fixed: Use workflowId
+                .workflow(workflow)
                 .travelRequestId(workflow.getTravelRequestId())
                 .approverRole("EMPLOYEE")
                 .approverId(submittedBy)
@@ -1747,44 +1937,42 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .comments("Bills submitted for Travel Desk review")
                 .actionTakenAt(LocalDateTime.now())
                 .build();
-        actionRepository.save(approvalAction);
-        
-        ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
-        
-        // Send notification to Travel Desk
-        sendNextApprovalNotification(updatedWorkflow);
-        
-        log.info("Workflow {} progressed to Travel Desk bill review successfully. Assigned to: {}", 
-                workflowId, travelDeskApproverId);
-        
-        return mapper.toDto(updatedWorkflow);
+
+        workflow.addAction(approvalAction);
+        workflowRepository.save(workflow);
+
+        sendNextApprovalNotification(workflow);
+        log.info("✅ Workflow {} progressed to Travel Desk bill review successfully. Assigned to: {}", workflowId, travelDeskApproverId);
+
+        return mapper.toDto(workflow);
     }
+
     
     @Override
     @Transactional
     public ApprovalWorkflowDTO reviewBills(UUID workflowId, UUID travelDeskId, boolean approved, String comments) {
         log.info("Travel Desk {} reviewing bills for workflow {}: approved={}", travelDeskId, workflowId, approved);
-        
+
         ApprovalWorkflow workflow = workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException("Workflow not found: " + workflowId));
-        
-        // Validate current state - should be in Travel Desk bill review stage
+
         if (!"TRAVEL_DESK_BILL_REVIEW".equals(workflow.getCurrentStep())) {
             throw new IllegalStateException("Workflow not in Travel Desk bill review stage");
         }
-        
-        // Validate Travel Desk authorization
+
         if (!travelDeskId.equals(workflow.getCurrentApproverId())) {
             throw new WorkflowException("Travel Desk user not authorized to review these bills");
         }
-        
+
         String action = approved ? "APPROVE_BILLS" : "REJECT_BILLS";
-        String reviewComments = comments != null ? comments : 
-            (approved ? "Bills approved by Travel Desk" : "Bills rejected by Travel Desk");
-        
-        // Record the review action
-        ApprovalAction approvalAction = ApprovalAction.builder()
-                .workflowId(workflow.getWorkflowId())
+        String reviewComments = comments != null
+                ? comments
+                : approved
+                    ? "Bills approved by Travel Desk"
+                    : "Bills rejected by Travel Desk";
+
+        ApprovalAction reviewAction = ApprovalAction.builder()
+                .workflow(workflow)
                 .travelRequestId(workflow.getTravelRequestId())
                 .approverRole("TRAVEL_DESK")
                 .approverId(travelDeskId)
@@ -1793,21 +1981,21 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .comments(reviewComments)
                 .actionTakenAt(LocalDateTime.now())
                 .build();
-        actionRepository.save(approvalAction);
-        
+
+        workflow.addAction(reviewAction);
+
         if (approved) {
-            // Progress to next step (Finance approval for bills)
             progressToNextStepAfterBillReview(workflow);
         } else {
-            // Reject the bills and return to employee
             handleBillRejection(workflow, reviewComments);
         }
-        
-        ApprovalWorkflow updatedWorkflow = workflowRepository.save(workflow);
-        log.info("Travel Desk bill review completed for workflow {}: {}", workflowId, approved ? "APPROVED" : "REJECTED");
-        
-        return mapper.toDto(updatedWorkflow);
+
+        workflowRepository.save(workflow);
+
+        log.info("✅ Travel Desk bill review completed for workflow {}: {}", workflowId, approved ? "APPROVED" : "REJECTED");
+        return mapper.toDto(workflow);
     }
+
 
     private void progressToNextStepAfterBillReview(ApprovalWorkflow workflow) {
         List<WorkflowConfiguration> configs = configRepository
@@ -1874,5 +2062,9 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
         log.info("Found {} pending bill reviews for Travel Desk user {}", workflows.size(), travelDeskId);
         return workflows.stream().map(mapper::toDto).toList();
     }
+
+
+
+
     
 }

@@ -8,12 +8,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.bwc.travel_request_management.client.EmployeeServiceClient;
+import com.bwc.travel_request_management.client.PolicyServiceClient;
 import com.bwc.travel_request_management.client.WorkflowServiceClient;
 import com.bwc.travel_request_management.dto.TravelRequestDTO;
 import com.bwc.travel_request_management.dto.TravelRequestProxyDTO;
@@ -38,6 +41,8 @@ public class TravelRequestServiceImpl implements TravelRequestService {
     private final TravelRequestRepository repository;
     private final TravelRequestManualMapper mapper;
     private final WorkflowServiceClient workflowServiceClient;
+    private final PolicyServiceClient policyServiceClient;
+
 
     /**
      * Injecting a self proxy is necessary for internal @Transactional calls.
@@ -55,10 +60,11 @@ public class TravelRequestServiceImpl implements TravelRequestService {
         log.info("Creating new travel request for employee: {}", dto.getEmployeeId());
 
         var employee = employeeServiceClient.getEmployee(dto.getEmployeeId());
-        log.info("Employee {} fetched successfully with {} project(s)", employee.getFullName(),
+        log.info("Employee {} fetched successfully with {} project(s)",
+                employee.getFullName(),
                 employee.getProjects() != null ? employee.getProjects().size() : 0);
 
-        // ✅ Validate that employee is assigned to this project
+        // ✅ Validate project assignment
         boolean isAssigned = employee.getProjects() != null && employee.getProjects().stream()
                 .anyMatch(p -> p.getProjectId().equals(dto.getProjectId()));
 
@@ -68,16 +74,48 @@ public class TravelRequestServiceImpl implements TravelRequestService {
                     employee.getFullName(), dto.getProjectId()));
         }
 
+        // ✅ Check overlapping requests
         if (self.hasOverlappingRequest(dto.getEmployeeId(), dto.getStartDate(), dto.getEndDate())) {
             throw new IllegalArgumentException("Employee already has a travel request for the specified dates");
         }
 
+        // ✅ Step 1: Fetch active policy ID from policy-service
+        UUID policyId = null;
+        try {
+            policyId = policyServiceClient.getActiveGradePolicyId(
+                    dto.getTravelDestination(),  // city
+                    null,                        // cityCategory (if applicable)
+                    employee.getLevel()          // employee grade, e.g., "L3"
+            );
+
+            log.info("Fetched active policy ID: {}", policyId);
+        } catch (feign.FeignException.NotFound e) {
+            log.warn("⚠️ No active policy found for city='{}', grade='{}'", 
+                     dto.getTravelDestination(), employee.getLevel());
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    String.format("No active policy found for destination '%s' and grade '%s'",
+                            dto.getTravelDestination(), employee.getLevel())
+            );
+        } catch (Exception e) {
+            log.error("❌ Failed to fetch active policy for employee {}: {}", dto.getEmployeeId(), e.getMessage(), e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error while fetching active policy for the given destination and grade"
+            );
+        }
+
+        // ✅ Step 2: Create and save TravelRequest entity
         TravelRequest entity = mapper.toEntity(dto);
         entity.setStatus("DRAFT");
+        entity.setPolicyId(policyId);
+
         TravelRequest saved = repository.save(entity);
 
+        // ✅ Step 3: Build proxy DTO for workflow creation
         TravelRequestProxyDTO travelRequestProxy = TravelRequestProxyDTO.builder()
                 .travelRequestId(saved.getTravelRequestId())
+                .policyId(policyId)
                 .employeeId(saved.getEmployeeId())
                 .projectId(saved.getProjectId())
                 .managerId(employee.getManagerId())
@@ -85,9 +123,11 @@ public class TravelRequestServiceImpl implements TravelRequestService {
                 .endDate(saved.getEndDate())
                 .purpose(saved.getPurpose())
                 .estimatedBudget(saved.getEstimatedBudget())
+                .travelDestination(saved.getTravelDestination())
+                .origin(saved.getOrigin())
                 .build();
 
-        // ✅ Execute after transaction commit
+        // ✅ Step 4: Trigger workflow after commit
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
@@ -102,9 +142,11 @@ public class TravelRequestServiceImpl implements TravelRequestService {
             }
         });
 
-        log.info("Travel request created successfully with ID: {}", saved.getTravelRequestId());
+        log.info("✅ Travel request created successfully with ID: {}", saved.getTravelRequestId());
         return mapper.toDto(saved);
     }
+
+
 
     @Override
     @Transactional(readOnly = true)

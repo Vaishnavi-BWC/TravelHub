@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.bwc.approval_workflow_service.dto.ApprovalRequestDTO;
-import com.bwc.approval_workflow_service.dto.ApprovalWorkflowDTO;
 import com.bwc.approval_workflow_service.dto.ApprovalHistoryDTO;
+import com.bwc.approval_workflow_service.dto.ApprovalWorkflowDTO;
+import com.bwc.approval_workflow_service.dto.ManagerActionRequestDTO;
 import com.bwc.approval_workflow_service.exception.AuthenticationException;
 import com.bwc.approval_workflow_service.service.ApprovalWorkflowService;
 
@@ -52,23 +52,21 @@ public class ManagerApprovalController {
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<ApprovalWorkflowDTO> takeManagerAction(
             @PathVariable UUID workflowId,
-            @RequestBody ApprovalRequestDTO approvalRequest,
-            HttpServletRequest request) {
+            @RequestBody ManagerActionRequestDTO request,
+            HttpServletRequest httpRequest) {
 
-        // Extract manager ID from security context (set by gateway)
-        String managerIdHeader = request.getHeader("X-User-Id");
+        String managerIdHeader = httpRequest.getHeader("X-User-Id");
         if (managerIdHeader == null) {
             throw new AuthenticationException("Manager ID not found in request headers");
         }
-        
-        UUID managerId = UUID.fromString(managerIdHeader);
-        
-        approvalRequest.setWorkflowId(workflowId);
-        approvalRequest.setApproverRole("MANAGER");
-        approvalRequest.setApproverId(managerId);
-        
-        return ResponseEntity.ok(workflowService.processApproval(approvalRequest));
+
+        request.setWorkflowId(workflowId);
+        request.setApproverId(UUID.fromString(managerIdHeader));
+
+        ApprovalWorkflowDTO result = workflowService.takeManagerAction(request);
+        return ResponseEntity.ok(result);
     }
+
     
     @GetMapping("/approvals/history")
     @PreAuthorize("hasRole('MANAGER')")

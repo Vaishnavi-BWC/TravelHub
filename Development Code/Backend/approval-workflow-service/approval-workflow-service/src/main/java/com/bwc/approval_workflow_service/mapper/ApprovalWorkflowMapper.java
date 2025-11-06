@@ -15,7 +15,7 @@ public class ApprovalWorkflowMapper {
         return ApprovalWorkflowDTO.builder()
                 .workflowId(entity.getWorkflowId())
                 .travelRequestId(entity.getTravelRequestId())
-                .workflowType(entity.getWorkflowType())                 // ✅ added
+                .workflowType(entity.getWorkflowType())
                 .currentStep(entity.getCurrentStep())
                 .currentApproverRole(entity.getCurrentApproverRole())
                 .currentApproverId(entity.getCurrentApproverId())
@@ -23,11 +23,10 @@ public class ApprovalWorkflowMapper {
                 .previousStep(entity.getPreviousStep())
                 .nextStep(entity.getNextStep())
                 .priority(entity.getPriority())
-                .estimatedCost(entity.getEstimatedCost())               // ✅ added
-                .actualCost(entity.getActualCost())                     // ✅ added
-                .isOverpriced(entity.getIsOverpriced())                 // ✅ added
-                .overpricedReason(entity.getOverpricedReason())         // ✅ added
-//                .comments(entity.getComments())                         // ✅ added
+                .estimatedCost(entity.getEstimatedCost())
+                .actualCost(entity.getActualCost())
+                .isOverpriced(entity.getIsOverpriced())
+                .overpricedReason(entity.getOverpricedReason())
                 .dueDate(entity.getDueDate())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
@@ -40,7 +39,8 @@ public class ApprovalWorkflowMapper {
 
         return ApprovalActionDTO.builder()
                 .actionId(entity.getActionId())
-                .workflowId(entity.getWorkflowId())
+                // ✅ FIXED: Use the linked workflow's ID safely
+                .workflowId(entity.getWorkflow() != null ? entity.getWorkflow().getWorkflowId() : null)
                 .travelRequestId(entity.getTravelRequestId())
                 .approverRole(entity.getApproverRole())
                 .approverId(entity.getApproverId())
@@ -50,8 +50,8 @@ public class ApprovalWorkflowMapper {
                 .comments(entity.getComments())
                 .escalationReason(entity.getEscalationReason())
                 .isEscalated(entity.getIsEscalated())
-                .amountApproved(entity.getAmountApproved())             // ✅ ensure exists
-                .reimbursementAmount(entity.getReimbursementAmount())   // ✅ ensure exists
+                .amountApproved(entity.getAmountApproved())
+                .reimbursementAmount(entity.getReimbursementAmount())
                 .actionTakenAt(entity.getActionTakenAt())
                 .createdAt(entity.getCreatedAt())
                 .build();
