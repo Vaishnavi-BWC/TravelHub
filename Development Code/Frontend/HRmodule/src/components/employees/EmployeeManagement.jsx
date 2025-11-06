@@ -145,12 +145,12 @@ const EmployeeManagement = () => {
       {/* Main Content */}
       {activeView === 'employee-list' && (
         <>
-          <div className="detailHeader">
+          {/* <div className="detailHeader">
             <h2>Employee Management</h2>
             <button onClick={handleAddEmployee} className="btn btnPrimary addempbtn">
               <i className="fas fa-plus"></i> Add Employee
             </button>
-          </div>
+          </div> */}
           <EmployeeList
             onEditEmployee={handleEditClick}
           />

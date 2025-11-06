@@ -8,7 +8,9 @@
 }
 
 .content {
-  padding: var(--space-2xl);
+  /* padding: var(--space-2xl); */
+  padding-top: 0.5%;
+  /* border: 1px solid #000; */
   flex: 1;
   /* border: 1px solid #000; */
 }

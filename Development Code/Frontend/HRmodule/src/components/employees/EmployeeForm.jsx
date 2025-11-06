@@ -279,8 +279,8 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
   return (
     <div className="form">
       <div className="formHeader">
-        <h1 className="formTitle">Add New Employee</h1>
-        <p className="formSubtitle">Fill in the details below to add a new employee to the system.</p>
+        <h1 className="formTitle">Create Employee Profile</h1>
+        <p className="formSubtitle">Onboard new talent seamlessly into the BrainWave family.</p>
       </div>
 
       {successMessage && (
@@ -385,7 +385,7 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
                 className="formControl"
                 disabled={isLoadingState || managersLoading}
               >
-                <option value="">Select Manager</option>
+                <option value="" className='select'>Select Manager</option>
                 {managers.map(manager => (
                   <option key={manager.managerId} value={manager.managerId}>
                     {manager.fullName} - {manager.department}
@@ -508,8 +508,8 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
               <div className="formGroup">
                 <label htmlFor="projects">Project Name</label>
                 <div className="dropdownContainer">
-                  <div className="dropdownTrigger" style={{ opacity: 0.6 }}>
-                    <span className="dropdownPlaceholder">Select a manager first</span>
+                  <div className="dropdownTrigger" style={{ opacity: 0.6 ,backgroundColor: '#f9f9f9',color: '#999', cursor: 'not-allowed' ,fontSize:'15px'}}>
+                    <span className="dropdownPlaceholder"  style={{fontSize:'1 rem'}}>Select a manager first</span>
                     <i className="fas fa-chevron-down"></i>
                   </div>
                 </div>

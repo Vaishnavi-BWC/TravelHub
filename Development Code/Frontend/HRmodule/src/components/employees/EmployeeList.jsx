@@ -10,9 +10,9 @@ import { useApp } from '../../contexts/AppContext';
 
 const EmployeeList = () => {
   const navigate = useNavigate();
-  const { 
-    employees, 
-    loading, 
+  const {
+    employees,
+    loading,
     error,
     updateEmployee,
     deactivateEmployee,
@@ -25,14 +25,14 @@ const EmployeeList = () => {
   } = useEmployees();
 
   const { showNotification } = useApp();
-  
+
   const [employeeFilter, setEmployeeFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
+
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  
+
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(null);
   const [statusAnimations, setStatusAnimations] = useState({});
 
@@ -45,6 +45,11 @@ const EmployeeList = () => {
       active: emp._original?.active
     })));
   }, [employees]);
+
+  // Add this function to handle navigation to add employee page
+  const handleAddEmployee = useCallback(() => {
+    navigate('/employees/new'); // Or whatever your add employee route is
+  }, [navigate]);
 
   const handleEditClick = useCallback((employee) => {
     setSelectedEmployee(employee);
@@ -72,7 +77,7 @@ const EmployeeList = () => {
   const handleStatusUpdate = useCallback(async (employeeId, currentStatus) => {
     try {
       setStatusUpdateLoading(employeeId);
-      
+
       // Start animation
       setStatusAnimations(prev => ({
         ...prev,
@@ -89,9 +94,9 @@ const EmployeeList = () => {
         result = await activateEmployee(employeeId);
         showNotification('Employee activated successfully!', 'success');
       }
-      
+
       console.log('✅ Status update completed:', result);
-      
+
       // Success animation
       setStatusAnimations(prev => ({
         ...prev,
@@ -106,11 +111,11 @@ const EmployeeList = () => {
           return newState;
         });
       }, 1500);
-      
+
     } catch (error) {
       console.error('❌ Error updating employee status:', error);
       showNotification('Failed to update employee status: ' + error.message, 'error');
-      
+
       // Error animation
       setStatusAnimations(prev => ({
         ...prev,
@@ -132,16 +137,16 @@ const EmployeeList = () => {
 
   const filteredEmployees = useMemo(() => {
     let filtered = employees;
-    
+
     if (employeeFilter !== "All") {
       filtered = filtered.filter(e => {
         const status = e.status?.toLowerCase();
         return status === employeeFilter.toLowerCase();
       });
     }
-    
+
     if (searchTerm) {
-      filtered = filtered.filter(e => 
+      filtered = filtered.filter(e =>
         e.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -149,7 +154,7 @@ const EmployeeList = () => {
         e.employee_code?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     console.log('🔍 Filtered employees count:', filtered.length);
     return filtered;
   }, [employees, employeeFilter, searchTerm]);
@@ -234,25 +239,35 @@ const EmployeeList = () => {
             </button>
           ))}
         </div>
-        
+
         <div className="searchAndControls">
           <div className="searchBox smooth-transition">
             <i className="fas fa-search searchIcon"></i>
-            <input 
-              type="text" 
-              placeholder="Search employees..." 
+            <input
+              type="text"
+              placeholder="Search employees..."
               className="searchInput"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
-          <button 
+
+          {/* Add Employee Button - Added here */}
+
+
+          <button
             onClick={handleRefresh}
             className="btn btnSecondary smooth-transition"
             disabled={loading}
           >
             <i className="fas fa-refresh"></i> Refresh
+          </button>
+          <button
+            onClick={handleAddEmployee}
+            className="btn btnPrimary smooth-transition"
+            disabled={loading}
+          >
+            <i className="fas fa-plus"></i> Add Employee
           </button>
         </div>
       </div>
@@ -287,10 +302,10 @@ const EmployeeList = () => {
                     const currentStatus = emp.status;
                     const isUpdating = statusUpdateLoading === emp.user_id;
                     const animationClass = getStatusAnimationClass(emp.user_id);
-                    
+
                     return (
-                      <tr 
-                        key={emp.user_id} 
+                      <tr
+                        key={emp.user_id}
                         className={`table-row smooth-fade-in row-animation-${index % 5}`}
                         style={{ animationDelay: `${(index % 10) * 0.05}s` }}
                       >
@@ -314,8 +329,8 @@ const EmployeeList = () => {
                         </td>
                         <td className={`smooth-slide-in ${animationClass}`}>
                           <div className="status-cell">
-                            <Badge 
-                              variant={currentStatus} 
+                            <Badge
+                              variant={currentStatus}
                               className={`status-badge smooth-transition ${animationClass}`}
                             >
                               {currentStatus ? currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1) : 'Unknown'}
@@ -329,9 +344,9 @@ const EmployeeList = () => {
                               {isUpdating ? (
                                 <i className="fas fa-spinner fa-spin pulse-animation"></i>
                               ) : currentStatus === 'active' ? (
-                                <i className="fas fa-toggle-on toggle-icon" style={{color: '#28a745', fontSize: '16px'}}></i>
+                                <i className="fas fa-toggle-on toggle-icon" style={{ color: '#28a745', fontSize: '16px' }}></i>
                               ) : (
-                                <i className="fas fa-toggle-off toggle-icon" style={{color: '#6c757d', fontSize: '16px'}}></i>
+                                <i className="fas fa-toggle-off toggle-icon" style={{ color: '#6c757d', fontSize: '16px' }}></i>
                               )}
                             </button>
                           </div>
@@ -362,13 +377,13 @@ const EmployeeList = () => {
                 </tbody>
               </table>
             </div>
-            
+
             {filteredEmployees.length === 0 && !isTransitioning && (
               <div className="noData smooth-fade-in">
                 <i className="fas fa-users"></i>
                 <p>No employees found</p>
                 {searchTerm && (
-                  <button 
+                  <button
                     onClick={() => setSearchTerm("")}
                     className="btn btnSecondary smooth-transition"
                   >
@@ -386,7 +401,7 @@ const EmployeeList = () => {
           <div className="paginationInfo">
             <span>Showing {filteredEmployees.length} of {pagination.totalElements} employees</span>
           </div>
-          
+
           <div className="paginationButtons">
             <button
               onClick={() => handlePageChange(1)}
@@ -402,7 +417,7 @@ const EmployeeList = () => {
             >
               <i className="fas fa-angle-left"></i>
             </button>
-            
+
             {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
               let pageNum;
               if (pagination.totalPages <= 5) {
@@ -414,7 +429,7 @@ const EmployeeList = () => {
               } else {
                 pageNum = pagination.currentPage - 2 + i;
               }
-              
+
               return (
                 <button
                   key={pageNum}
@@ -426,7 +441,7 @@ const EmployeeList = () => {
                 </button>
               );
             })}
-            
+
             <button
               onClick={handleNextPage}
               disabled={pagination.currentPage >= pagination.totalPages - 1 || loading || isTransitioning}

@@ -43,7 +43,7 @@
 .pending-approvals-table {
   width: 100%;
   border-collapse: collapse;
-  min-height: 200px;
+  /* min-height: 200px; */
 }
 
 .pending-approvals-table th {
