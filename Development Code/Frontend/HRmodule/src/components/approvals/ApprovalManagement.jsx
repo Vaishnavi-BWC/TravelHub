@@ -75,10 +75,10 @@ const ApprovalManagement = () => {
     case 'approval-requests':
       return (
         <div className="content">
-          <div className="detailHeader">
+          {/* <div className="detailHeader">
             <h2>HR Approval Requests</h2>
             <p>Manage and approve travel requests</p>
-          </div>
+          </div> */}
           <ApprovalList
             approvals={approvals}
             onRequestSelect={handleRequestSelect}

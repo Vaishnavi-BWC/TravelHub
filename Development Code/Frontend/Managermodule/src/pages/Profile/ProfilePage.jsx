@@ -98,13 +98,14 @@ const handleSaveClick = async () => {
 
   return (
     <div className="profile-page">
-      <div className="page-header">
+      {/* <div className="page-header">
         <h2>Manager Profile</h2>
         <p>Manage your personal information and account settings</p>
-      </div>
+      </div> */}
 
       <div className="profile-container">
         <div className="card profile-card">
+            <h3 style={{textAlign:"center"}}>Manager Profile</h3>
           <div className="card-body">
             <img
               src={user.avatar}

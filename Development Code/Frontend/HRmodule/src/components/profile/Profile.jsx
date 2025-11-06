@@ -117,14 +117,15 @@ const Profile = () => {
 
   return (
     <div className="content contentprofile">
-      <div className="detailHeader">
+      {/* <div className="detailHeader">
         <h2>HR Manager Profile</h2>
         <p>Manage your personal information and account settings</p>
-      </div>
+      </div> */}
 
       <div className="profileContainer">
         <div className="card profileCard">
           <div className="cardBody">
+            <h3>My Profile</h3>
             <img
               src={avatar}
               alt="Profile"

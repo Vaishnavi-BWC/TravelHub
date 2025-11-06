@@ -6,12 +6,12 @@
 {
     display: flex;
   /* border: 1px solid #000; */
-  margin-left: 5%;
+  margin-left: 2%;
   gap:1%;
 }
-.profile-page .page-header
+/* .profile-page .page-header
 {
-    /* border: 1px solid #000; */
+    border: 1px solid #000;
     text-align: left;
     margin-top: 2%;
     margin-left: 2%;
@@ -19,11 +19,12 @@
 .profile-page .page-header h2
 {
     font-size: 30px;
-}
+} */
 .profile-page .profile-card
 {
         /* border: 1px solid #000; */
         width: 35%;
+        margin-top: 2%;
 }
 .profile-card .card-body
 {
@@ -52,6 +53,7 @@
 .profile-container .profile-details
 {
     width: 60%;
+    margin-top: 2%;
 }
 .changephoto
 {

@@ -102,7 +102,7 @@
 .travel-request-list-table {
   width: 100%;
   border-collapse: collapse;
-  min-height: 300px;
+  /* min-height: 300px; */
 }
 
 .travel-request-list-table th {
@@ -127,6 +127,7 @@
 .travel-request-list-row {
   cursor: pointer;
   transition: all 0.2s ease;
+  padding: 10px;
 }
 
 .travel-request-list-row:hover {
