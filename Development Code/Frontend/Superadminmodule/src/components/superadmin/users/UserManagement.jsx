@@ -8,7 +8,7 @@ import {
   FaToggleOn, FaToggleOff, FaSpinner,
   FaAngleLeft, FaAngleRight, FaAngleDoubleLeft, FaAngleDoubleRight
 } from 'react-icons/fa';
-import styles from '../superadmin.module.css';
+
 import '../styles/UserManagement.css';
 
 const UserManagement = () => {
@@ -184,17 +184,14 @@ const UserManagement = () => {
   }, [statusAnimations]);
 
   return (
-    <div className={styles.container}>
-      <h2> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Employee Management</h2>
-      <button
-        className={`${styles.primaryBtn} primarybtnadd`}
-        onClick={handleAddUser}
-      >
-        <FaPlus className={styles.btnIcon} />
-        Add Employee
-      </button>
-
-      <div className={`${styles.card} maincard`}>
+    <div className="container">
+      <div className="card maincard">
+         <div className="card-header">
+        <div className="header-content">
+          <h3 style={{fontWeight:'500',marginBottom:'10px'}}>Employee Management</h3>
+          <h6 style={{ color: 'gray', fontSize: '15px', fontWeight: '400' }}>Streamline workforce data and maintain employee records efficiently.</h6>
+        </div>
+      </div>
         <div className="cardheaderuser">
           <div className="filterButtons">
             {["All", "active", "inactive"].map((x) => (
@@ -209,8 +206,8 @@ const UserManagement = () => {
           </div>
 
           <div className="headerActions">
-            <div className={styles.searchBox}>
-              <FaSearch className={styles.searchIcon} />
+            <div className="searchBox">
+              <FaSearch className="searchIcon"/>
               <input
                 type="text"
                 placeholder="Search employees..."
@@ -219,27 +216,33 @@ const UserManagement = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-
+            <button
+              className="primaryBtn primarybtnadd"
+              onClick={handleAddUser}
+            >
+              <FaPlus className="btn-icon" />
+              Add Employee
+            </button>
             <button
               onClick={handleRefresh}
-              className={`${styles.secondaryBtn} btnSecondary smooth-transition`}
+              className="secondaryBtn btnSecondary smooth-transition"
               disabled={loading}
             >
-              <FaSync className={styles.btnIcon} />
+              <FaSync className="btn-icon" />
               Refresh
             </button>
           </div>
         </div>
 
-        <div className={`${styles.cardBody} ${isTransitioning ? 'page-transition' : ''}`}>
+        <div className={`cardBody ${isTransitioning ? 'page-transition' : ''}`}>
           {loading ? (
             <div className="loadingState smooth-fade-in">
-              <FaSpinner className="fas fa-spinner fa-spin" />
+              <FaSpinner className="spinner-icon fa-spin" />
               Loading employees...
             </div>
           ) : error ? (
             <div className="errorState smooth-fade-in">
-              <i className="fas fa-exclamation-circle"></i> Error: {error}
+              <span className="error-icon">⚠️</span> Error: {error}
             </div>
           ) : (
             <>
@@ -289,41 +292,45 @@ const UserManagement = () => {
                           </td>
                           <td className={`smooth-slide-in ${animationClass}`}>
                             <div className="status-cell">
-                              <span className="status-text">
+                              {/* UPDATED: Added active/inactive class to status text */}
+                              <span className={`status-text ${currentStatus === 'active' ? 'active' : 'inactive'}`}>
                                 {currentStatus ? currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1) : 'Unknown'}
-                              </span>   <button
-                                className={`btnIcon status-toggle smooth-transition ${animationClass}`}
+                              </span>
+                              <button
+                                className={`action-btn status-toggle smooth-transition ${animationClass}`}
                                 onClick={() => handleStatusUpdate(emp.user_id, currentStatus)}
                                 disabled={isUpdating || loading}
                                 title={currentStatus === 'active' ? 'Deactivate Employee' : 'Activate Employee'}
                               >
                                 {isUpdating ? (
-                                  <FaSpinner className="fas fa-spinner fa-spin pulse-animation" />
+                                  <FaSpinner className="spinner-icon fa-spin pulse-animation" />
                                 ) : currentStatus === 'active' ? (
-                                  <FaToggleOn className="toggle-icon" style={{ color: '#28a745', fontSize: '16px' }} />
+                                  <FaToggleOn className="toggle-icon active" />
                                 ) : (
-                                  <FaToggleOff className="toggle-icon" style={{ color: '#6c757d', fontSize: '16px' }} />
+                                  <FaToggleOff className="toggle-icon inactive" />
                                 )}
                               </button>
                             </div>
                           </td>
                           <td className="smooth-slide-in">
                             <div className="actionButtons">
+                              {/* UPDATED: Added view-btn class and view-icon class */}
                               <button
-                                className="btnIcon smooth-scale"
+                                className="action-btn view-btn smooth-scale"
                                 onClick={() => handleViewEmployee(emp)}
                                 title="View Details"
                                 disabled={isUpdating}
                               >
-                                <FaEye className="fas fa-eye" />
+                                <FaEye className="action-icon view-icon" />
                               </button>
+                              {/* UPDATED: Added edit-btn class and edit-icon class */}
                               <button
-                                className="btnIcon smooth-scale"
+                                className="action-btn edit-btn smooth-scale"
                                 onClick={() => handleEditEmployee(emp)}
                                 title="Edit Employee"
                                 disabled={isUpdating}
                               >
-                                <FaEdit className="fas fa-edit" />
+                                <FaEdit className="action-icon edit-icon" />
                               </button>
                             </div>
                           </td>
@@ -336,7 +343,7 @@ const UserManagement = () => {
 
               {filteredEmployees.length === 0 && !isTransitioning && (
                 <div className="noData smooth-fade-in">
-                  <i className="fas fa-users"></i>
+                  <span className="no-data-icon">👥</span>
                   <p>No employees found</p>
                   {searchTerm && (
                     <button
@@ -378,14 +385,14 @@ const UserManagement = () => {
               <button
                 onClick={() => handlePageChange(1)}
                 disabled={pagination.currentPage === 0 || loading || isTransitioning}
-                className="btn btnSecondary smooth-transition"
+                className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleDoubleLeft />
               </button>
               <button
                 onClick={handlePrevPage}
                 disabled={pagination.currentPage === 0 || loading || isTransitioning}
-                className="btn btnSecondary smooth-transition"
+                className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleLeft />
               </button>
@@ -406,7 +413,7 @@ const UserManagement = () => {
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum + 1)}
-                    className={`btn smooth-transition ${pagination.currentPage === pageNum ? 'btnPrimary' : 'btnSecondary'}`}
+                    className={`pagibtn smooth-transition ${pagination.currentPage === pageNum ? 'btnPrimary' : 'btnSecondary'}`}
                     disabled={loading || isTransitioning}
                   >
                     {pageNum + 1}
@@ -417,14 +424,14 @@ const UserManagement = () => {
               <button
                 onClick={handleNextPage}
                 disabled={pagination.currentPage >= pagination.totalPages - 1 || loading || isTransitioning}
-                className="btn btnSecondary smooth-transition"
+                className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleRight />
               </button>
               <button
                 onClick={() => handlePageChange(pagination.totalPages)}
                 disabled={pagination.currentPage >= pagination.totalPages - 1 || loading || isTransitioning}
-                className="btn btnSecondary smooth-transition"
+                className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleDoubleRight />
               </button>

@@ -16,10 +16,11 @@
 }
 
 .content h2 {
-  font-size: var(--font-size-3xl);
+  font-size: var(  --font-size-xl);
   color: var(--text-primary);
-  margin-bottom: var(--space-sm);
+  /* margin-bottom: var(--space-sm); */
   font-weight: 700;
+  margin-left: 1%;
 }
 
 .content > p {
@@ -36,7 +37,6 @@
   /* align-items: center; */
   margin-bottom: var(--space-xl);
 }
-
 /* Dashboard Grid */
 .dashboard-grid {
   display: grid;

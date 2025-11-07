@@ -1,6 +1,6 @@
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useApprovals } from '../../hooks/useApprovals'; // Import the hook directly
+import { useParams, useNavigate } from 'react-router-dom'; // Make sure this import is correct
+import { useApprovals } from '../../hooks/useApprovals';
 import ApprovalList from './ApprovalList';
 import ApprovalDetail from './ApprovalDetail';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -9,7 +9,6 @@ const ApprovalManagement = () => {
   const { requestId } = useParams();
   const navigate = useNavigate();
   
-  // Use the useApprovals hook directly instead of relying on context
   const { 
     approvals, 
     loading, 
@@ -20,8 +19,6 @@ const ApprovalManagement = () => {
   } = useApprovals();
 
   const activeView = requestId ? 'request-detail' : 'approval-requests';
-
-  // Find the selected request for detail view
   const selectedRequest = approvals.find(req => req.id === requestId);
 
   const handleRequestSelect = (request) => {
@@ -38,7 +35,6 @@ const ApprovalManagement = () => {
       if (activeView === 'request-detail') {
         navigate('/approvals');
       }
-      // For list view, the list will refresh automatically via the hook
     } catch (error) {
       console.error('Error approving request:', error);
       alert(`Failed to approve request: ${error.message}`);
@@ -51,7 +47,6 @@ const ApprovalManagement = () => {
       if (activeView === 'request-detail') {
         navigate('/approvals');
       }
-      // For list view, the list will refresh automatically via the hook
     } catch (error) {
       console.error('Error rejecting request:', error);
       alert(`Failed to reject request: ${error.message}`);
@@ -67,24 +62,18 @@ const ApprovalManagement = () => {
     );
   }
 
-  if (loading && activeView === 'approval-requests') {
-    return <LoadingSpinner text="Loading HR approval requests..." />;
-  }
+  // Remove the loading check that was returning LoadingSpinner here
 
   switch (activeView) {
     case 'approval-requests':
       return (
         <div className="content">
-          {/* <div className="detailHeader">
-            <h2>HR Approval Requests</h2>
-            <p>Manage and approve travel requests</p>
-          </div> */}
           <ApprovalList
             approvals={approvals}
             onRequestSelect={handleRequestSelect}
-            loading={loading}
+            loading={loading} // Pass loading prop to ApprovalList
             error={error}
-            onRefresh={refetch} // Use refetch from the hook
+            onRefresh={refetch}
             onApprove={handleApprove}
             onReject={handleReject}
           />
@@ -115,6 +104,5 @@ const ApprovalManagement = () => {
       return null;
   }
 };
-
 export { ApprovalManagement };
 export default ApprovalManagement;

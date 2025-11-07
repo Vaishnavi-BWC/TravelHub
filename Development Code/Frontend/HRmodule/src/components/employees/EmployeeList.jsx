@@ -6,7 +6,7 @@ import Modal from '../common/Model';
 import EmployeeEditForm from './EmployeeEditForm';
 import { useEmployees } from '../../hooks/useEmployees';
 import { useApp } from '../../contexts/AppContext';
-// import './EmployeeList.css'; // We'll create this CSS file
+// import '../../styles/EmployeeList.css'; // We'll create this CSS file
 
 const EmployeeList = () => {
   const navigate = useNavigate();
@@ -227,6 +227,12 @@ const EmployeeList = () => {
 
   return (
     <div className="card employee-list-container">
+       <div className="card-header">
+        <div className="header-content">
+          <h3>Employee Management</h3>
+          <h6 style={{ color: 'gray', fontSize: '15px', fontWeight: '400' }}>Streamline workforce data and maintain employee records efficiently.</h6>
+        </div>
+      </div>
       <div className="cardHeaderFlex">
         <div className="filterButtons">
           {["All", "active", "inactive"].map((x) => (

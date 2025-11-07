@@ -18,18 +18,51 @@ const DashboardPage = () => {
   const [showMessage, setShowMessage] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const [totalMyRequestsCount, setTotalMyRequestsCount] = useState(0);
+  const [userName, setUserName] = useState('Manager');
+  const [userNameLoading, setUserNameLoading] = useState(false);
+
+  // Get first name from full name
+  const getFirstName = (fullName) => {
+    if (!fullName) return 'Manager';
+    const nameArray = fullName.split(" ").filter(name => name.trim() !== '');
+    return nameArray.length > 1 ? nameArray[0] : fullName;
+  };
+
+  // Fetch manager name on component mount
+  useEffect(() => {
+    const fetchManagerName = async () => {
+      try {
+        setUserNameLoading(true);
+        console.log('🔍 Fetching manager name for dashboard...');
+        
+        const profileData = await managerService.getManagerProfile();
+        console.log('✅ Manager Profile data received:', profileData);
+        
+        // Set the user name (only first name)
+        if (profileData && profileData.name) {
+          setUserName(getFirstName(profileData.name));
+        }
+      } catch (err) {
+        console.error('❌ Error fetching manager profile:', err);
+        // Fallback to localStorage data
+        const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+        setUserName(getFirstName(userData.userName) || 'Manager');
+      } finally {
+        setUserNameLoading(false);
+      }
+    };
+
+    fetchManagerName();
+  }, []);
 
   // Fetch total my requests count
   useEffect(() => {
     const fetchTotalMyRequestsCount = async () => {
       try {
         const allRequests = await managerService.getTravelRequestsFilteredByEmployee();
-        setTotalMyRequestsCount(allRequests.length);
+        // You can use this count if needed, but we'll use personalRequests.length for now
       } catch (error) {
         console.error('Error fetching total requests count:', error);
-        // Fallback to current personalRequests length if API call fails
-        setTotalMyRequestsCount(personalRequests.length);
       }
     };
 
@@ -198,12 +231,18 @@ const DashboardPage = () => {
       )}
 
       <div className="page-header">
-        <h1>Welcome Back!</h1>
+        <h1>
+          {userNameLoading ? (
+            'Welcome Back!'
+          ) : (
+            `Welcome  ${userName}!`
+          )}
+        </h1>
       </div>
 
       {/* Stats Overview */}
       <StatsCards
-        personalRequestsCount={totalMyRequestsCount} // Use the total count from API
+        personalRequestsCount={personalRequests.length}
         teamRequestsCount={teamRequests.length}
         approvedCount={approvedCount}
         pendingApprovalCount={pendingApprovals.length}
