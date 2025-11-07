@@ -1,6 +1,7 @@
 package com.bwc.approval_workflow_service.factory;
 
 import com.bwc.approval_workflow_service.dto.BaseApprovalActionRequestDTO;
+import com.bwc.approval_workflow_service.dto.BaseApprovalActionResponseDTO;
 import com.bwc.approval_workflow_service.service.ApprovalService;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +17,9 @@ public class ApprovalServiceFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <I extends BaseApprovalActionRequestDTO, O> ApprovalService<I, O> getService(String actorType) {
+    public <I extends BaseApprovalActionRequestDTO, O extends BaseApprovalActionResponseDTO>
+    ApprovalService<I, O> getService(String actorType) {
+
         String beanName = actorType.toLowerCase() + "ApprovalService";
         ApprovalService<?, ?> service = serviceRegistry.get(beanName);
 
@@ -24,7 +27,7 @@ public class ApprovalServiceFactory {
             throw new IllegalArgumentException("No ApprovalService found for actor type: " + actorType);
         }
 
-        // Safe because you control naming and types
+        // ✅ Safe because you control bean naming and types
         return (ApprovalService<I, O>) service;
     }
 }

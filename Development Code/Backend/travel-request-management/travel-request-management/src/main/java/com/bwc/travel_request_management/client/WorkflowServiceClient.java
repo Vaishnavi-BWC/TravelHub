@@ -23,12 +23,13 @@ public interface WorkflowServiceClient {
     @PostMapping("/api/workflows/initiate")
     void createWorkflow(@RequestBody CreateWorkflowRequest request);
     
-    @PostMapping("/api/workflows/initiate-with-travel-request")
+    @PostMapping("/api/workflows/initiation/start")
     void createWorkflowWithTravelRequest(
         @RequestBody TravelRequestProxyDTO travelRequest,
         @RequestParam String workflowType,
         @RequestParam Double estimatedCost
     );
+
 
     // ✅ NEW: Notify workflow service about booking upload
     @PostMapping("/api/workflows/{workflowId}/upload-booking")

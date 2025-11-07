@@ -1,5 +1,5 @@
 server:
-  address: 0.0.0.0   # ✅ Listen on all interfaces
+  address: 0.0.0.0
   port: 8088
 
 spring:
@@ -58,13 +58,15 @@ spring:
         - id: approval-workflow-service
           uri: http://localhost:8086
           predicates:
-            - Path=/api/workflows/**,
+            - Path=/api/v1/workflows/**,
                    /api/workflow-configs/**,
                    /api/manager/**,
                    /api/finance/**,
                    /api/hr/**,
                    /api/travel-desk/**,
-                   /api/admin/**
+                   /api/admin/**,
+                   /api/v1/dashboard/**,
+                   /api/workflows/initiation/**
           filters:
             - AddRequestHeader=X-Internal-Gateway-Secret, bwc-secure-gateway
 
@@ -80,13 +82,13 @@ spring:
 
 # 🔐 JWT Config (used for token verification & role forwarding)
 jwt:
-  secret: MySuperSecureAesEncryptionKey123456   # ✅ SAME as Auth & Workflow services
+  secret: MySuperSecureAesEncryptionKey123456
   expiration-seconds: 3600
 
 # 🔑 Internal Gateway Shared Secret
 gateway:
   internal:
-    secret: bwc-secure-gateway                   # ✅ SAME across Gateway + Workflow
+    secret: bwc-secure-gateway
 
 logging:
   level:

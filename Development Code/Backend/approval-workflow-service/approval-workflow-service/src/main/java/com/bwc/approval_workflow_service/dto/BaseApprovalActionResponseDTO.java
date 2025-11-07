@@ -8,12 +8,12 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Data
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
 public abstract class BaseApprovalActionResponseDTO {
     private UUID workflowId;
-    private String status;   // e.g. APPROVED_BY_MANAGER
-    private String nextStep; // next workflow stage
-    private String message;  // optional display message
+    private String status;
+    private String nextStep;
+    private String message;
 }
