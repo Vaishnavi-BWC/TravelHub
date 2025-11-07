@@ -6,12 +6,17 @@ import {
   FaPlus,
   FaFilter,
   FaFilePdf,
-  FaFileExcel
+  FaFileExcel,
+  FaChevronLeft,
+  FaChevronRight,
+  FaStepBackward,
+  FaStepForward
 } from "react-icons/fa";
 import { useAuth } from '../../../hooks/useAuth';
 import { useTravelRequests } from '../../../hooks/useTravelRequests';
 import { useRequestFilters } from '../../../hooks/useRequestFilters';
 import { useRequestUtils } from '../../../hooks/useRequestUtils';
+import { usePagination } from '../../../hooks/usePagination';
 import { useNavigate } from 'react-router-dom';
 import './MyRequests.css';
 
@@ -45,6 +50,20 @@ const MyRequests = ({
     exportRequests
   } = useRequestUtils();
 
+  // Pagination hook
+  const {
+    currentPage,
+    pageSize,
+    totalPages,
+    currentItems,
+    goToPage,
+    nextPage,
+    prevPage,
+    goToFirstPage,
+    goToLastPage,
+    setPageSize
+  } = usePagination(filteredRequests, 8); // Show 8 items per page
+
   // Handle view request details
   const handleViewRequest = (requestId, requestData) => {
     console.log('🔍 [MyRequests] Request data structure:', {
@@ -77,12 +96,19 @@ const MyRequests = ({
 
     console.log('✅ [MyRequests] Navigation triggered');
   };
+
   const handleExport = (format) => {
     if (onExport) {
       onExport(filteredRequests, format);
     } else {
       exportRequests(filteredRequests, format, filter);
     }
+  };
+
+  // Handle page size change
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    goToPage(1); // Reset to first page when changing page size
   };
 
   if (loading) {
@@ -184,7 +210,10 @@ const MyRequests = ({
                 {filterOptions.map(option => (
                   <button
                     key={option.value}
-                    onClick={() => setFilter(option.value)}
+                    onClick={() => {
+                      setFilter(option.value);
+                      goToPage(1); // Reset to first page when filter changes
+                    }}
                     className={`filterBtn ${filter === option.value ? 'filterBtnActive' : ''}`}
                   >
                     {option.label}
@@ -202,7 +231,10 @@ const MyRequests = ({
                   type="text"
                   placeholder="Search requests by ID, purpose, or project..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    goToPage(1); // Reset to first page when search changes
+                  }}
                   className="searchInput"
                 />
                 {searchTerm && (
@@ -216,7 +248,10 @@ const MyRequests = ({
                       cursor: 'pointer',
                       color: '#6c757d'
                     }}
-                    onClick={() => setSearchTerm("")}
+                    onClick={() => {
+                      setSearchTerm("");
+                      goToPage(1);
+                    }}
                   >
                     ×
                   </button>
@@ -226,9 +261,12 @@ const MyRequests = ({
 
             {/* Results Summary */}
             <div style={{ padding: '10px 0', color: '#6c757d', fontSize: '0.9em' }}>
-              Showing {filteredRequests.length} of {requests.length} requests
+              Showing {currentItems.length} of {filteredRequests.length} requests
               {searchTerm && (
                 <span style={{ fontStyle: 'italic' }}> for "{searchTerm}"</span>
+              )}
+              {filteredRequests.length > 0 && (
+                <span> (Page {currentPage} of {totalPages})</span>
               )}
             </div>
           </div>
@@ -239,119 +277,216 @@ const MyRequests = ({
       <div className="card">
         <div className="cardHeader">
           <h3>Travel Requests</h3>
+          {filteredRequests.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <label style={{ fontSize: '0.9em', color: '#6c757d' }}>
+                Show:
+                <select
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  style={{ 
+                    marginLeft: '8px', 
+                    padding: '4px 8px', 
+                    border: '1px solid #ddd', 
+                    borderRadius: '4px' 
+                  }}
+                >
+                  <option value={5}>5</option>
+                  <option value={8}>8</option>
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                  <option value={20}>20</option>
+                </select>
+              </label>
+            </div>
+          )}
         </div>
         <div className="cardBody">
-          {filteredRequests.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th
-                      style={{ cursor: 'pointer', userSelect: 'none' }}
-                      onClick={() => handleSort('travelRequestId')}
-                    >
-                      Request ID
-                      {sortConfig.key === 'travelRequestId' && (
-                        <span style={{ marginLeft: '5px' }}>
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </th>
-                    <th
-                      style={{ cursor: 'pointer', userSelect: 'none' }}
-                      onClick={() => handleSort('purpose')}
-                    >
-                      Purpose
-                      {sortConfig.key === 'purpose' && (
-                        <span style={{ marginLeft: '5px' }}>
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </th>
-                    <th
-                      style={{ cursor: 'pointer', userSelect: 'none' }}
-                      onClick={() => handleSort('projectId')}
-                    >
-                      Project ID
-                      {sortConfig.key === 'projectId' && (
-                        <span style={{ marginLeft: '5px' }}>
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </th>
-                    <th
-                      style={{ cursor: 'pointer', userSelect: 'none' }}
-                      onClick={() => handleSort('startDate')}
-                    >
-                      Start Date
-                      {sortConfig.key === 'startDate' && (
-                        <span style={{ marginLeft: '5px' }}>
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </th>
-                    <th
-                      style={{ cursor: 'pointer', userSelect: 'none' }}
-                      onClick={() => handleSort('endDate')}
-                    >
-                      End Date
-                      {sortConfig.key === 'endDate' && (
-                        <span style={{ marginLeft: '5px' }}>
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </th>
-                    <th>Duration</th>
-                    <th
-                      style={{ cursor: 'pointer', userSelect: 'none' }}
-                      onClick={() => handleSort('createdAt')}
-                    >
-                      Created Date
-                      {sortConfig.key === 'createdAt' && (
-                        <span style={{ marginLeft: '5px' }}>
-                          {sortConfig.direction === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </th>
-                    <th>Status</th>
-                    <th>View</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRequests.map((request) => (
-                    <tr key={request.travelRequestId} className="clickableRow"  onClick={() => console.log('📋 Row clicked for:', request.travelRequestId)}>
-                      <td>{request.travelRequestId}</td>
-                      <td>{request.purpose}</td>
-                      <td>{request.projectId}</td>
-                      <td>{formatDate(request.startDate)}</td>
-                      <td>{formatDate(request.endDate)}</td>
-                      <td>{calculateDuration(request.startDate, request.endDate)} days</td>
-                      <td>{formatDate(request.createdAt)}</td>
-                      <td>
-                        <span className={getStatusColor()}>
-                          {getStatusDisplay()}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                          <button
-                            className="btnIcon"
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent event bubbling
-                              console.log('👁️ Eye button clicked for request:', request.travelRequestId);
-                              handleViewRequest(request.travelRequestId, request);
-                            }}
-                            title="View Details"
-                          >
-                            <FaEye />
-                          </button>
-                        </div>
-                      </td>
+          {currentItems.length > 0 ? (
+            <>
+              <div style={{ overflowX: 'auto' }}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th
+                        style={{ cursor: 'pointer', userSelect: 'none' }}
+                        onClick={() => handleSort('travelRequestId')}
+                      >
+                        Request ID
+                        {sortConfig.key === 'travelRequestId' && (
+                          <span style={{ marginLeft: '5px' }}>
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </th>
+                      <th
+                        style={{ cursor: 'pointer', userSelect: 'none' }}
+                        onClick={() => handleSort('purpose')}
+                      >
+                        Purpose
+                        {sortConfig.key === 'purpose' && (
+                          <span style={{ marginLeft: '5px' }}>
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </th>
+                      <th
+                        style={{ cursor: 'pointer', userSelect: 'none' }}
+                        onClick={() => handleSort('projectId')}
+                      >
+                        Project ID
+                        {sortConfig.key === 'projectId' && (
+                          <span style={{ marginLeft: '5px' }}>
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </th>
+                      <th
+                        style={{ cursor: 'pointer', userSelect: 'none' }}
+                        onClick={() => handleSort('startDate')}
+                      >
+                        Start Date
+                        {sortConfig.key === 'startDate' && (
+                          <span style={{ marginLeft: '5px' }}>
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </th>
+                      <th
+                        style={{ cursor: 'pointer', userSelect: 'none' }}
+                        onClick={() => handleSort('endDate')}
+                      >
+                        End Date
+                        {sortConfig.key === 'endDate' && (
+                          <span style={{ marginLeft: '5px' }}>
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </th>
+                      <th>Duration</th>
+                      <th
+                        style={{ cursor: 'pointer', userSelect: 'none' }}
+                        onClick={() => handleSort('createdAt')}
+                      >
+                        Created Date
+                        {sortConfig.key === 'createdAt' && (
+                          <span style={{ marginLeft: '5px' }}>
+                            {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </th>
+                      <th>Status</th>
+                      <th>View</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {currentItems.map((request) => (
+                      <tr key={request.travelRequestId} className="clickableRow" onClick={() => console.log('📋 Row clicked for:', request.travelRequestId)}>
+                        <td>{request.travelRequestId}</td>
+                        <td>{request.purpose}</td>
+                        <td>{request.projectId}</td>
+                        <td>{formatDate(request.startDate)}</td>
+                        <td>{formatDate(request.endDate)}</td>
+                        <td>{calculateDuration(request.startDate, request.endDate)} days</td>
+                        <td>{formatDate(request.createdAt)}</td>
+                        <td>
+                          <span className={getStatusColor()}>
+                            {getStatusDisplay()}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                              className="btnIcon"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent event bubbling
+                                console.log('👁️ Eye button clicked for request:', request.travelRequestId);
+                                handleViewRequest(request.travelRequestId, request);
+                              }}
+                              title="View Details"
+                            >
+                              <FaEye />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="pagination-container">
+                  <div className="pagination-info">
+                    Showing {currentItems.length} items on page {currentPage} of {totalPages}
+                  </div>
+                  <div className="pagination-controls">
+                    <button
+                      className="pagination-btn"
+                      onClick={goToFirstPage}
+                      disabled={currentPage === 1}
+                      title="First Page"
+                    >
+                      <FaStepBackward />
+                    </button>
+                    <button
+                      className="pagination-btn"
+                      onClick={prevPage}
+                      disabled={currentPage === 1}
+                      title="Previous Page"
+                    >
+                      <FaChevronLeft />
+                    </button>
+                    
+                    {/* Page Numbers */}
+                    <div className="page-numbers">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(page => {
+                          // Show first 3 pages, last 3 pages, and pages around current page
+                          if (totalPages <= 7) return true;
+                          if (page <= 3) return true;
+                          if (page > totalPages - 3) return true;
+                          if (Math.abs(page - currentPage) <= 1) return true;
+                          return false;
+                        })
+                        .map((page, index, array) => {
+                          // Add ellipsis for gaps
+                          const showEllipsis = index > 0 && page - array[index - 1] > 1;
+                          return (
+                            <React.Fragment key={page}>
+                              {showEllipsis && <span className="pagination-ellipsis">...</span>}
+                              <button
+                                className={`pagination-btn ${currentPage === page ? 'pagination-btn-active' : ''}`}
+                                onClick={() => goToPage(page)}
+                              >
+                                {page}
+                              </button>
+                            </React.Fragment>
+                          );
+                        })}
+                    </div>
+
+                    <button
+                      className="pagination-btn"
+                      onClick={nextPage}
+                      disabled={currentPage === totalPages}
+                      title="Next Page"
+                    >
+                      <FaChevronRight />
+                    </button>
+                    <button
+                      className="pagination-btn"
+                      onClick={goToLastPage}
+                      disabled={currentPage === totalPages}
+                      title="Last Page"
+                    >
+                      <FaStepForward />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div style={{
               textAlign: 'center',
@@ -387,7 +522,7 @@ const MyRequests = ({
         </div>
       </div>
 
-      {/* Quick Stats - Fixed this section */}
+      {/* Quick Stats */}
       <div className="statsContainer">
         <div className="statCard">
           <div className="statIcon total">

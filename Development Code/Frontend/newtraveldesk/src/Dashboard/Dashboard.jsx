@@ -1,5 +1,5 @@
 // traveldesk/src/components/Dashboard/Dashboard.jsx
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useDashboardData } from '../hooks/useDashboardData';
 import {
   formatDateTime,
@@ -19,6 +19,23 @@ const Dashboard = () => {
     error,
     refreshData
   } = useDashboardData();
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(pendingRequests.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  // Get current page requests (most recent first)
+  const currentRequests = useMemo(() => {
+    const sortedRequests = [...pendingRequests].sort((a, b) => 
+      new Date(b.dueDate) - new Date(a.dueDate)
+    );
+    return sortedRequests.slice(startIndex, endIndex);
+  }, [pendingRequests, startIndex, endIndex]);
 
   const handleValidate = (request) => {
     console.log('Validating request:', request);
@@ -48,6 +65,23 @@ Due Date: ${formatDateTime(request.dueDate)}
     alert(details);
   };
 
+  // Pagination handlers
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handlePageClick = (page) => {
+    setCurrentPage(page);
+  };
+
   if (loading) {
     return (
       <div className="dashboard">
@@ -58,7 +92,7 @@ Due Date: ${formatDateTime(request.dueDate)}
             className="btn-refresh"
             disabled={loading}
           >
-            {loading ? '🔄 Refreshing...' : '🔄 Refresh'}
+            {loading ? '🔄 Refreshing...' : '🔁 Refresh'}
           </button>
         </div>
         <div className="loading-state">
@@ -75,7 +109,7 @@ Due Date: ${formatDateTime(request.dueDate)}
         <div className="dashboard-header">
           <h1>Travel Desk Dashboard</h1>
           <button onClick={refreshData} className="btn-refresh">
-            🔄 Refresh
+            🔁 Refresh
           </button>
         </div>
         <div className="error-state">
@@ -95,7 +129,7 @@ Due Date: ${formatDateTime(request.dueDate)}
       <div className="dashboard-header">
         <h1>Travel Desk Dashboard</h1>
         {/* <button onClick={refreshData} className="btn-refresh">
-          🔄 Refresh
+          🔁 Refresh
         </button> */}
       </div>
 
@@ -134,10 +168,19 @@ Due Date: ${formatDateTime(request.dueDate)}
       </div>
 
       <RecentTickets
-        pendingRequests={pendingRequests}
+        pendingRequests={currentRequests}
+        totalRequests={pendingRequests.length}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
+        startIndex={startIndex}
+        endIndex={endIndex}
         onValidate={handleValidate}
         onReview={handleReview}
         onViewDetails={handleViewDetails}
+        onNextPage={handleNextPage}
+        onPrevPage={handlePrevPage}
+        onPageClick={handlePageClick}
       />
     </div>
   );
@@ -156,41 +199,96 @@ const DashboardCard = ({ title, value, footer, type, icon }) => (
   </div>
 );
 
-const RecentTickets = ({ pendingRequests, onValidate, onReview, onViewDetails }) => (
+const RecentTickets = ({ 
+  pendingRequests, 
+  totalRequests,
+  currentPage,
+  totalPages,
+  itemsPerPage,
+  startIndex,
+  endIndex,
+  onValidate, 
+  onReview, 
+  onViewDetails,
+  onNextPage,
+  onPrevPage,
+  onPageClick
+}) => (
   <div className="recent-tickets">
     <div className="section-header">
       <h2>Pending Travel Desk Approvals</h2>
-      <span className="count-badge">{pendingRequests.length} request(s)</span>
+      <div className="header-info">
+        <span className="count-badge">{totalRequests} request(s)</span>
+        {totalRequests > itemsPerPage && (
+          <span className="pagination-info">
+            Showing {startIndex + 1}-{Math.min(endIndex, totalRequests)} of {totalRequests}
+          </span>
+        )}
+      </div>
     </div>
 
     <div className="tickets-table">
       {pendingRequests.length > 0 ? (
-        <table>
-          <thead>
-            <tr>
-              <th>Request ID</th>
-              <th>Workflow Type</th>
-              <th>Current Step</th>
-              <th>Priority</th>
-              <th>Due Date</th>
-              <th>Estimated Cost</th>
-              <th>Status</th>
-              {/* <th>Price Exception</th> */}
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pendingRequests.map((request) => (
-              <TicketRow
-                key={request.workflowId}
-                request={request}
-                onValidate={onValidate}
-                onReview={onReview}
-                onViewDetails={onViewDetails}
-              />
-            ))}
-          </tbody>
-        </table>
+        <>
+          <table>
+            <thead>
+              <tr>
+                <th className="col-request-id">Request ID</th>
+                <th className="col-workflow-type">Workflow Type</th>
+                <th className="col-current-step">Current Step</th>
+                <th className="col-due-date">Due Date</th>
+                <th className="col-estimated-cost">Estimated Cost</th>
+                <th className="col-status">Status</th>
+                <th className="col-price-exception">Price Exception</th>
+                <th className="col-actions">View</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendingRequests.map((request) => (
+                <TicketRow
+                  key={request.workflowId}
+                  request={request}
+                  onValidate={onValidate}
+                  onReview={onReview}
+                  onViewDetails={onViewDetails}
+                />
+              ))}
+            </tbody>
+          </table>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <button 
+                className="pagination-btn prev"
+                onClick={onPrevPage}
+                disabled={currentPage === 1}
+              >
+                ‹ Previous
+              </button>
+              
+              <div className="pagination-numbers">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    className={`pagination-number ${page === currentPage ? 'active' : ''}`}
+                    onClick={() => onPageClick(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              
+              <button 
+                className="pagination-btn next"
+                onClick={onNextPage}
+                disabled={currentPage === totalPages}
+              >
+                Next ›
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <EmptyTable />
       )}
@@ -200,7 +298,6 @@ const RecentTickets = ({ pendingRequests, onValidate, onReview, onViewDetails })
 
 const TicketRow = ({ request, onValidate, onReview, onViewDetails }) => {
   const statusInfo = getStatusInfo(request);
-  const priorityInfo = getPriorityBadge(request.priority);
   
   return (
     <tr>
@@ -208,32 +305,33 @@ const TicketRow = ({ request, onValidate, onReview, onViewDetails }) => {
         <div className="request-id-text">
           {request.travelRequestId?.substring(0, 8) || 'N/A'}...
         </div>
-        <div className="workflow-type">
-          {getWorkflowTypeText(request.workflowType)}
-        </div>
       </td>
-      <td>
+      <td className="workflow-type">
+        <span className="workflow-type-badge">
+          {getWorkflowTypeText(request.workflowType)}
+        </span>
+      </td>
+      <td className="current-step">
         <span className="step-badge">
           {getCurrentStepText(request.currentStep)}
         </span>
       </td>
-      <td>
-        <span className={`priority-badge ${priorityInfo.class}`}>
-          {priorityInfo.text}
-        </span>
-      </td>
-      <td>
-        <div className="due-date">
+      <td className="due-date">
+        <div className="due-date-text">
           {formatDateTime(request.dueDate)}
         </div>
       </td>
-      <td className="cost">{getEstimatedCost(request)}</td>
-      <td>
-        <span className={`status ${statusInfo.class}`}>
+      <td className="estimated-cost">
+        <span className="cost-amount">
+          {getEstimatedCost(request)}
+        </span>
+      </td>
+      <td className="status">
+        <span className={`status-badge ${statusInfo.class}`}>
           {statusInfo.text}
         </span>
       </td>
-      <td>
+      <td className="price-exception">
         {request.isOverpriced ? (
           <span className="exception-indicator">
             ⚠️ Yes
@@ -242,29 +340,31 @@ const TicketRow = ({ request, onValidate, onReview, onViewDetails }) => {
           <span className="no-exception">No</span>
         )}
       </td>
-      <td className="action-buttons">
-        <button 
-          className="icon-btn view-btn"
-          onClick={() => onViewDetails(request)}
-          title="View Details"
-        >
-          👁️
-        </button>
-        {request.isOverpriced ? (
+      <td className="actions">
+        <div className="actions-container">
           <button 
-            className="action-btn review"
-            onClick={() => onReview(request)}
+            className="icon-btn view-btn"
+            onClick={() => onViewDetails(request)}
+            title="View Details"
           >
-            Review
+            👁️
           </button>
-        ) : (
-          <button 
-            className="action-btn validate"
-            onClick={() => onValidate(request)}
-          >
-            Validate
-          </button>
-        )}
+          {request.isOverpriced ? (
+            <button 
+              className="action-btn review-btn"
+              onClick={() => onReview(request)}
+            >
+              Review
+            </button>
+          ) : (
+            <button 
+              className="action-btn validate-btn"
+              onClick={() => onValidate(request)}
+            >
+              Validate
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   );

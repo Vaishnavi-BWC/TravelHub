@@ -1,31 +1,110 @@
 import React, { useState, useEffect } from 'react';
-import { fetchTravelRequestsWithBookings, fetchBookingsByRequestId } from '../services/bookingService';
 import './BookingHistory.css';
 
 const BookingHistory = ({ onTicketClick }) => {
   const [filters, setFilters] = useState({
     status: 'all',
-    department: 'all',
     search: ''
   });
   const [travelRequests, setTravelRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [bookingDetails, setBookingDetails] = useState([]);
+  const [bookingSummary, setBookingSummary] = useState(null);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
 
-  // Fetch all travel requests with bookings on component mount
+  // Fetch user ID and travel requests on component mount
   useEffect(() => {
-    fetchTravelRequests();
+    initializeComponent();
   }, []);
+
+  // Fetch travel requests when userId changes
+  useEffect(() => {
+    if (userId) {
+      fetchTravelRequests();
+    }
+  }, [userId]);
+
+  const initializeComponent = async () => {
+    try {
+      setLoading(true);
+      await fetchUserId();
+      // fetchTravelRequests will be called automatically when userId is set
+    } catch (err) {
+      console.error('Initialization error:', err);
+      setError(`Initialization failed: ${err.message}`);
+      setLoading(false);
+    }
+  };
+
+  const fetchUserId = async () => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user ID: ${response.status}`);
+      }
+      
+      const userData = await response.json();
+      const fetchedUserId = userData.id || userData.userId;
+      setUserId(fetchedUserId);
+      console.log('✅ User ID fetched:', fetchedUserId);
+      return fetchedUserId;
+    } catch (err) {
+      console.error('Error fetching user ID:', err);
+      setError('Failed to fetch user ID. Please check your authentication.');
+      setLoading(false);
+      throw err;
+    }
+  };
 
   const fetchTravelRequests = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchTravelRequestsWithBookings();
-      setTravelRequests(data);
+      
+      if (!userId) {
+        console.log('🔄 User ID not available yet, waiting...');
+        return;
+      }
+
+      console.log('🔄 Fetching travel requests with User ID:', userId);
+
+      const response = await fetch('/travel-desk-proxy/api/travel-desk/history/my-actions', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-User-Id': userId
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Filter only COMPLETE_BOOKING actions
+      const completeBookingRequests = data.filter(
+        request => request.action === 'COMPLETE_BOOKING'
+      );
+      
+      console.log('✅ COMPLETE_BOOKING requests:', completeBookingRequests);
+      setTravelRequests(completeBookingRequests);
+      
     } catch (err) {
       console.error('❌ Error fetching travel requests:', err);
       setError('Failed to load travel requests. Please try again.');
@@ -34,54 +113,110 @@ const BookingHistory = ({ onTicketClick }) => {
     }
   };
 
-  // Fetch booking details when a request is selected
-  const fetchBookingDetails = async (travelRequest) => {
+  // Fetch booking summary when a request is selected
+  const fetchBookingSummary = async (travelRequest) => {
     try {
       setDetailsLoading(true);
       setError(null);
       setSelectedRequest(travelRequest);
+      setBookingSummary(null);
       
-      const data = await fetchBookingsByRequestId(travelRequest.travelRequestId);
-      
-      // Transform API data to match component structure
-      const transformedBookings = Array.isArray(data) ? data.map((booking, index) => ({
-        id: `BK-${booking.bookingId.substring(0, 8).toUpperCase()}`,
-        bookingId: booking.bookingId,
-        employee: travelRequest.employeeName,
-        employeeId: travelRequest.employeeId,
-        department: travelRequest.department,
-        travelDates: travelRequest.travelDates,
-        destination: travelRequest.destination,
-        bookedOn: formatBookedDate(booking.createdAt),
-        status: getStatusFromBooking(booking),
-        statusText: getStatusTextFromBooking(booking),
-        travelType: getTravelTypeFromRequest(travelRequest),
-        bookingCost: getBookingCost(booking),
-        bookingAgent: 'Travel Desk',
-        bookingReference: booking.bookingId,
-        bookingType: booking.bookingType,
-        details: booking.details,
-        notes: booking.notes,
-        flightDetails: getFlightDetails(booking),
-        hotelDetails: getHotelDetails(booking),
-        rating: getRandomRating(),
-        feedback: getFeedback(booking),
-        originalData: booking
-      })) : [];
+      console.log('📊 Fetching booking summary for:', travelRequest.travelRequestId);
 
-      setBookingDetails(transformedBookings);
+      const response = await fetch(`/travel-management/api/bookings/summary/${travelRequest.travelRequestId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Booking summary:', data);
+      setBookingSummary(data);
+      
     } catch (err) {
-      console.error('❌ Error fetching booking details:', err);
+      console.error('❌ Error fetching booking summary:', err);
       setError(`Failed to load booking details: ${err.message}`);
-      setBookingDetails([]);
     } finally {
       setDetailsLoading(false);
     }
   };
 
+  // Fetch documents for a booking
+  const fetchDocuments = async (travelRequestId) => {
+    try {
+      setDocumentsLoading(true);
+      setError(null);
+
+      console.log('📄 Fetching documents for travel request:', travelRequestId);
+
+      const response = await fetch(`/travel-management/api/bookings/request/${travelRequestId}/documents`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          setDocuments([]);
+          console.log('📄 No documents found for this booking');
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setDocuments(data);
+      console.log('✅ Documents fetched:', data);
+      setShowDocumentsModal(true);
+      
+    } catch (err) {
+      console.error('❌ Error fetching documents:', err);
+      if (err.message.includes('404')) {
+        setDocuments([]);
+        alert('No documents found for this booking.');
+      } else {
+        alert(`Failed to load documents: ${err.message}`);
+      }
+    } finally {
+      setDocumentsLoading(false);
+    }
+  };
+
+  // View document
+  const handleViewDocument = (document) => {
+    console.log('👁️ Viewing document:', document);
+    
+    // Construct the view URL using the document ID
+    const viewUrl = `/travel-management/api/bookings/documents/${document.documentId}/view`;
+    
+    console.log('🔗 Opening document URL:', viewUrl);
+    window.open(viewUrl, '_blank');
+  };
+
+  // Download document
+  const handleDownloadDocument = (document) => {
+    console.log('📥 Downloading document:', document);
+    
+    // Construct the download URL using the document ID
+    const downloadUrl = `/travel-management/api/bookings/documents/${document.documentId}/download`;
+    
+    console.log('🔗 Downloading document URL:', downloadUrl);
+    window.open(downloadUrl, '_blank');
+  };
+
   // Helper functions for data transformation
-  const formatBookedDate = (createdAt) => {
-    const date = new Date(createdAt);
+  const formatBookedDate = (dateString) => {
+    const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -91,52 +226,54 @@ const BookingHistory = ({ onTicketClick }) => {
     });
   };
 
-  const getStatusFromBooking = (booking) => {
-    const statuses = ['completed', 'upcoming', 'in-progress'];
-    return statuses[Math.floor(Math.random() * statuses.length)];
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2
+    }).format(amount);
   };
 
-  const getStatusTextFromBooking = (booking) => {
-    const status = getStatusFromBooking(booking);
-    const statusMap = {
-      'completed': 'Completed',
-      'upcoming': 'Upcoming',
-      'in-progress': 'In Progress'
+  const getBookingTypeBadge = (bookingType) => {
+    const typeMap = {
+      'FLIGHT': { class: 'booking-type-flight', icon: 'fas fa-plane' },
+      'HOTEL': { class: 'booking-type-hotel', icon: 'fas fa-hotel' },
+      'CAR_RENTAL': { class: 'booking-type-car', icon: 'fas fa-car' },
+      'OTHER': { class: 'booking-type-other', icon: 'fas fa-receipt' }
     };
-    return statusMap[status];
+    
+    return typeMap[bookingType] || { class: 'booking-type-other', icon: 'fas fa-receipt' };
   };
 
-  const getTravelTypeFromRequest = (request) => {
-    return request.destination === 'International' ? 'International' : 'Domestic';
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      'CONFIRMED': { class: 'status-confirmed', text: 'Confirmed' },
+      'PENDING': { class: 'status-pending', text: 'Pending' },
+      'CANCELLED': { class: 'status-cancelled', text: 'Cancelled' },
+      'COMPLETED': { class: 'status-completed', text: 'Completed' }
+    };
+    
+    return statusMap[status] || { class: 'status-pending', text: status };
   };
 
-  const getBookingCost = (booking) => {
-    const costs = ['₹8,900', '₹11,800', '₹14,500', '₹16,200', '₹45,700'];
-    return costs[Math.floor(Math.random() * costs.length)];
+  const getDocumentTypeBadge = (documentType) => {
+    const typeMap = {
+      'FLIGHT_TICKET': { class: 'doc-type-flight', icon: 'fas fa-ticket-alt' },
+      'HOTEL_VOUCHER': { class: 'doc-type-hotel', icon: 'fas fa-hotel' },
+      'INVOICE': { class: 'doc-type-invoice', icon: 'fas fa-file-invoice' },
+      'RECEIPT': { class: 'doc-type-receipt', icon: 'fas fa-receipt' },
+      'OTHER': { class: 'doc-type-other', icon: 'fas fa-file' }
+    };
+    
+    return typeMap[documentType] || { class: 'doc-type-other', icon: 'fas fa-file' };
   };
 
-  const getFlightDetails = (booking) => {
-    const flights = ['AI-601 • 10:30 AM - 12:00 PM', '6E-234 • 1:30 PM - 3:15 PM', 'UK-945 • 4:00 PM - 6:15 PM'];
-    return flights[Math.floor(Math.random() * flights.length)];
-  };
-
-  const getHotelDetails = (booking) => {
-    const hotels = ['Grand Hotel • 2 nights', 'Tech Park Inn • 2 nights', 'Capital Suites • 3 nights'];
-    return hotels[Math.floor(Math.random() * hotels.length)];
-  };
-
-  const getRandomRating = () => {
-    return Math.random() > 0.3 ? Math.floor(Math.random() * 5) + 1 : null;
-  };
-
-  const getFeedback = (booking) => {
-    const feedbacks = [
-      'Smooth booking process',
-      'Good service, timely updates',
-      'Excellent service, will recommend',
-      'Flight was delayed, otherwise good'
-    ];
-    return booking.rating ? feedbacks[Math.floor(Math.random() * feedbacks.length)] : null;
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const handleFilterChange = (filterType, value) => {
@@ -150,86 +287,60 @@ const BookingHistory = ({ onTicketClick }) => {
     console.log('Filters applied:', filters);
   };
 
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 'completed': return 'status-completed';
-      case 'upcoming': return 'status-upcoming';
-      case 'in-progress': return 'status-in-progress';
-      case 'cancelled': return 'status-cancelled';
-      default: return 'status-completed';
+  const getActionBadge = (action) => {
+    switch (action) {
+      case 'COMPLETE_BOOKING': 
+        return { class: 'action-complete', text: 'Booking Completed', icon: 'fas fa-check-circle' };
+      case 'APPROVE':
+        return { class: 'action-approve', text: 'Approved', icon: 'fas fa-thumbs-up' };
+      default:
+        return { class: 'action-default', text: action, icon: 'fas fa-info-circle' };
     }
   };
 
-  const getTravelTypeClass = (travelType) => {
-    switch (travelType) {
-      case 'International': return 'travel-type-international';
-      case 'Domestic': return 'travel-type-domestic';
-      default: return 'travel-type-domestic';
-    }
+  const handleViewDocuments = async (travelRequest) => {
+    console.log('📄 Viewing documents for:', travelRequest);
+    await fetchDocuments(travelRequest.travelRequestId);
   };
 
-  const getDaysAway = (travelDate) => {
-    const days = Math.floor(Math.random() * 30) + 1;
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Tomorrow';
-    return `${days} days`;
+  const handleViewDetails = (travelRequest) => {
+    console.log('👁️ Viewing details for:', travelRequest);
+    fetchBookingSummary(travelRequest);
   };
 
-  const renderRating = (rating) => {
-    if (!rating) return null;
-    
-    return (
-      <div className="rating">
-        {[...Array(5)].map((_, i) => (
-          <i 
-            key={i} 
-            className={`fas fa-star ${i < rating ? 'filled' : ''}`}
-          ></i>
-        ))}
-      </div>
-    );
+  const clearSelection = () => {
+    setSelectedRequest(null);
+    setBookingSummary(null);
+    setDocuments([]);
+    setShowDocumentsModal(false);
+  };
+
+  const closeDocumentsModal = () => {
+    setShowDocumentsModal(false);
+    setDocuments([]);
   };
 
   // Filter travel requests based on current filters
   const filteredRequests = travelRequests.filter(request => {
-    if (filters.status !== 'all' && request.status !== filters.status) return false;
-    if (filters.department !== 'all' && request.department !== filters.department) return false;
+    if (filters.status !== 'all' && request.action !== filters.status) return false;
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       return (
         request.employeeName.toLowerCase().includes(searchLower) ||
-        request.destination.toLowerCase().includes(searchLower) ||
-        request.travelRequestId.toLowerCase().includes(searchLower)
+        request.travelPurpose.toLowerCase().includes(searchLower) ||
+        request.travelRequestId.toLowerCase().includes(searchLower) ||
+        (request.comments && request.comments.toLowerCase().includes(searchLower))
       );
     }
     return true;
   });
-
-  const bookingStats = {
-    total: bookingDetails.length,
-    completed: bookingDetails.filter(b => b.status === 'completed').length,
-    upcoming: bookingDetails.filter(b => b.status === 'upcoming').length,
-    inProgress: bookingDetails.filter(b => b.status === 'in-progress').length
-  };
-
-  const totalSavings = bookingDetails
-    .filter(b => b.status === 'completed')
-    .reduce((sum, booking) => {
-      const cost = parseInt(booking.bookingCost.replace(/[^0-9]/g, ''));
-      return sum + cost;
-    }, 0);
-
-  const clearSelection = () => {
-    setSelectedRequest(null);
-    setBookingDetails([]);
-  };
 
   if (loading) {
     return (
       <div className="booking-history">
         <div className="loading-state">
           <i className="fas fa-spinner fa-spin"></i>
-          <p>Loading travel requests...</p>
+          <p>Loading booking history...</p>
         </div>
       </div>
     );
@@ -237,52 +348,127 @@ const BookingHistory = ({ onTicketClick }) => {
 
   return (
     <div className="booking-history">
+      {/* Documents Modal */}
+      {showDocumentsModal && (
+        <div className="modal-overlay">
+          <div className="modal-content documents-modal">
+            <div className="modal-header">
+              <h3>Booking Documents</h3>
+              <button className="close-button" onClick={closeDocumentsModal}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              {documentsLoading ? (
+                <div className="loading-state">
+                  <i className="fas fa-spinner fa-spin"></i>
+                  <p>Loading documents...</p>
+                </div>
+              ) : documents.length > 0 ? (
+                <div className="documents-list">
+                  {documents.map((doc, index) => {
+                    const docTypeBadge = getDocumentTypeBadge(doc.documentType);
+                    return (
+                      <div key={doc.documentId} className="document-item">
+                        <div className="document-icon">
+                          <i className={docTypeBadge.icon}></i>
+                        </div>
+                        <div className="document-info">
+                          <div className="document-name">{doc.originalFileName}</div>
+                          <div className="document-meta">
+                            <span className="document-type">
+                              <i className={docTypeBadge.icon}></i>
+                              {doc.documentType}
+                            </span>
+                            <span className="document-size">{formatFileSize(doc.fileSize)}</span>
+                          </div>
+                          {doc.description && (
+                            <div className="document-description">{doc.description}</div>
+                          )}
+                          <div className="document-date">
+                            Uploaded: {formatBookedDate(doc.uploadedAt)}
+                          </div>
+                          {/* Display Document ID and Booking ID */}
+                          <div className="document-ids">
+                            <div className="id-item">
+                              <strong>Document ID:</strong> 
+                              <span className="id-value">{doc.documentId}</span>
+                            </div>
+                            <div className="id-item">
+                              <strong>Booking ID:</strong> 
+                              <span className="id-value">{doc.travelBookingId}</span>
+                            </div>
+                            <div className="id-item">
+                              <strong>Travel Request ID:</strong> 
+                              <span className="id-value">{doc.travelRequestId}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="document-actions">
+                          <button 
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleViewDocument(doc)}
+                            title="View Document"
+                          >
+                            <i className="fas fa-eye"></i> View
+                          </button>
+                          <button 
+                            className="btn btn-outline btn-sm"
+                            onClick={() => handleDownloadDocument(doc)}
+                            title="Download Document"
+                          >
+                            <i className="fas fa-download"></i> Download
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <i className="fas fa-file-alt"></i>
+                  <h3>No Documents Found</h3>
+                  <p>No documents available for this booking.</p>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={closeDocumentsModal}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="history-header">
         <div className="header-content">
           <h2>Booking History</h2>
           <p>
             {selectedRequest 
-              ? `Booking details for ${selectedRequest.employeeName} - ${selectedRequest.destination}`
-              : 'Select a travel request to view booking history'
+              ? `Booking details for ${selectedRequest.employeeName}`
+              : 'Completed travel bookings history'
             }
           </p>
           
-          {selectedRequest && (
+          {selectedRequest && bookingSummary && (
             <div className="history-stats">
               <div className="stat-card total">
                 <div className="stat-icon">
                   <i className="fas fa-calendar-check"></i>
                 </div>
                 <div className="stat-info">
-                  <div className="stat-number">{bookingStats.total}</div>
+                  <div className="stat-number">{bookingSummary.totalBookings}</div>
                   <div className="stat-label">Total Bookings</div>
                 </div>
               </div>
-              <div className="stat-card completed">
-                <div className="stat-icon">
-                  <i className="fas fa-check-circle"></i>
-                </div>
-                <div className="stat-info">
-                  <div className="stat-number">{bookingStats.completed}</div>
-                  <div className="stat-label">Completed</div>
-                </div>
-              </div>
-              <div className="stat-card upcoming">
-                <div className="stat-icon">
-                  <i className="fas fa-plane"></i>
-                </div>
-                <div className="stat-info">
-                  <div className="stat-number">{bookingStats.upcoming}</div>
-                  <div className="stat-label">Upcoming</div>
-                </div>
-              </div>
-              <div className="stat-card savings">
+              <div className="stat-card amount">
                 <div className="stat-icon">
                   <i className="fas fa-rupee-sign"></i>
                 </div>
                 <div className="stat-info">
-                  <div className="stat-number">₹{(totalSavings / 1000).toFixed(0)}K</div>
-                  <div className="stat-label">Total Value</div>
+                  <div className="stat-number">{formatCurrency(bookingSummary.totalBookingAmount)}</div>
+                  <div className="stat-label">Total Amount</div>
                 </div>
               </div>
             </div>
@@ -316,39 +502,11 @@ const BookingHistory = ({ onTicketClick }) => {
         <>
           <div className="filters">
             <div className="filter-item">
-              <label htmlFor="status-filter">Request Status</label>
-              <select 
-                id="status-filter"
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-              >
-                <option value="all">All Statuses</option>
-                <option value="APPROVED">Approved</option>
-                <option value="PENDING">Pending</option>
-                <option value="COMPLETED">Completed</option>
-              </select>
-            </div>
-            <div className="filter-item">
-              <label htmlFor="department-filter">Department</label>
-              <select 
-                id="department-filter"
-                value={filters.department}
-                onChange={(e) => handleFilterChange('department', e.target.value)}
-              >
-                <option value="all">All Departments</option>
-                <option value="Engineering">Engineering</option>
-                <option value="Sales">Sales</option>
-                <option value="Marketing">Marketing</option>
-                <option value="HR">HR</option>
-                <option value="Finance">Finance</option>
-              </select>
-            </div>
-            <div className="filter-item">
               <label htmlFor="search">Search</label>
               <input 
                 type="text" 
                 id="search"
-                placeholder="Employee, Destination, Request ID..."
+                placeholder="Employee, Purpose, Request ID..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
               />
@@ -368,79 +526,101 @@ const BookingHistory = ({ onTicketClick }) => {
                   <tr>
                     <th>Request ID</th>
                     <th>Employee</th>
-                    <th>Department</th>
-                    <th>Destination</th>
-                    <th>Travel Dates</th>
-                    <th>Purpose</th>
-                    <th>Bookings</th>
-                    <th>Last Booking</th>
+                    <th>Travel Purpose</th>
+                    <th>Estimated Cost</th>
+                    <th>Approver</th>
+                    <th>Completed On</th>
+                    <th>Comments</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRequests.map(request => (
-                    <tr key={request.travelRequestId} className="request-row">
-                      <td>
-                        <div className="request-id">
-                          <code>{request.travelRequestId.substring(0, 8)}...</code>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="employee-info">
-                          <div className="employee-name">{request.employeeName}</div>
-                          <div className="employee-id">{request.employeeId}</div>
-                        </div>
-                      </td>
-                      <td>{request.department}</td>
-                      <td>
-                        <div className="destination">
-                          <i className="fas fa-map-marker-alt"></i>
-                          {request.destination}
-                        </div>
-                      </td>
-                      <td>{request.travelDates}</td>
-                      <td>{request.purpose}</td>
-                      <td>
-                        <span className="booking-count">
-                          <i className="fas fa-calendar-check"></i>
-                          {request.bookingCount} booking(s)
-                        </span>
-                      </td>
-                      <td>{request.lastBookingDate}</td>
-                      <td>
-                        <span className={`status status-${request.status.toLowerCase()}`}>
-                          {request.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            className="btn btn-primary btn-sm"
-                            onClick={() => fetchBookingDetails(request)}
-                            disabled={detailsLoading}
-                          >
-                            {detailsLoading && request.travelRequestId === selectedRequest?.travelRequestId ? (
-                              <i className="fas fa-spinner fa-spin"></i>
-                            ) : (
+                  {filteredRequests.map(request => {
+                    const actionBadge = getActionBadge(request.action);
+                    
+                    return (
+                      <tr key={request.actionId} className="request-row">
+                        <td>
+                          <div className="request-id">
+                            <code>{request.travelRequestId.substring(0, 8)}...</code>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="employee-info">
+                            <div className="employee-name">{request.employeeName}</div>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="travel-purpose">
+                            {request.travelPurpose}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="estimated-cost">
+                            {request.estimatedCost ? `₹${request.estimatedCost}` : 'N/A'}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="approver">
+                            {request.approverName || 'N/A'}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="action-date">
+                            {formatBookedDate(request.actionTakenAt)}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="comments">
+                            {request.comments || 'No comments'}
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`action-badge ${actionBadge.class}`}>
+                            <i className={actionBadge.icon}></i>
+                            {actionBadge.text}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-buttons">
+                            <button 
+                              className="btn btn-primary btn-sm"
+                              onClick={() => handleViewDetails(request)}
+                              disabled={detailsLoading}
+                              title="View Details"
+                            >
                               <i className="fas fa-eye"></i>
-                            )}
-                            View Bookings
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                              Details
+                            </button>
+                            <button 
+                              className="btn btn-info btn-sm"
+                              onClick={() => handleViewDocuments(request)}
+                              disabled={documentsLoading}
+                              title="View Documents"
+                            >
+                              {documentsLoading ? (
+                                <i className="fas fa-spinner fa-spin"></i>
+                              ) : (
+                                <i className="fas fa-file-alt"></i>
+                              )}
+                              Documents
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            {filteredRequests.length === 0 && (
+            {filteredRequests.length === 0 && !loading && (
               <div className="empty-state">
                 <i className="fas fa-search"></i>
-                <h3>No Travel Requests Found</h3>
-                <p>No travel requests with bookings match your search criteria.</p>
-                <button className="btn btn-primary" onClick={() => setFilters({ status: 'all', department: 'all', search: '' })}>
+                <h3>No Completed Bookings Found</h3>
+                <p>No completed travel bookings match your search criteria.</p>
+                <button className="btn btn-primary" onClick={() => setFilters({ status: 'all', search: '' })}>
                   <i className="fas fa-times"></i> Clear Filters
                 </button>
               </div>
@@ -457,112 +637,119 @@ const BookingHistory = ({ onTicketClick }) => {
               <i className="fas fa-spinner fa-spin"></i>
               <p>Loading booking details...</p>
             </div>
-          ) : (
-            <>
-              <div className="filters">
-                <div className="filter-item">
-                  <label htmlFor="booking-status-filter">Booking Status</label>
-                  <select id="booking-status-filter">
-                    <option value="all">All Statuses</option>
-                    <option value="completed">Completed</option>
-                    <option value="upcoming">Upcoming</option>
-                    <option value="in-progress">In Progress</option>
-                  </select>
-                </div>
-                <div className="filter-item" style={{justifyContent: 'flex-end'}}>
-                  <label>&nbsp;</label>
-                  <button className="btn btn-primary">
-                    <i className="fas fa-filter"></i> Apply Filters
-                  </button>
+          ) : bookingSummary ? (
+            <div className="booking-details-section">
+              {/* Request Information */}
+              <div className="detail-card">
+                <h4>Travel Request Information</h4>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <label>Request ID:</label>
+                    <span>{selectedRequest.travelRequestId}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>Employee:</label>
+                    <span>{selectedRequest.employeeName}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>Travel Purpose:</label>
+                    <span>{selectedRequest.travelPurpose}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>Estimated Cost:</label>
+                    <span>{selectedRequest.estimatedCost ? `₹${selectedRequest.estimatedCost}` : 'N/A'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>Approver:</label>
+                    <span>{selectedRequest.approverName || 'N/A'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>Completed On:</label>
+                    <span>{formatBookedDate(selectedRequest.actionTakenAt)}</span>
+                  </div>
+                  <div className="detail-item full-width">
+                    <label>Comments:</label>
+                    <span>{selectedRequest.comments || 'No comments'}</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="table-container">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Booking ID</th>
-                      <th>Booking Type</th>
-                      <th>Booked On</th>
-                      <th>Details</th>
-                      <th>Notes</th>
-                      <th>Cost</th>
-                      <th>Status</th>
-                      <th>Rating</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bookingDetails.map(booking => (
-                      <tr key={booking.bookingId} className={`booking-row ${booking.status}`}>
-                        <td>
-                          <div className="booking-id">
-                            <code>{booking.id}</code>
+              {/* Booking Summary */}
+              <div className="detail-card">
+                <h4>Booking Summary</h4>
+                <div className="booking-summary">
+                  <div className="summary-stats">
+                    <div className="summary-stat">
+                      <span className="stat-label">Total Bookings</span>
+                      <span className="stat-value">{bookingSummary.totalBookings}</span>
+                    </div>
+                    <div className="summary-stat">
+                      <span className="stat-label">Total Amount</span>
+                      <span className="stat-value">{formatCurrency(bookingSummary.totalBookingAmount)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bookings List */}
+              <div className="detail-card">
+                <h4>Bookings</h4>
+                <div className="bookings-list">
+                  {bookingSummary.bookings.map((booking, index) => {
+                    const typeBadge = getBookingTypeBadge(booking.bookingType);
+                    const statusBadge = getStatusBadge(booking.status);
+                    
+                    return (
+                      <div key={booking.bookingId} className="booking-item">
+                        <div className="booking-header">
+                          <div className="booking-type">
+                            <span className={`booking-type-badge ${typeBadge.class}`}>
+                              <i className={typeBadge.icon}></i>
+                              {booking.bookingType}
+                            </span>
                           </div>
-                        </td>
-                        <td>
-                          <span className="booking-type">
-                            {booking.bookingType}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="booked-date">
-                            {booking.bookedOn}
+                          <div className="booking-status">
+                            <span className={`status-badge ${statusBadge.class}`}>
+                              {statusBadge.text}
+                            </span>
                           </div>
-                        </td>
-                        <td>
-                          <div className="booking-details">
-                            {booking.details}
+                        </div>
+                        <div className="booking-details">
+                          <div className="booking-info">
+                            <div className="booking-reference">
+                              <strong>Reference:</strong> {booking.bookingReference}
+                            </div>
+                            <div className="booking-amount">
+                              <strong>Amount:</strong> {formatCurrency(booking.bookingAmount)}
+                            </div>
+                            <div className="booking-date">
+                              <strong>Booked:</strong> {formatBookedDate(booking.bookingDate)}
+                            </div>
                           </div>
-                        </td>
-                        <td>
                           <div className="booking-notes">
-                            {booking.notes}
+                            <strong>Details:</strong> {booking.details}
                           </div>
-                        </td>
-                        <td>
-                          <div className="booking-cost">
-                            <span className="cost-amount">{booking.bookingCost}</span>
+                          {booking.notes && (
+                            <div className="booking-notes">
+                              <strong>Notes:</strong> {booking.notes}
+                            </div>
+                          )}
+                          <div className="booking-id">
+                            <small>Booking ID: {booking.bookingId}</small>
                           </div>
-                        </td>
-                        <td>
-                          <span className={`status ${getStatusClass(booking.status)}`}>
-                            {booking.statusText}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="booking-rating">
-                            {renderRating(booking.rating)}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="action-buttons">
-                            <button 
-                              className="btn btn-primary btn-sm"  
-                              onClick={() => onTicketClick(booking)}
-                            >
-                              <i className="fas fa-eye"></i>
-                              Details
-                            </button>
-                            <button className="btn btn-outline btn-sm">
-                              <i className="fas fa-print"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {bookingDetails.length === 0 && (
-                <div className="empty-state">
-                  <i className="fas fa-history"></i>
-                  <h3>No Booking History</h3>
-                  <p>No booking history found for this travel request.</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </>
+              </div>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <i className="fas fa-history"></i>
+              <h3>No Booking Details</h3>
+              <p>No detailed booking information found for this request.</p>
+            </div>
           )}
         </>
       )}

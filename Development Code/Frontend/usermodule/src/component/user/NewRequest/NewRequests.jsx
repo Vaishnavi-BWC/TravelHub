@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   FaInfoCircle,
   FaCalendarAlt,
@@ -15,7 +15,8 @@ import {
   FaTrain,
   FaCar,
   FaHotel,
-  FaUtensils
+  FaUtensils,
+  FaPaperclip
 } from "react-icons/fa";
 import { useAuth } from '../../../hooks/useAuth';
 import { useTravelRequest } from '../../../hooks/useTravelRequest';
@@ -26,6 +27,7 @@ const NewRequest = ({ onBack }) => {
   const { loading: submitting, error: submitError, success: submitSuccess, saveAsDraft, submitRequest } = useTravelRequest();
 
   const [formData, setFormData] = useState({
+    isPostTravel: false, // Checkbox for post-travel
     travelDestination: '',
     origin: '',
     startDate: '',
@@ -34,7 +36,8 @@ const NewRequest = ({ onBack }) => {
     projectId: '',
     estimatedBudget: '',
     managerPresent: true,
-    travelModes: {}
+    travelModes: {},
+    attachments: [] // For post-travel attachments
   });
 
   const [errors, setErrors] = useState({});
@@ -47,6 +50,7 @@ const NewRequest = ({ onBack }) => {
   const [policyLoading, setPolicyLoading] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
   const [apiError, setApiError] = useState(null);
+  const [attachmentFiles, setAttachmentFiles] = useState([]);
 
   // Fetch employee data directly when component mounts
   useEffect(() => {
@@ -62,7 +66,6 @@ const NewRequest = ({ onBack }) => {
         setApiError(null);
         console.log('👤 Fetching employee data for user:', user.userId);
 
-        // Direct call to employee API
         const employeeResponse = await fetch(`/ems/api/v1/employees/${user.userId}`, {
           method: 'GET',
           headers: {
@@ -86,13 +89,13 @@ const NewRequest = ({ onBack }) => {
         setEmployeeData(employeeData);
 
         // Extract projects from employee data
-        console.log('📋 Employee projectIds:', employeeData.projectIds);
+        console.log('📋 Employee projects:', employeeData.projects);
         
-        if (employeeData.projectIds && employeeData.projectIds.length > 0) {
-          const projects = employeeData.projectIds.map(projectId => ({
-            id: projectId,
-            label: `Project ${projectId.substring(0, 8)}...`,
-            uuid: projectId
+        if (employeeData.projects && employeeData.projects.length > 0) {
+          const projects = employeeData.projects.map(project => ({
+            id: project.projectId,
+            label: project.projectName,
+            uuid: project.projectId
           }));
           setProjectOptions(projects);
           console.log('✅ Projects loaded successfully:', projects);
@@ -105,14 +108,13 @@ const NewRequest = ({ onBack }) => {
         console.error('❌ Error fetching employee data:', error);
         setApiError(`Failed to load employee data: ${error.message}`);
         
-        // Fallback: Use hardcoded projects for demo
+        // Fallback data
         const fallbackProjects = [
           { id: "3554a10c-1332-4793-848b-7fa0bcf8a331", label: "BWC Internal Project", uuid: "3554a10c-1332-4793-848b-7fa0bcf8a331" },
           { id: "8aa8b2c7-cd77-4bb0-bdd1-9b88a9ed0540", label: "ABC Project", uuid: "8aa8b2c7-cd77-4bb0-bdd1-9b88a9ed0540" }
         ];
         setProjectOptions(fallbackProjects);
         
-        // Set fallback employee data
         setEmployeeData({
           employeeId: user?.userId || 'Unknown',
           fullName: user?.email?.split('@')[0] || 'User',
@@ -121,7 +123,7 @@ const NewRequest = ({ onBack }) => {
           level: 'L3',
           managerName: 'Manager',
           active: true,
-          projectIds: fallbackProjects.map(p => p.id)
+          projects: fallbackProjects.map(p => ({ projectId: p.id, projectName: p.label }))
         });
         
         console.log('🔄 Using fallback data due to API error');
@@ -139,10 +141,11 @@ const NewRequest = ({ onBack }) => {
     }
   }, [user, authStatus]);
 
-  // Fetch travel policy when user clicks the button
-  const fetchTravelPolicy = async () => {
-    if (!formData.travelDestination || !employeeData?.level) {
-      alert('Please enter travel destination first');
+  // Auto-fetch travel policy when destination and employee level are available
+  const fetchTravelPolicy = useCallback(async (destination, grade) => {
+    if (!destination || !grade) {
+      setPolicyData(null);
+      setShowPolicy(false);
       return;
     }
 
@@ -151,13 +154,10 @@ const NewRequest = ({ onBack }) => {
       setShowPolicy(true);
       setApiError(null);
       
-      const city = formData.travelDestination;
-      const grade = employeeData.level;
-
-      console.log(`🏙️ Fetching travel policy for city: ${city}, grade: ${grade}`);
+      console.log(`🏙️ Auto-fetching travel policy for city: ${destination}, grade: ${grade}`);
 
       const policyResponse = await fetch(
-        `/pms/api/policies/active?city=${encodeURIComponent(city)}&grade=${encodeURIComponent(grade)}`,
+        `/pms/api/policies/active?city=${encodeURIComponent(destination)}&grade=${encodeURIComponent(grade)}`,
         {
           method: 'GET',
           headers: {
@@ -189,7 +189,18 @@ const NewRequest = ({ onBack }) => {
     } finally {
       setPolicyLoading(false);
     }
-  };
+  }, [user]);
+
+  // Auto-fetch policy when destination changes
+  useEffect(() => {
+    if (formData.travelDestination && employeeData?.level) {
+      const delayDebounceFn = setTimeout(() => {
+        fetchTravelPolicy(formData.travelDestination, employeeData.level);
+      }, 1000); // 1 second delay after typing stops
+
+      return () => clearTimeout(delayDebounceFn);
+    }
+  }, [formData.travelDestination, employeeData?.level, fetchTravelPolicy]);
 
   // Validate form whenever formData changes
   useEffect(() => {
@@ -202,6 +213,11 @@ const NewRequest = ({ onBack }) => {
       if (!formData.endDate) newErrors.endDate = 'End date is required';
       if (!formData.purpose) newErrors.purpose = 'Purpose is required';
       if (!formData.projectId) newErrors.projectId = 'Project selection is required';
+      
+      // For post-travel, validate attachments
+      if (formData.isPostTravel && attachmentFiles.length === 0) {
+        newErrors.attachments = 'At least one attachment is required for post-travel requests';
+      }
       
       // Date validation
       if (formData.startDate && formData.endDate) {
@@ -223,7 +239,7 @@ const NewRequest = ({ onBack }) => {
     };
 
     validateForm();
-  }, [formData]);
+  }, [formData, attachmentFiles]);
 
   const prepareSubmissionData = () => {
     if (!user || !user.userId) {
@@ -251,7 +267,9 @@ const NewRequest = ({ onBack }) => {
       endDate: formatDate(formData.endDate),
       purpose: formData.purpose,
       managerPresent: formData.managerPresent,
-      estimatedBudget: formData.estimatedBudget ? parseFloat(formData.estimatedBudget) : 0
+      estimatedBudget: formData.estimatedBudget ? parseFloat(formData.estimatedBudget) : 0,
+      isPostTravel: formData.isPostTravel,
+      attachments: formData.attachments
     };
 
     console.log('📦 Prepared submission data:', submissionData);
@@ -273,6 +291,28 @@ const NewRequest = ({ onBack }) => {
         ...prev.travelModes,
         [modeName]: classId
       }
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setAttachmentFiles(prev => [...prev, ...files]);
+    setFormData(prev => ({
+      ...prev,
+      attachments: [...prev.attachments, ...files.map(file => ({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        file: file
+      }))]
+    }));
+  };
+
+  const removeAttachment = (index) => {
+    setAttachmentFiles(prev => prev.filter((_, i) => i !== index));
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, i) => i !== index)
     }));
   };
 
@@ -394,6 +434,28 @@ const NewRequest = ({ onBack }) => {
             </div>
           )}
         </div>
+
+        {/* Policy Status Indicator */}
+        <div className={styles.headerActions}>
+          <div className={styles.policyStatus}>
+            {policyLoading ? (
+              <div className={styles.policyLoading}>
+                <div className={styles.spinnerSmall}></div>
+                <span>Loading Policy...</span>
+              </div>
+            ) : policyData ? (
+              <div className={styles.policyFound}>
+                <FaInfoCircle />
+                <span>Policy Loaded for {formData.travelDestination}</span>
+              </div>
+            ) : formData.travelDestination ? (
+              <div className={styles.policyPending}>
+                <FaInfoCircle />
+                <span>Enter destination to load policy</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       {/* API Error Banner */}
@@ -453,146 +515,16 @@ const NewRequest = ({ onBack }) => {
             </div>
           )}
 
-          {/* Travel Details Card */}
-          <div className={styles.formCard}>
-            <div className={styles.cardHeader}>
-              <FaMapMarkerAlt className={styles.cardIcon} />
-              <h3>Travel Details</h3>
-            </div>
-            <div className={styles.cardContent}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="travelDestination">
-                    <FaMapMarkerAlt className={styles.inputIcon} />
-                    Travel Destination *
-                  </label>
-                  <input
-                    type="text"
-                    id="travelDestination"
-                    name="travelDestination"
-                    value={formData.travelDestination}
-                    onChange={handleInputChange}
-                    placeholder="Enter destination city"
-                    className={errors.travelDestination ? styles.inputError : ''}
-                  />
-                  {errors.travelDestination && (
-                    <span className={styles.errorText}>{errors.travelDestination}</span>
-                  )}
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="origin">
-                    <FaMapMarkerAlt className={styles.inputIcon} />
-                    Departure Location *
-                  </label>
-                  <input
-                    type="text"
-                    id="origin"
-                    name="origin"
-                    value={formData.origin}
-                    onChange={handleInputChange}
-                    placeholder="Enter departure location"
-                    className={errors.origin ? styles.inputError : ''}
-                  />
-                  {errors.origin && (
-                    <span className={styles.errorText}>{errors.origin}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="startDate">
-                    <FaCalendarAlt className={styles.inputIcon} />
-                    Start Date *
-                  </label>
-                  <input
-                    type="date"
-                    id="startDate"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleInputChange}
-                    className={errors.startDate ? styles.inputError : ''}
-                  />
-                  {errors.startDate && (
-                    <span className={styles.errorText}>{errors.startDate}</span>
-                  )}
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="endDate">
-                    <FaCalendarAlt className={styles.inputIcon} />
-                    End Date *
-                  </label>
-                  <input
-                    type="date"
-                    id="endDate"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleInputChange}
-                    className={errors.endDate ? styles.inputError : ''}
-                  />
-                  {errors.endDate && (
-                    <span className={styles.errorText}>{errors.endDate}</span>
-                  )}
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>Duration</label>
-                  <div className={styles.durationDisplay}>
-                    {calculateDuration()} day(s)
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="purpose">
-                  <FaInfoCircle className={styles.inputIcon} />
-                  Purpose of Travel *
-                </label>
-                <textarea
-                  id="purpose"
-                  name="purpose"
-                  value={formData.purpose}
-                  onChange={handleInputChange}
-                  placeholder="Describe the purpose and objectives of this travel"
-                  rows="3"
-                  className={errors.purpose ? styles.inputError : ''}
-                />
-                {errors.purpose && (
-                  <span className={styles.errorText}>{errors.purpose}</span>
-                )}
-              </div>
-
-              {/* Policy Fetch Button */}
-              <div className={styles.policyButtonContainer}>
-                <button
-                  type="button"
-                  onClick={fetchTravelPolicy}
-                  disabled={!formData.travelDestination || !employeeData?.level || policyLoading}
-                  className={styles.policyButton}
-                >
-                  <FaInfoCircle className={styles.btnIcon} />
-                  {policyLoading ? 'Fetching Policy...' : 'Check Travel Policy'}
-                </button>
-                <div className={styles.policyHelpText}>
-                  {employeeData?.level ? (
-                    `Click to check travel policy for ${formData.travelDestination || 'your destination'} (Grade: ${employeeData.level})`
-                  ) : (
-                    'Enter destination to check travel policy'
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Travel Policy Information */}
+          {/* Travel Policy Information - Auto-loaded */}
           {showPolicy && (
             <div className={styles.formCard}>
               <div className={styles.cardHeader}>
                 <FaInfoCircle className={styles.cardIcon} />
                 <h3>Travel Policy Information</h3>
                 {policyLoading && <span className={styles.loadingBadge}>Loading...</span>}
+                {policyData && !policyData.notFound && !policyData.error && (
+                  <span className={styles.successBadge}>Auto-loaded</span>
+                )}
               </div>
               <div className={styles.cardContent}>
                 {policyLoading ? (
@@ -686,6 +618,122 @@ const NewRequest = ({ onBack }) => {
             </div>
           )}
 
+          {/* Travel Details Card */}
+          <div className={styles.formCard}>
+            <div className={styles.cardHeader}>
+              <FaMapMarkerAlt className={styles.cardIcon} />
+              <h3>Travel Details</h3>
+            </div>
+            <div className={styles.cardContent}>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="travelDestination">
+                    <FaMapMarkerAlt className={styles.inputIcon} />
+                    Travel Destination *
+                  </label>
+                  <input
+                    type="text"
+                    id="travelDestination"
+                    name="travelDestination"
+                    value={formData.travelDestination}
+                    onChange={handleInputChange}
+                    placeholder="Enter destination city"
+                    className={errors.travelDestination ? styles.inputError : ''}
+                  />
+                  {errors.travelDestination && (
+                    <span className={styles.errorText}>{errors.travelDestination}</span>
+                  )}
+                  <div className={styles.autoPolicyNote}>
+                    Policy will auto-load when destination is entered
+                  </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="origin">
+                    <FaMapMarkerAlt className={styles.inputIcon} />
+                    Departure Location *
+                  </label>
+                  <input
+                    type="text"
+                    id="origin"
+                    name="origin"
+                    value={formData.origin}
+                    onChange={handleInputChange}
+                    placeholder="Enter departure location"
+                    className={errors.origin ? styles.inputError : ''}
+                  />
+                  {errors.origin && (
+                    <span className={styles.errorText}>{errors.origin}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="startDate">
+                    <FaCalendarAlt className={styles.inputIcon} />
+                    Start Date *
+                  </label>
+                  <input
+                    type="date"
+                    id="startDate"
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleInputChange}
+                    className={errors.startDate ? styles.inputError : ''}
+                  />
+                  {errors.startDate && (
+                    <span className={styles.errorText}>{errors.startDate}</span>
+                  )}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="endDate">
+                    <FaCalendarAlt className={styles.inputIcon} />
+                    End Date *
+                  </label>
+                  <input
+                    type="date"
+                    id="endDate"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleInputChange}
+                    className={errors.endDate ? styles.inputError : ''}
+                  />
+                  {errors.endDate && (
+                    <span className={styles.errorText}>{errors.endDate}</span>
+                  )}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>Duration</label>
+                  <div className={styles.durationDisplay}>
+                    {calculateDuration()} day(s)
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="purpose">
+                  <FaInfoCircle className={styles.inputIcon} />
+                  Purpose of Travel *
+                </label>
+                <textarea
+                  id="purpose"
+                  name="purpose"
+                  value={formData.purpose}
+                  onChange={handleInputChange}
+                  placeholder="Describe the purpose and objectives of this travel"
+                  rows="3"
+                  className={errors.purpose ? styles.inputError : ''}
+                />
+                {errors.purpose && (
+                  <span className={styles.errorText}>{errors.purpose}</span>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Project & Budget Card */}
           <div className={styles.formCard}>
             <div className={styles.cardHeader}>
@@ -753,6 +801,89 @@ const NewRequest = ({ onBack }) => {
               </div>
             </div>
           </div>
+
+          {/* Post-Travel Checkbox */}
+          <div className={styles.formCard}>
+            <div className={styles.cardHeader}>
+              <FaPaperclip className={styles.cardIcon} />
+              <h3>Request Type</h3>
+            </div>
+            <div className={styles.cardContent}>
+              <div className={styles.formGroup}>
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    name="isPostTravel"
+                    checked={formData.isPostTravel}
+                    onChange={handleInputChange}
+                  />
+                  <span className={styles.checkboxText}>
+                    This is a Post-Travel Request (for expense reimbursement after travel)
+                  </span>
+                </label>
+                <div className={styles.checkboxHelpText}>
+                  Check this box if you are submitting expenses after completing your travel. 
+                  You will need to upload receipts and supporting documents.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Attachments Section - Only for Post-Travel */}
+          {formData.isPostTravel && (
+            <div className={styles.formCard}>
+              <div className={styles.cardHeader}>
+                <FaPaperclip className={styles.cardIcon} />
+                <h3>Expense Attachments</h3>
+              </div>
+              <div className={styles.cardContent}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="attachments">
+                    <FaPaperclip className={styles.inputIcon} />
+                    Upload Receipts and Documents *
+                  </label>
+                  <input
+                    type="file"
+                    id="attachments"
+                    multiple
+                    onChange={handleFileChange}
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    className={styles.fileInput}
+                  />
+                  <div className={styles.fileHelpText}>
+                    Supported formats: PDF, JPG, PNG, DOC, DOCX. Maximum file size: 10MB per file.
+                  </div>
+                  
+                  {errors.attachments && (
+                    <span className={styles.errorText}>{errors.attachments}</span>
+                  )}
+                  
+                  {/* Display uploaded files */}
+                  {attachmentFiles.length > 0 && (
+                    <div className={styles.attachmentsList}>
+                      <h4>Uploaded Files:</h4>
+                      {attachmentFiles.map((file, index) => (
+                        <div key={index} className={styles.attachmentItem}>
+                          <FaPaperclip className={styles.attachmentIcon} />
+                          <span className={styles.attachmentName}>{file.name}</span>
+                          <span className={styles.attachmentSize}>
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeAttachment(index)}
+                            className={styles.removeAttachment}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className={styles.actionButtons}>
