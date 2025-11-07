@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -21,12 +21,132 @@ ChartJS.register(
 );
 
 const Dashboard = ({ setActiveTab }) => {
-  const statsData = [
-    { count: 2, label: 'Pending Approvals', icon: 'fas fa-clock', color: 'blue', tab: 'pending-approvals' },
-    { count: 1, label: 'Pending Reimbursements', icon: 'fas fa-money-bill-wave', color: 'green', tab: 'reimbursements' },
-    { count: 1, label: 'Policy Exceptions', icon: 'fas fa-exclamation-circle', color: 'purple', tab: 'policy-exceptions' },
+  const [statsData, setStatsData] = useState([
+    { count: 0, label: 'Pending Approvals', icon: 'fas fa-clock', color: 'blue', tab: 'pending-approvals' },
+    { count: 0, label: 'Pending Reimbursements', icon: 'fas fa-money-bill-wave', color: 'green', tab: 'reimbursements' },
+    { count: 0, label: 'Policy Exceptions', icon: 'fas fa-exclamation-circle', color: 'purple', tab: 'policy-exceptions' },
     { count: 0, label: 'Overdue (>48h)', icon: 'fas fa-exclamation-triangle', color: 'orange', tab: 'pending-approvals' }
-  ];
+  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch dashboard statistics
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch pending approvals count
+      const pendingResponse = await fetch('/travel-desk-proxy/api/finance/approvals/pending', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      if (!pendingResponse.ok) {
+        throw new Error(`Failed to fetch pending approvals: ${pendingResponse.status}`);
+      }
+
+      const pendingData = await pendingResponse.json();
+      console.log('📊 Pending approvals data:', pendingData);
+
+      // Calculate overdue requests (>48 hours)
+      const overdueCount = calculateOverdueCount(pendingData);
+
+      // Fetch reimbursement data (you might need to adjust this endpoint)
+      const reimbursementResponse = await fetch('/travel-desk-proxy/api/finance/reimbursements/pending', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      let reimbursementCount = 0;
+      if (reimbursementResponse.ok) {
+        const reimbursementData = await reimbursementResponse.json();
+        reimbursementCount = Array.isArray(reimbursementData) ? reimbursementData.length : 0;
+      }
+
+      // Calculate policy exceptions (requests with special handling)
+      const policyExceptionsCount = calculatePolicyExceptions(pendingData);
+
+      // Update stats data with real counts
+      setStatsData([
+        { 
+          count: Array.isArray(pendingData) ? pendingData.length : 0, 
+          label: 'Pending Approvals', 
+          icon: 'fas fa-clock', 
+          color: 'blue', 
+          tab: 'pending-approvals' 
+        },
+        { 
+          count: reimbursementCount, 
+          label: 'Pending Reimbursements', 
+          icon: 'fas fa-money-bill-wave', 
+          color: 'green', 
+          tab: 'reimbursements' 
+        },
+        { 
+          count: policyExceptionsCount, 
+          label: 'Policy Exceptions', 
+          icon: 'fas fa-exclamation-circle', 
+          color: 'purple', 
+          tab: 'policy-exceptions' 
+        },
+        { 
+          count: overdueCount, 
+          label: 'Overdue (>48h)', 
+          icon: 'fas fa-exclamation-triangle', 
+          color: 'orange', 
+          tab: 'pending-approvals' 
+        }
+      ]);
+
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
+      setError(`Failed to load dashboard data: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateOverdueCount = (pendingData) => {
+    if (!Array.isArray(pendingData)) return 0;
+    
+    const fortyEightHoursAgo = new Date();
+    fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
+    
+    return pendingData.filter(request => {
+      if (!request.createdAt && !request.submittedAt) return false;
+      
+      const requestDate = new Date(request.createdAt || request.submittedAt);
+      return requestDate < fortyEightHoursAgo;
+    }).length;
+  };
+
+  const calculatePolicyExceptions = (pendingData) => {
+    if (!Array.isArray(pendingData)) return 0;
+    
+    // Count requests that might need special attention
+    // You can adjust these criteria based on your business rules
+    return pendingData.filter(request => {
+      const highAmount = request.estimatedCost > 50000; // High value requests
+      const internationalTravel = request.destination && 
+                                 request.destination.toLowerCase().includes('international');
+      const urgentPriority = request.priority === 'HIGH' || request.priority === 'URGENT';
+      
+      return highAmount || internationalTravel || urgentPriority;
+    }).length;
+  };
 
   // Bar chart data
   const barChartData = {
@@ -85,6 +205,34 @@ const Dashboard = ({ setActiveTab }) => {
       }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="dashboard">
+        <h2 className="section-title">Finance Overview</h2>
+        <div className="loading-state">
+          <i className="fas fa-spinner fa-spin"></i>
+          <p>Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard">
+        <h2 className="section-title">Finance Overview</h2>
+        <div className="error-state">
+          <i className="fas fa-exclamation-triangle"></i>
+          <h3>Error Loading Dashboard</h3>
+          <p>{error}</p>
+          <button className="btn btn-primary" onClick={fetchDashboardStats}>
+            <i className="fas fa-sync"></i> Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard">
