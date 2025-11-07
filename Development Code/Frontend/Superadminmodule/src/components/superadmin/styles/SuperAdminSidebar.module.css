@@ -8,16 +8,17 @@
   --text-white: #ffffff;
   --accent-color: #ff6b35;
   --space-xs: 4px;
-  --space-sm: 8px;
+  --space-sm-header: 8px;
   --space-md: 12px;
   --space-lg: 20px;
-  --space-xl: 25px;
+  --space-xl: 20px;
   --space-2xl: 24px;
   --font-size-sm: 14px;
   --font-size-base: 16px;
-  --font-size-lg: 18px;
+  --font-size-lg: 16px;
   --font-size-xl: 20px;
   --radius-sm: 4px;
+  --font-size-sm-header:14px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-round: 50%;
@@ -29,7 +30,7 @@
 
 /* Sidebar Base Styles */
 .sidebar {
-  width: 300px;
+  width: 280px;
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--bg-dark) 100%);
   color: var(--text-light);
   transition: all var(--transition-normal);
@@ -67,7 +68,8 @@
 
 /* Sidebar Header */
 .sidebarHeader {
-  padding: var(--space-xl) var(--space-lg);
+  /* padding: var(--space-xl) var(--space-lg); */
+  padding: 20px 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   text-align: left;
   border-bottom: none;
@@ -101,7 +103,7 @@
 .logoWrapper {
   background: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-lg);
-  padding: var(--space-sm);
+  padding: var(--space-sm-header);
   box-shadow: var(--shadow-md);
   transition: all var(--transition-normal);
 }
@@ -125,14 +127,14 @@
 
 .companyName {
   font-size: var(--font-size-lg);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-white);
   letter-spacing: 0.5px;
   line-height: 1.2;
 }
 
 .appName {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-sm-header);
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
   letter-spacing: 0.3px;

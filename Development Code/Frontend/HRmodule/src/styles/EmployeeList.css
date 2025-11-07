@@ -217,7 +217,7 @@
 .cardHeaderFlex {
   padding: 20px;
   border-bottom: 1px solid var(--gray-200);
-  background: var(--gray-50);
+  /* background: var(--gray-50); */
 }
 
 .filterButtons {

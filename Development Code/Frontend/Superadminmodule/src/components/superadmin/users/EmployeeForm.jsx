@@ -280,8 +280,8 @@ function EmployeeForm({ onSubmit, onCancel, isLoading = false }) {
   return (
     <div className="form">
       <div className="formHeader">
-        <h1 className="formTitle">Add New Employee</h1>
-        <p className="formSubtitle">Fill in the details below to add a new employee to the system.</p>
+       <h1 className="formTitle">Create Employee Profile</h1>
+        <p className="formSubtitle">Onboard new talent seamlessly into the BrainWave family.</p>
       </div>
 
       {successMessage && (

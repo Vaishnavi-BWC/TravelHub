@@ -2,14 +2,15 @@ import React, { useState, useMemo } from 'react';
 import Badge from '../common/Badge';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import '../../components/audit/AuditTrail.css'
+
 const ApprovalList = ({
   approvals,
   onRequestSelect,
   loading = false,
   error = null,
   onRefresh,
-  onApprove, // Add this prop for direct approval
-  onReject   // Add this prop for direct rejection
+  onApprove,
+  onReject
 }) => {
   const [requestFilter, setRequestFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,7 +47,7 @@ const ApprovalList = ({
   };
 
   const handleQuickApprove = async (request, e) => {
-    e.stopPropagation(); // Prevent row click
+    e.stopPropagation();
     if (!onApprove) {
       console.warn('onApprove function not provided');
       return;
@@ -58,7 +59,6 @@ const ApprovalList = ({
     setProcessingRequest(request.id);
     try {
       await onApprove(request.id, "Approved via quick action");
-      // Success handled by parent component
     } catch (error) {
       console.error('Error approving request:', error);
       alert(`Failed to approve request: ${error.message}`);
@@ -68,14 +68,14 @@ const ApprovalList = ({
   };
 
   const handleQuickReject = async (request, e) => {
-    e.stopPropagation(); // Prevent row click
+    e.stopPropagation();
     if (!onReject) {
       console.warn('onReject function not provided');
       return;
     }
 
     const reason = prompt(`Please enter reason for rejecting request ${request.id}:`);
-    if (reason === null) return; // User cancelled
+    if (reason === null) return;
 
     if (!reason.trim()) {
       alert("Please provide a reason for rejection.");
@@ -85,7 +85,6 @@ const ApprovalList = ({
     setProcessingRequest(request.id);
     try {
       await onReject(request.id, reason);
-      // Success handled by parent component
     } catch (error) {
       console.error('Error rejecting request:', error);
       alert(`Failed to reject request: ${error.message}`);
@@ -99,32 +98,6 @@ const ApprovalList = ({
       onRequestSelect(request);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="card">
-        <div className="cardBody">
-          <LoadingSpinner text="Loading HR approval requests..." />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="card">
-        <div className="cardBody">
-          <div className="errorMessage">
-            <i className="fas fa-exclamation-circle"></i>
-            {error}
-            <button onClick={onRefresh} className="btn btnSecondary" style={{ marginLeft: '10px' }}>
-              <i className="fas fa-refresh"></i> Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="card">
@@ -188,7 +161,19 @@ const ApprovalList = ({
       </div>
 
       <div className="cardBody">
-        {filteredRequests.length > 0 ? (
+        {error ? (
+          <div className="errorMessage">
+            <i className="fas fa-exclamation-circle"></i>
+            {error}
+            <button onClick={onRefresh} className="btn btnSecondary" style={{ marginLeft: '10px' }}>
+              <i className="fas fa-refresh"></i> Retry
+            </button>
+          </div>
+        ) : loading ? (
+          <div className="loading">
+            <i className="fas fa-spinner fa-spin"></i> Loading approval requests...
+          </div>
+        ) : filteredRequests.length > 0 ? (
           <div className="table-container">
             <table className="data-table">
               <thead>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSuperAdmin } from "@/contexts/SuperAdminContext";
-import styles from '../superadmin.module.css';
+import './SLA.css';
 
 const SLASettings = () => {
   const { state, actions } = useSuperAdmin();
@@ -172,24 +172,24 @@ const SLASettings = () => {
 
   if (loading && !slaSettings) {
     return (
-      <div className={styles.container}>
-        <div className={`${styles.card} maincard`}>
-          <div className={styles.loading}>Loading SLA Settings...</div>
+      <div className="container">
+        <div className="card maincard">
+          <div className="loading">Loading SLA Settings...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.containersla}>
-      <div className={`${styles.card} maincard`}>
-        <div className={styles.cardHeader}>
-          <div className={styles.headerLeft}>
+    <div className="containersla">
+      <div className="card maincard">
+        <div className="cardHeader">
+          <div className="headerLeft">
             <h3>SLA Settings</h3>
             <select 
               value={workflowType}
               onChange={(e) => setWorkflowType(e.target.value)}
-              className={styles.workflowSelect}
+              className="workflowSelect"
             >
               <option value="PRE_TRAVEL">Pre-Travel</option>
               <option value="POST_TRAVEL">Post-Travel</option>
@@ -198,15 +198,15 @@ const SLASettings = () => {
             
             {/* Temporary debug button */}
              
-          <div className={styles.tabButtons}>
+          <div className="tabButtons">
             <button 
-              className={`${styles.tabButton} ${activeTab === 'individual' ? styles.tabButtonActive : ''}`}
+              className={`tabButton ${activeTab === 'individual' ? "tabButtonActive" : ''}`}
               onClick={() => setActiveTab('individual')}
             >
               Individual Steps
             </button>
             <button 
-              className={`${styles.tabButton} ${activeTab === 'bulk' ? styles.tabButtonActive : ''}`}
+              className={`tabButton ${activeTab === 'bulk' ? "tabButtonActive" : ''}`}
               onClick={() => setActiveTab('bulk')}
             >
               Bulk Update
@@ -215,9 +215,9 @@ const SLASettings = () => {
           </div>
         </div>
         
-        <div className={styles.cardBody}>
+        <div className="cardBody">
           {slaSettings && (
-            <div className={styles.workflowInfo}>
+            <div className="workflowInfo">
               <p><strong>Workflow Type:</strong> {slaSettings.workflowType}</p>
               <p><strong>Total Steps:</strong> {slaSettings.totalSteps}</p>
               <p><strong>Active Steps:</strong> {slaSettings.activeSteps}</p>
@@ -228,8 +228,8 @@ const SLASettings = () => {
 
           {activeTab === 'individual' && (
             <>
-              <div className={styles.tableContainer}>
-                <table className={styles.dataTable}>
+              <div className="tableContainer">
+                <table className="dataTable">
                   <thead>
                     <tr>
                       <th>Step Name</th>
@@ -244,28 +244,28 @@ const SLASettings = () => {
                   </thead>
                   <tbody>
                     {settings.map((setting) => (
-                      <tr key={setting.configId} className={!setting.isActive ? styles.inactiveRow : ''}>
-                        <td className={styles.stepCell}>
-                          <span className={styles.stepName}>{setting.stepName}</span>
+                      <tr key={setting.configId} className={!setting.isActive ? "inactiveRow" : ''}>
+                        <td className="stepCell">
+                          <span className="stepName">{setting.stepName}</span>
                           {hasUnsavedChanges(setting.configId) && (
-                            <span className={styles.unsavedBadge}>Unsaved</span>
+                            <span className="unsavedBadge">Unsaved</span>
                           )}
-                          {/* Debug info - remove later */}
-                          {/* <small style={{display: 'block', color: '#666', fontSize: '10px'}}>
-                            ID: {setting.configId.substring(0, 8)}...
-                          </small> */}
                         </td>
-                        <td className={styles.roleCell}>
-                          <span className={styles.roleBadge}>{setting.role}</span>
+                        <td className="roleCell">
+                          <div className="roleclass">
+                               <span className="roleBadge">{setting.role}</span>
+                          </div>
+                       
                         </td>
-                        <td>
-                            {setting.isMandatory && <span className={styles.mandatoryBadge}>Mandatory</span>}
-                        </td>
-                        <td className={styles.sequenceCell}>
+                  <td>
+  {setting.isMandatory && <span className="mandatoryBadge">Mandatory</span>}
+  {!setting.isMandatory && <span className="optionalBadge">Optional</span>}
+</td>
+                        <td className="sequenceCell">
                           <select
                             value={setting.sequenceOrder}
                             onChange={(e) => updateStepSequence(setting.configId, parseInt(e.target.value))}
-                            className={styles.sequenceSelect}
+                            className="sequenceSelect"
                             disabled={!setting.isActive}
                           >
                             {[1, 2, 3, 4, 5, 6].map(num => (
@@ -278,7 +278,7 @@ const SLASettings = () => {
                             type="number" 
                             value={getDisplayValue(setting, 'slaHours')}
                             onChange={(e) => handleLocalChange(setting.configId, 'slaHours', e.target.value)}
-                            className={`${styles.numberInput} ${hasUnsavedChanges(setting.configId) ? styles.unsavedInput : ''}`}
+                            className={`numberInput ${hasUnsavedChanges(setting.configId) ? "unsavedInput" : ''}`}
                             min="1"
                             max="720"
                             disabled={!setting.isActive}
@@ -289,22 +289,22 @@ const SLASettings = () => {
                             type="checkbox" 
                             checked={getDisplayValue(setting, 'autoApprove')}
                             onChange={(e) => handleLocalChange(setting.configId, 'autoApprove', e.target.checked)}
-                            className={`${styles.checkbox} ${hasUnsavedChanges(setting.configId) ? styles.unsavedCheckbox : ''}`}
+                            className={`checkbox ${hasUnsavedChanges(setting.configId) ?"unsavedCheckbox" : ''}`}
                             disabled={!setting.isActive}
                           />
                         </td>
                         <td>
                           <button
-                            className={`${styles.statusToggle} ${setting.isActive ? styles.statusActive : styles.statusInactive}`}
+                            className={`statusToggle ${setting.isActive ? "statusActive": "statusInactive"}`}
                             onClick={() => toggleStepActivation(setting.configId, !setting.isActive)}
                           >
                             {setting.isActive ? 'Active' : 'Inactive'}
                           </button>
                         </td>
                         <td>
-                          <div className={styles.actionButtons}>
+                          <div className="actionButtons">
                             <button 
-                              className={`${styles.primaryBtnSmall} ${hasUnsavedChanges(setting.configId) ? styles.saveHighlight : ''}`}
+                              className={`primaryBtnSmall ${hasUnsavedChanges(setting.configId) ? "saveHighlight": ''}`}
                               onClick={() => handleSaveIndividual(setting.configId)}
                               disabled={!setting.isActive || loading || savingId === setting.configId}
                               title={`Save SLA settings for ${setting.stepName}`}
@@ -312,7 +312,7 @@ const SLASettings = () => {
                               {savingId === setting.configId ? 'Saving...' : 'Save'}
                             </button>
                             <button 
-                              className={styles.secondaryBtnSmall}
+                              className="secondaryBtnSmall"
                               onClick={() => toggleStepActivation(setting.configId, !setting.isActive)}
                               disabled={loading}
                               title={setting.isActive ? `Deactivate ${setting.stepName}` : `Activate ${setting.stepName}`}
@@ -328,14 +328,14 @@ const SLASettings = () => {
               </div>
               
               {settings.some(s => !s.isActive) && (
-                <div className={styles.inactiveNote}>
+                <div className="inactiveNote">
                   <i className="fas fa-info-circle"></i>
                   <span>Inactive steps are shown in light gray and cannot be modified until activated.</span>
                 </div>
               )}
 
               {Object.keys(localChanges).length > 0 && (
-                <div className={styles.unsavedNote}>
+                <div className="unsavedNote">
                   <i className="fas fa-exclamation-triangle"></i>
                   <span>You have unsaved changes. Click 'Save' on each row to apply changes.</span>
                 </div>
@@ -344,34 +344,34 @@ const SLASettings = () => {
           )}
 
           {activeTab === 'bulk' && (
-            <div className={styles.bulkUpdateSection}>
-              <div className={styles.bulkForm}>
+            <div className="bulkUpdateSection">
+              <div className="bulkForm">
                 <h4>Bulk Update All Steps</h4>
                 <p>Set the same SLA hours for all active approval steps in this workflow.</p>
                 
-                <div className={styles.formGroup}>
+                <div className="formGroup">
                   <label htmlFor="bulkTimeLimit">SLA Hours (for all active steps):</label>
                   <input
                     id="bulkTimeLimit"
                     type="number"
                     value={bulkTimeLimit}
                     onChange={(e) => setBulkTimeLimit(parseInt(e.target.value) || 48)}
-                    className={styles.numberInput}
+                    className="numberInput"
                     min="1"
                     max="720"
                   />
-                  <small className={styles.helpText}>Hours (1-720)</small>
+                  <small className="helpText">Hours (1-720)</small>
                 </div>
                 
                 <button 
-                  className={styles.primaryBtn}
+                  className="primaryBtn"
                   onClick={updateBulkSLA}
                   disabled={loading}
                 >
                   {loading ? 'Updating...' : 'Apply to All Active Steps'}
                 </button>
                 
-                <div className={styles.bulkInfo}>
+                <div className="bulkInfo">
                   <p><strong>Note:</strong> This will update the SLA hours for all <strong>active</strong> steps in the {workflowType} workflow. Inactive steps will not be affected.</p>
                 </div>
               </div>

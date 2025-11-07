@@ -4,7 +4,7 @@
   --primary-blue: #1a4f8c;
   --primary-blue-light: #3a7bb8;
   --primary-gradient: linear-gradient(135deg, #1a4f8c 0%, #3a7bb8 100%);
-
+  
   /* Neutral Colors */
   --white: #ffffff;
   --gray-50: #fafbfc;
@@ -17,7 +17,7 @@
   --gray-700: #4a5568;
   --gray-800: #2d3748;
   --gray-900: #1a202c;
-
+  
   /* Semantic Colors */
   --success: #48bb78;
   --success-light: #f0fff4;
@@ -27,20 +27,20 @@
   --error-border: #feb2b2;
   --warning: #ed8936;
   --info: #4299e1;
-
+  
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   --shadow-blue: 0 4px 15px rgba(58, 123, 184, 0.3);
-
+  
   /* Border Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
-
+  
   /* Spacing */
   --space-xs: 8px;
   --space-sm: 12px;
@@ -48,7 +48,7 @@
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 40px;
-
+  
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-base: 0.3s ease;
@@ -63,35 +63,46 @@
 
 /* ===== Form Container ===== */
 .form {
-  width: 100%;
+  width: 99%;
   margin: 0 auto;
   padding: var(--space-2xl);
   background: var(--white);
-  border-radius: var(--radius-xl);
+  /* border-radius: var(--radius-xl); */
   box-shadow: var(--shadow-lg);
   /* border: 1px solid var(--gray-200); */
-  height: 100vh;
+  height: 91vh;
+  margin-top: 0.5%;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 /* ===== Form Header ===== */
 .formHeader {
-  text-align: center;
+  text-align: left;
   margin-bottom: var(--space-2xl);
   padding-bottom: var(--space-lg);
-  border-bottom: 1px solid var(--gray-200);
+  border-left: 4px solid #0073e6;
+  padding-left: 12px;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  /* border-bottom: 1px solid var(--gray-200); */
+ /* box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px; */
+  padding-top: 1%;
+  padding-bottom: 1%;
 }
 
 .formTitle {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary-blue);
   margin-bottom: var(--space-sm);
   line-height: 1.2;
+
 }
 
 .formSubtitle {
   color: var(--gray-600);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
 }
@@ -143,7 +154,6 @@
     opacity: 0;
     transform: translateY(-10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -156,6 +166,9 @@
   flex-direction: column;
   gap: var(--space-lg);
   margin-bottom: var(--space-lg);
+  /* border: 1px solid #000; */
+  width: 95%;
+  margin: auto;
 }
 
 /* Row container for side-by-side fields */
@@ -186,11 +199,9 @@
   font-size: 0.95rem;
   transition: color var(--transition-base);
 }
-
 .formGroup label span {
   color: var(--error);
 }
-
 /* ===== Form Controls ===== */
 .formControl {
   width: 100%;
@@ -362,13 +373,8 @@ select.formControl {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* ===== Form States ===== */
@@ -376,7 +382,10 @@ select.formControl {
   border-color: var(--success);
   box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1);
 }
-
+.select
+{
+  color:var(--gray-500);
+}
 .formError .formControl {
   border-color: var(--error);
   box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.1);
@@ -389,27 +398,27 @@ select.formControl {
     margin: var(--space-md);
     border-radius: var(--radius-lg);
   }
-
+  
   /* On mobile, switch rows to single column */
   .formRow {
     flex-direction: column;
     gap: var(--space-lg);
   }
-
+  
   .formTitle {
     font-size: 1.6rem;
   }
-
+  
   .formActions {
     flex-direction: column;
     gap: var(--space-sm);
   }
-
+  
   .btn {
     width: 100%;
     justify-content: center;
   }
-
+  
   .successMessage,
   .errorMessage {
     padding: var(--space-md);
@@ -423,15 +432,15 @@ select.formControl {
     margin: var(--space-sm);
     border-radius: var(--radius-md);
   }
-
+  
   .formTitle {
     font-size: 1.4rem;
   }
-
+  
   .formGrid {
     gap: var(--space-md);
   }
-
+  
   .successMessage,
   .errorMessage {
     padding: var(--space-sm) var(--space-md);
@@ -445,15 +454,15 @@ select.formControl {
     box-shadow: none;
     border: 1px solid var(--gray-400);
   }
-
+  
   .btn {
     display: none;
   }
-
+  
   .formActions {
     display: none;
   }
-
+  
   .successMessage,
   .errorMessage {
     display: none;
@@ -469,11 +478,11 @@ select.formControl {
     --success: #006400;
     --error: #8b0000;
   }
-
+  
   .formControl {
     border-width: 3px;
   }
-
+  
   .successMessage,
   .errorMessage {
     border-width: 2px;
@@ -487,11 +496,11 @@ select.formControl {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-
+  
   .btn::before {
     display: none;
   }
-
+  
   .successMessage,
   .errorMessage {
     animation: none;
@@ -792,7 +801,7 @@ select.formControl {
     flex-direction: column;
     gap: var(--space-lg);
   }
-
+  
   /* Ensure dropdown menus are visible on mobile */
   .dropdownMenu {
     position: fixed;
@@ -804,7 +813,7 @@ select.formControl {
     border-radius: 10px 10px 0 0;
     margin-top: 0;
   }
-
+  
   .dropdownTrigger {
     min-height: 48px;
   }
@@ -842,3 +851,187 @@ select.formControl {
   font-weight: 600;
   box-shadow: var(--shadow-sm);
 }
+
+
+
+
+
+/* ===== Make Dropdowns Match Form Inputs ===== */
+.dropdownTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  background: var(--gray-50);
+  color: var(--gray-800);
+  transition: all var(--transition-base);
+  line-height: 1.5;
+  cursor: pointer;
+  min-height: auto;
+  width: 100%;
+  height: 48px;
+}
+
+.dropdownTrigger:hover {
+  border-color: var(--gray-400);
+  background: var(--gray-100);
+}
+
+.dropdownTrigger.dropdownOpen {
+  border-color: var(--primary-blue-light);
+  background: var(--white);
+  box-shadow: 0 0 0 4px rgba(58, 123, 184, 0.1);
+  transform: translateY(-1px);
+}
+
+.dropdownPlaceholder {
+  color: var(--gray-500);
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+.dropdownTrigger:not(.dropdownOpen) .dropdownPlaceholder {
+  color: var(--gray-500);
+  font-weight: 400;
+}
+
+/* Disabled state for dropdowns */
+.dropdownTrigger.disabledState {
+  opacity: 0.6;
+  background-color: var(--gray-50);
+  color: var(--gray-500);
+  cursor: not-allowed;
+  border: 2px solid var(--gray-300);
+}
+
+.dropdownTrigger.disabledState:hover {
+  border-color: var(--gray-300);
+  background: var(--gray-50);
+  transform: none;
+  box-shadow: none;
+}
+
+.dropdownTrigger.disabledState .dropdownPlaceholder {
+  color: var(--gray-500);
+  font-size: 1rem;
+  color:red;
+}
+
+/* Ensure all form controls have the same height and alignment */
+.formControl,
+.dropdownTrigger,
+select.formControl {
+  min-height: 48px;
+  height: auto;
+  display: flex;
+  align-items: center;
+}
+
+/* Make sure dropdown menu items are properly styled */
+.dropdownMenu {
+  background: var(--white);
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  margin-top: 4px;
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  padding: var(--space-md) var(--space-lg);
+  min-height: auto;
+  align-items: center;
+  border-bottom: 1px solid var(--gray-200);
+  transition: background-color var(--transition-fast);
+  cursor: pointer;
+  display: flex;
+}
+
+.dropdownItem:hover {
+  background-color: var(--gray-100);
+}
+
+.dropdownItem.selected {
+  background-color: var(--primary-blue-light);
+  color: var(--white);
+}
+
+.dropdownItem.selected .roleName,
+.dropdownItem.selected .roleDescription {
+  color: var(--white);
+}
+
+.dropdownItem.disabled {
+  cursor: not-allowed;
+  color: var(--gray-500);
+  background-color: var(--gray-50);
+}
+
+/* Ensure consistent font sizes */
+.formGroup label {
+  font-size: 0.95rem;
+}
+
+.formControl,
+.dropdownTrigger,
+.dropdownPlaceholder {
+  font-size: 1rem;
+}
+
+.roleName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 2px;
+}
+
+.roleDescription {
+  font-size: 0.85rem;
+  color: var(--gray-600);
+  line-height: 1.3;
+}
+
+.roleCheckbox {
+  margin-right: 12px;
+  color: var(--primary-blue);
+  flex-shrink: 0;
+}
+
+.roleCheckbox i {
+  font-size: 1rem;
+}
+
+.roleInfo {
+  flex: 1;
+}
+
+/* Selected badge styling */
+.selectedRolesBadge {
+  margin-top: 8px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--primary-blue);
+  color: var(--white);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Loading state for dropdowns */
+.dropdownLoading {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+/* Remove the old inline styles from the component */

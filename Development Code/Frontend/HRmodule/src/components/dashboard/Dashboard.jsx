@@ -6,7 +6,8 @@ import DashboardStats from './DashboardStats';
 import PendingApprovals from './PendingApprovals';
 import RecentEmployees from './RecentEmployees';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { approvalService } from '../../services/approvalService'; // Import approval service
+import { approvalService } from '../../services/approvalService';
+import { hrService } from '../../services/hrService'; // Import hr service
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -20,8 +21,9 @@ const Dashboard = () => {
 
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
   const [loadingApprovals, setLoadingApprovals] = useState(true);
+  const [userName, setUserName] = useState('HR'); // State for user name
 
-  // Load dashboard data including approvals count
+  // Load dashboard data including approvals count and user name
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
@@ -32,6 +34,9 @@ const Dashboard = () => {
 
         // Load pending approvals count
         await loadPendingApprovalsCount();
+
+        // Load user name
+        await loadUserName();
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       }
@@ -39,6 +44,32 @@ const Dashboard = () => {
     
     loadDashboardData();
   }, []);
+
+  // Function to load user name
+  const loadUserName = async () => {
+    try {
+      console.log('🔍 Fetching HR user name for dashboard...');
+      
+      const profileData = await hrService.getHRProfile();
+      console.log('✅ HR Profile data received:', profileData);
+      
+      // Set the user name
+      if (profileData && profileData.fullName) {
+        let namearray = profileData.fullName.split(" ");
+        console.log(namearray.length)
+        if(namearray.length>1){
+          setUserName(namearray[0]);
+        } else {
+        setUserName(profileData.fullName);
+      }
+    }
+    } catch (err) {
+      console.error('❌ Error fetching HR profile:', err);
+      // Fallback to localStorage data
+      const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+      setUserName(userData.userName || userData.email || 'HR');
+    }
+  };
 
   // Function to load pending approvals count
   const loadPendingApprovalsCount = async () => {
@@ -95,7 +126,8 @@ const Dashboard = () => {
   const handleRefresh = useCallback(() => {
     refreshAllData();
     loadPendingApprovalsCount(); // Refresh approvals count too
-  }, [refreshAllData, loadPendingApprovalsCount]);
+    loadUserName(); // Refresh user name too
+  }, [refreshAllData, loadPendingApprovalsCount, loadUserName]);
 
   // Show loading only if both employees and approvals are loading
   const isLoading = (employeesData.dashboardLoading && employees.length === 0 && employeesData.allEmployees.length === 0) || 
@@ -113,7 +145,7 @@ const Dashboard = () => {
     <div className="dashboard">
       <div className="content">
         <div className="detailHeader">
-          <h2>Welcome HR!</h2>
+          <h2>Welcome {userName}!</h2> {/* Updated to show dynamic user name */}
           {/* <button 
             className="btn btnSecondary" 
             onClick={handleRefresh}
