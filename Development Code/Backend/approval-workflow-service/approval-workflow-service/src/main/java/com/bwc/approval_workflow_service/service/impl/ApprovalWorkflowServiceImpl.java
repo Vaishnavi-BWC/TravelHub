@@ -279,20 +279,10 @@ public class ApprovalWorkflowServiceImpl implements ApprovalWorkflowService {
                 .approverId(managerRequest.getApproverId())
                 .approverName(managerRequest.getApproverName())
                 .comments(managerRequest.getComments())
-                .amountApproved(managerRequest.getAmountApproved())
-                .reimbursementAmount(managerRequest.getReimbursementAmount())
-                .escalationReason(managerRequest.getEscalationReason())
-                .markOverpriced(managerRequest.getMarkOverpriced())
-                .overpricedReason(managerRequest.getOverpricedReason())
                 .build();
 
         // 🔹 Reuse main approval flow (handles all logic and saves ApprovalAction)
         ApprovalWorkflowDTO result = processApproval(approvalRequest);
-
-        // 🔹 If manager raised exception, record it explicitly
-        if (Boolean.TRUE.equals(managerRequest.getIsExceptionRaised())) {
-            recordRaisedException(managerRequest);
-        }
 
         log.info("✅ Manager action processed for workflow {} successfully", managerRequest.getWorkflowId());
         return result;

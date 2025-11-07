@@ -6,9 +6,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.bwc.approval_workflow_service.config.FeignConfig;
 import com.bwc.approval_workflow_service.dto.NotificationRequestDTO;
+import com.bwc.approval_workflow_service.entity.ApprovalWorkflow;
 
 @FeignClient(name = "notification-service", url = "${services.notification.url:http://localhost:8090}", configuration = FeignConfig.class)
 public interface NotificationServiceClient {
     @PostMapping("/api/notifications")
     void sendNotification(@RequestBody NotificationRequestDTO notificationRequest);
+
+	void notifyNextApprover(ApprovalWorkflow workflow, String nextStep);
 }
