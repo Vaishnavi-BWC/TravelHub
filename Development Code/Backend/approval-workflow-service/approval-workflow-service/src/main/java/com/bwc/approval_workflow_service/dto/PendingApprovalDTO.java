@@ -15,6 +15,7 @@ import java.util.UUID;
 public class PendingApprovalDTO {
     private UUID workflowId;
     private UUID travelRequestId;
+    private UUID policyId;
     private String employeeName;
     private String employeeDepartment;
     private String currentStep;

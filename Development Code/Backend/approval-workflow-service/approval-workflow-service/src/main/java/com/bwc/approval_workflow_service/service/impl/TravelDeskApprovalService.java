@@ -1,12 +1,5 @@
 package com.bwc.approval_workflow_service.service.impl;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-
 import com.bwc.approval_workflow_service.client.NotificationServiceClient;
 import com.bwc.approval_workflow_service.dto.TravelDeskApprovalActionRequestDTO;
 import com.bwc.approval_workflow_service.dto.TravelDeskApprovalActionResponseDTO;
@@ -19,9 +12,15 @@ import com.bwc.approval_workflow_service.repository.ApprovalWorkflowRepository;
 import com.bwc.approval_workflow_service.service.impl.base.AbstractApprovalService;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
-@Service("travelDeskApprovalService")
+@Service("travel_deskApprovalService")
 public class TravelDeskApprovalService
         extends AbstractApprovalService<TravelDeskApprovalActionRequestDTO, TravelDeskApprovalActionResponseDTO> {
 
@@ -41,6 +40,7 @@ public class TravelDeskApprovalService
                       ApprovalActionType.SUGGEST_ALTERNATIVE, ApprovalActionType.RAISE_EXCEPTION);
     }
 
+    // ✅ Add this missing method
     @Override
     protected String getExceptionReason(TravelDeskApprovalActionRequestDTO request) {
         return request.getExceptionReason();
@@ -59,6 +59,7 @@ public class TravelDeskApprovalService
 
         String message;
         String nextStepName = null;
+        boolean exceptionRaised = false;
 
         switch (request.getActionType()) {
             case APPROVE -> {
@@ -100,7 +101,10 @@ public class TravelDeskApprovalService
 
             case RAISE_EXCEPTION -> {
                 workflow.setStatus("EXCEPTION_RAISED_BY_TRAVEL_DESK");
-                message = "Travel Desk raised an exception: " + request.getExceptionReason();
+                message = "Travel Desk raised operational exception: " + request.getExceptionReason();
+                exceptionRaised = true;
+                log.warn("🚨 Travel Desk Operational Exception: {} - Booking: {}", 
+                        request.getExceptionReason(), request.getBookingReference());
             }
 
             default -> throw new WorkflowException("Unsupported action type: " + request.getActionType());
@@ -115,6 +119,7 @@ public class TravelDeskApprovalService
                 .travelArrangementsConfirmed(request.getTravelArrangementsConfirmed())
                 .alternativeDetails(request.getAlternativeSuggestions())
                 .exceptionDetails(request.getExceptionReason())
+                .exceptionRaised(exceptionRaised)
                 .build();
     }
 }

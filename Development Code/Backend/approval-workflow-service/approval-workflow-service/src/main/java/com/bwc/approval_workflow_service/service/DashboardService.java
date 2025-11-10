@@ -233,6 +233,7 @@ public class DashboardService {
         return PendingApprovalDTO.builder()
                 .workflowId(workflow.getWorkflowId())
                 .travelRequestId(workflow.getTravelRequestId())
+                .policyId(workflow.getPolicyId())
                 .employeeName(workflow.getEmployeeName())
                 .employeeDepartment(workflow.getEmployeeDepartment())
                 .currentStep(workflow.getCurrentStep())

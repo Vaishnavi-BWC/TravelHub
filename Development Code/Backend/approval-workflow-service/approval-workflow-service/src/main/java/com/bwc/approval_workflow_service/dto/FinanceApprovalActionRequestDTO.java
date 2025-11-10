@@ -8,10 +8,20 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-@NoArgsConstructor // Add this
+@NoArgsConstructor
 public class FinanceApprovalActionRequestDTO extends BaseApprovalActionRequestDTO {
     private Double budgetApproved;
     private String expenseCategory;
     private Boolean withinBudget;
     private String clarificationRequest;
+
+    @Override
+    public boolean canRaiseException() {
+        return false; // Finance cannot raise exceptions
+    }
+
+    @Override
+    protected String getRoleSpecificExceptionReason() {
+        return null; // Finance doesn't have exception reasons
+    }
 }

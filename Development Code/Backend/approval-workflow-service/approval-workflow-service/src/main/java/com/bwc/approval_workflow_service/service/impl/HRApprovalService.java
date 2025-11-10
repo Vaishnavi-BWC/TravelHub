@@ -1,12 +1,5 @@
 package com.bwc.approval_workflow_service.service.impl;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-
 import com.bwc.approval_workflow_service.client.NotificationServiceClient;
 import com.bwc.approval_workflow_service.dto.HRApprovalActionRequestDTO;
 import com.bwc.approval_workflow_service.dto.HRApprovalActionResponseDTO;
@@ -19,6 +12,12 @@ import com.bwc.approval_workflow_service.repository.ApprovalWorkflowRepository;
 import com.bwc.approval_workflow_service.service.impl.base.AbstractApprovalService;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service("hrApprovalService")
@@ -41,6 +40,7 @@ public class HRApprovalService
                       ApprovalActionType.REQUEST_DOCUMENTATION, ApprovalActionType.RAISE_EXCEPTION);
     }
 
+    // ✅ Add this missing method
     @Override
     protected String getExceptionReason(HRApprovalActionRequestDTO request) {
         return request.getExceptionReason();
@@ -59,6 +59,7 @@ public class HRApprovalService
 
         String message;
         String nextStepName = null;
+        boolean exceptionRaised = false;
 
         switch (request.getActionType()) {
             case APPROVE -> {
@@ -100,7 +101,10 @@ public class HRApprovalService
 
             case RAISE_EXCEPTION -> {
                 workflow.setStatus("EXCEPTION_RAISED_BY_HR");
-                message = "HR raised an exception: " + request.getExceptionReason();
+                message = "HR raised policy exception: " + request.getExceptionReason();
+                exceptionRaised = true;
+                log.warn("🚨 HR Policy Exception: {} - Policy Section: {}", 
+                        request.getExceptionReason(), request.getPolicySection());
             }
 
             default -> throw new WorkflowException("Unsupported action type: " + request.getActionType());
@@ -114,6 +118,8 @@ public class HRApprovalService
                 .policyComplianceChecked(request.getPolicyComplianceChecked())
                 .complianceStatus(workflow.getStatus())
                 .exceptionDetails(request.getExceptionReason())
+                .policySectionReference(request.getPolicySection())
+                .exceptionRaised(exceptionRaised)
                 .build();
     }
 }

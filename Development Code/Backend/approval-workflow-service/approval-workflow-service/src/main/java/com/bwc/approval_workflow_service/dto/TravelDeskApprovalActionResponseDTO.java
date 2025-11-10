@@ -12,4 +12,5 @@ public class TravelDeskApprovalActionResponseDTO extends BaseApprovalActionRespo
     private Boolean travelArrangementsConfirmed;
     private String alternativeDetails;
     private String exceptionDetails;
+    private Boolean exceptionRaised;        // Add this field
 }

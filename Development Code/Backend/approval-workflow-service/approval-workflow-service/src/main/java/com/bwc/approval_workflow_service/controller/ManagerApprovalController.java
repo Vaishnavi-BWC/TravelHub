@@ -107,7 +107,7 @@ import lombok.RequiredArgsConstructor;
 public class ManagerApprovalController {
 
     private final ManagerApprovalService managerService;
-
+    
     @PostMapping("/{workflowId}/approve")
     public ResponseEntity<?> approve(@PathVariable UUID workflowId,
                                      @RequestBody ManagerApprovalActionRequestDTO dto) {

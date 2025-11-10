@@ -2,12 +2,15 @@ package com.bwc.approval_workflow_service.service.impl.base;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bwc.approval_workflow_service.client.NotificationServiceClient;
 import com.bwc.approval_workflow_service.dto.BaseApprovalActionRequestDTO;
 import com.bwc.approval_workflow_service.dto.BaseApprovalActionResponseDTO;
+import com.bwc.approval_workflow_service.dto.HRApprovalActionRequestDTO;
+import com.bwc.approval_workflow_service.dto.TravelDeskApprovalActionRequestDTO;
 import com.bwc.approval_workflow_service.dto.WorkflowNotificationDTO;
 import com.bwc.approval_workflow_service.entity.ActorAction;
 import com.bwc.approval_workflow_service.entity.ApprovalWorkflow;
@@ -35,11 +38,17 @@ public abstract class AbstractApprovalService<I extends BaseApprovalActionReques
     public O processApproval(I request) {
         log.info("🔹 [{}] Processing {} for workflow {}", getActorRole(), request.getActionType(), request.getWorkflowId());
 
+        // 🔒 Pre-validate action permissions
+        request.validateActionPermission();
+
         ApprovalWorkflow workflow = workflowRepository.findByIdWithStepsAndActions(request.getWorkflowId())
                 .orElseThrow(() -> new ResourceNotFoundException("Workflow not found: " + request.getWorkflowId()));
 
         validateActor(workflow, request);
         validateActionPermission(request.getActionType());
+        
+        // 🔒 Role-specific validation for exceptions
+        validateExceptionRaising(request);
         
         ActorAction action = recordAction(workflow, request);
         
@@ -50,6 +59,11 @@ public abstract class AbstractApprovalService<I extends BaseApprovalActionReques
         
         O response = handleApproval(workflow, request, action);
         workflowRepository.save(workflow);
+        
+        // 🔒 Notify about exceptions if raised
+        if (request.getActionType() == ApprovalActionType.RAISE_EXCEPTION) {
+            notifyExceptionRaised(workflow, request);
+        }
         
         return response;
     }
@@ -113,7 +127,7 @@ public abstract class AbstractApprovalService<I extends BaseApprovalActionReques
     }
 
     protected void handleExceptionRaising(ActorAction action, I request) {
-        String exceptionReason = getExceptionReason(request);
+        String exceptionReason = request.getExceptionReason();
         if (exceptionReason == null || exceptionReason.trim().isEmpty()) {
             throw new WorkflowException("Exception reason is required for RAISE_EXCEPTION action");
         }
@@ -128,28 +142,80 @@ public abstract class AbstractApprovalService<I extends BaseApprovalActionReques
                 .build();
 
         action.addException(exception);
+        
+        log.warn("🚨 Exception raised by {}: {}", getActorRole(), exceptionReason);
     }
 
-    protected abstract String getExceptionReason(I request);
+    /**
+     * 🔒 Role-specific exception validation
+     */
+    protected void validateExceptionRaising(I request) {
+        if (request.getActionType() == ApprovalActionType.RAISE_EXCEPTION) {
+            if (!request.canRaiseException()) {
+                throw new SecurityException(getActorRole() + " role cannot raise exceptions. Only Travel Desk and HR are allowed.");
+            }
+            
+            // Role-specific validation
+            if (request instanceof HRApprovalActionRequestDTO hrRequest) {
+                hrRequest.validateHRException();
+            } else if (request instanceof TravelDeskApprovalActionRequestDTO travelRequest) {
+                travelRequest.validateTravelDeskException();
+            }
+        }
+    }
 
-    protected abstract O handleApproval(ApprovalWorkflow workflow, I request, ActorAction action);
-    protected abstract String getActorRole();
+    /**
+     * 🔒 Notify relevant stakeholders about exceptions
+     */
+    protected void notifyExceptionRaised(ApprovalWorkflow workflow, I request) {
+        try {
+            String exceptionReason = request.getExceptionReason();
+            String raisedByRole = getActorRole();
+            
+            WorkflowNotificationDTO dto = WorkflowNotificationDTO.builder()
+                    .workflowId(workflow.getWorkflowId())
+                    .workflowType(workflow.getWorkflowType())
+                    .currentStep("EXCEPTION_RAISED")
+                    .nextApproverRole("ADMIN") // Notify admins about exceptions
+                    .employeeName(workflow.getEmployeeName())
+                    .employeeEmail(workflow.getEmployeeEmail())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+            
+            dto.setAdditionalData(Map.of(
+                "exceptionReason", exceptionReason,
+                "raisedByRole", raisedByRole,
+                "workflowStatus", workflow.getStatus(),
+                "priority", "HIGH"
+            ));
+
+            notificationService.notifyException(dto);
+            log.info("📢 Exception notification sent for workflow {}", workflow.getWorkflowId());
+            
+        } catch (Exception e) {
+            log.warn("⚠️ Exception notification failed: {}", e.getMessage(), e);
+        }
+    }
 
     protected void notifyNextStep(ApprovalWorkflow workflow, String nextStepRole) {
         try {
-            WorkflowNotificationDTO dto = new WorkflowNotificationDTO(
-                    workflow.getWorkflowId(),
-                    workflow.getWorkflowType(),
-                    workflow.getCurrentStep(),
-                    nextStepRole,
-                    workflow.getEmployeeName(),
-                    workflow.getEmployeeEmail(),
-                    workflow.getUpdatedAt()
-            );
+            WorkflowNotificationDTO dto = WorkflowNotificationDTO.builder()
+                    .workflowId(workflow.getWorkflowId())
+                    .workflowType(workflow.getWorkflowType())
+                    .currentStep(workflow.getCurrentStep())
+                    .nextApproverRole(nextStepRole)
+                    .employeeName(workflow.getEmployeeName())
+                    .employeeEmail(workflow.getEmployeeEmail())
+                    .timestamp(workflow.getUpdatedAt())
+                    .build();
 
             notificationService.notifyNextApprover(dto);
         } catch (Exception e) {
             log.warn("⚠️ Notification failed: {}", e.getMessage(), e);
         }
     }
+
+    protected abstract String getExceptionReason(I request);
+    protected abstract O handleApproval(ApprovalWorkflow workflow, I request, ActorAction action);
+    protected abstract String getActorRole();
 }

@@ -40,6 +40,7 @@ public class ManagerApprovalService
         return List.of(ApprovalActionType.APPROVE, ApprovalActionType.REJECT, ApprovalActionType.RETURN);
     }
 
+    // ✅ Add this missing method
     @Override
     protected String getExceptionReason(ManagerApprovalActionRequestDTO request) {
         return null; // Manager cannot raise exceptions

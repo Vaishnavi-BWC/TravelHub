@@ -1,13 +1,16 @@
 package com.bwc.approval_workflow_service.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class WorkflowNotificationDTO {
@@ -17,18 +20,10 @@ public class WorkflowNotificationDTO {
     private String nextApproverRole;
     private String employeeName;
     private String employeeEmail;
-    private LocalDateTime updatedAt;
-    
-    // Add getters for the fields used in NotificationFallback
-    public UUID getWorkflowId() {
-        return workflowId;
-    }
-    
-    public String getEmployeeName() {
-        return employeeName;
-    }
-    
-    public String getNextApproverRole() {
-        return nextApproverRole;
+    private LocalDateTime timestamp;
+    private Map<String, Object> additionalData;
+
+    public void setAdditionalData(Map<String, Object> additionalData) {
+        this.additionalData = additionalData;
     }
 }

@@ -11,8 +11,15 @@ public class NotificationFallback implements NotificationServiceClient {
     @Override
     public void notifyNextApprover(WorkflowNotificationDTO notificationDTO) {
         log.warn("📧 Notification service unavailable - Would notify {} for workflow {} (Employee: {})",
-                notificationDTO.getNextApproverRole(), 
-                notificationDTO.getWorkflowId(), 
+                notificationDTO.getNextApproverRole(),
+                notificationDTO.getWorkflowId(),
                 notificationDTO.getEmployeeName());
+    }
+
+    @Override
+    public void notifyException(WorkflowNotificationDTO notification) {
+        log.warn("⚠️ Notification service unavailable - Exception notification for workflow {}. Details: {}",
+                notification.getWorkflowId(),
+                notification.getAdditionalData());
     }
 }

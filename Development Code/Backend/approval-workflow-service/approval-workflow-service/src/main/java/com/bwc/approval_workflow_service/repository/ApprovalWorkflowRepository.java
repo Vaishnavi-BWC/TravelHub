@@ -98,8 +98,15 @@ import com.bwc.approval_workflow_service.entity.ApprovalWorkflow;
 @Repository
 public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkflow, UUID> {
 
-    @Query("SELECT w FROM ApprovalWorkflow w LEFT JOIN FETCH w.steps WHERE w.workflowId = :workflowId")
-    Optional<ApprovalWorkflow> findByIdWithStepsAndActions(@Param("workflowId") UUID workflowId);
+	@Query("""
+		    SELECT DISTINCT w 
+		    FROM ApprovalWorkflow w
+		    LEFT JOIN FETCH w.steps s
+		    LEFT JOIN FETCH s.actorActions
+		    WHERE w.workflowId = :workflowId
+		    """)
+		Optional<ApprovalWorkflow> findByIdWithStepsAndActions(@Param("workflowId") UUID workflowId);
+
 
     // Add this missing method
     Optional<ApprovalWorkflow> findByTravelRequestIdAndWorkflowType(UUID travelRequestId, String workflowType);

@@ -9,12 +9,15 @@ import com.bwc.approval_workflow_service.dto.WorkflowNotificationDTO;
 
 @FeignClient(
     name = "notification-service",
-    url = "${services.notification.url:http://localhost:8084}", // original port
+    url = "${services.notification.url:http://localhost:8084}",
     configuration = FeignConfig.class,
-    fallback = NotificationFallback.class // 🟢 add this
+    fallback = NotificationFallback.class
 )
 public interface NotificationServiceClient {
 
     @PostMapping("/api/notifications/next-approver")
     void notifyNextApprover(@RequestBody WorkflowNotificationDTO notification);
+
+    @PostMapping("/api/notifications/exception")
+    void notifyException(@RequestBody WorkflowNotificationDTO notification);
 }

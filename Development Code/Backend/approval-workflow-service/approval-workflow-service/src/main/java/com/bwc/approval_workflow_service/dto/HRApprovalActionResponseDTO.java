@@ -11,4 +11,6 @@ public class HRApprovalActionResponseDTO extends BaseApprovalActionResponseDTO {
     private Boolean policyComplianceChecked;
     private String complianceStatus;
     private String exceptionDetails;
+    private String policySectionReference;  // Add this field
+    private Boolean exceptionRaised;        // Add this field
 }

@@ -8,7 +8,17 @@ import lombok.experimental.SuperBuilder;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
-@NoArgsConstructor // Add this
+@NoArgsConstructor
 public class ManagerApprovalActionRequestDTO extends BaseApprovalActionRequestDTO {
     private String returnReason;
+
+    @Override
+    public boolean canRaiseException() {
+        return false; // Manager cannot raise exceptions
+    }
+
+    @Override
+    protected String getRoleSpecificExceptionReason() {
+        return null; // Managers don't have exception reasons
+    }
 }
