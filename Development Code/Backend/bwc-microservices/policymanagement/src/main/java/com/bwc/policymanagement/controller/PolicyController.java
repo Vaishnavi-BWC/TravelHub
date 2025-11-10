@@ -155,6 +155,19 @@ public class PolicyController {
         // ✅ Return the GradePolicy ID instead of the Policy ID
         return ResponseEntity.ok(gradePolicy.getId());
     }
+    
+//    
+//    @GetMapping("/active/id")
+//    @Operation(summary = "Fetch active grade policy ID for a given city and employee grade or by city category and grade")
+//    public ResponseEntity<UUID> getActiveGradePolicyId(
+//            @Parameter(description = "City name") @RequestParam(name = "city", required = false) String city,
+//            @Parameter(description = "City category ID") @RequestParam(name = "cityCategory", required = false) UUID cityCategory,
+//            @Parameter(description = "Employee grade (L1-L5)") @RequestParam(name = "grade") String grade) {
+//
+//        // Temporarily return a random UUID for testing purposes
+//        UUID randomId = UUID.randomUUID();
+//        return ResponseEntity.ok(randomId);
+//    }
 
 
 }

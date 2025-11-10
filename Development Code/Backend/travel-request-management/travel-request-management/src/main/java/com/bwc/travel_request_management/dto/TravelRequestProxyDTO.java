@@ -19,11 +19,12 @@ public class TravelRequestProxyDTO {
     private UUID employeeId;
     private UUID projectId;
     private UUID managerId;
+    private UUID categoryId;          // ✅ added (to match workflow service)
     private LocalDate startDate;
     private LocalDate endDate;
     private String purpose;
     private Double estimatedBudget;
-    private BigDecimal AdvancedTaken;
+    private BigDecimal advancedTaken; // ✅ corrected case (lowercase)
     private String travelDestination;
     private String origin;
 }
