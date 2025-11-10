@@ -16,4 +16,7 @@ public interface PolicyGradeService {
     void deleteGradePolicy(UUID policyId, String grade);
 
     List<GradePolicyResponse> getGradePolicies(UUID policyId);
+    
+    GradePolicyResponse getGradePolicyById(UUID gradeId);
+
 }

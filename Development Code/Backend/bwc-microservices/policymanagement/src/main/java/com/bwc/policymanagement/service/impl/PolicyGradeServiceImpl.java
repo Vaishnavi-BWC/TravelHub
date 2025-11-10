@@ -1,21 +1,30 @@
 package com.bwc.policymanagement.service.impl;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.bwc.common.exception.BusinessException;
 import com.bwc.common.exception.ResourceNotFoundException;
 import com.bwc.policymanagement.dto.AddGradePolicyRequest;
 import com.bwc.policymanagement.dto.GradePolicyRequest;
 import com.bwc.policymanagement.dto.GradePolicyResponse;
-import com.bwc.policymanagement.entity.*;
+import com.bwc.policymanagement.entity.CityCategory;
+import com.bwc.policymanagement.entity.GradePolicy;
+import com.bwc.policymanagement.entity.LodgingAllowance;
+import com.bwc.policymanagement.entity.PerDiemAllowance;
+import com.bwc.policymanagement.entity.Policy;
+import com.bwc.policymanagement.entity.TravelClass;
+import com.bwc.policymanagement.entity.TravelMode;
 import com.bwc.policymanagement.repository.CityCategoryRepository;
+import com.bwc.policymanagement.repository.GradePolicyRepository;
 import com.bwc.policymanagement.repository.PolicyRepository;
 import com.bwc.policymanagement.service.PolicyGradeService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @Transactional
@@ -25,6 +34,8 @@ public class PolicyGradeServiceImpl implements PolicyGradeService {
 
     private final PolicyRepository policyRepository;
     private final CityCategoryRepository categoryRepository;
+    private final GradePolicyRepository gradePolicyRepository;
+
 
     // ✅ SonarQube: define constants instead of repeating literals
     private static final String POLICY_ENTITY = "Policy";
@@ -181,4 +192,13 @@ public class PolicyGradeServiceImpl implements PolicyGradeService {
                         .toList())
                 .build();
     }
+    
+    @Override
+    public GradePolicyResponse getGradePolicyById(UUID gradeId) {
+        GradePolicy gradePolicy = gradePolicyRepository.findByIdWithDetails(gradeId)
+                .orElseThrow(() -> new ResourceNotFoundException("GradePolicy", gradeId.toString()));
+
+        return toResponseDto(gradePolicy);
+    }
+
 }
