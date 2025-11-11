@@ -1,18 +1,31 @@
 package com.bwc.approval_workflow_service.controller;
 
-import com.bwc.approval_workflow_service.dto.*;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.bwc.approval_workflow_service.dto.ActionHistoryDTO;
+import com.bwc.approval_workflow_service.dto.DashboardOverviewDTO;
+import com.bwc.approval_workflow_service.dto.DashboardSummaryDTO;
+import com.bwc.approval_workflow_service.dto.ExceptionDTO;
+import com.bwc.approval_workflow_service.dto.PendingApprovalDTO;
+import com.bwc.approval_workflow_service.dto.WorkflowDetailDTO;
+import com.bwc.approval_workflow_service.dto.WorkflowExceptionSummaryDTO;
 import com.bwc.approval_workflow_service.service.DashboardService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -98,6 +111,55 @@ public class DashboardController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    
+    
+    @GetMapping("/workflows/with-exceptions/pending")
+    @Operation(
+        summary = "Get pending workflows containing exceptions for logged-in stakeholder",
+        description = "Fetches all pending workflows that contain exceptions and are assigned to the logged-in stakeholder's role."
+    )
+    public ResponseEntity<?> getPendingWorkflowsWithExceptions() {
+        try {
+            UserContext userContext = getCurrentUserContext();
+            String userRole = userContext.getUserRole();
+
+            log.info("📄 Fetching pending workflows with exceptions for role: {}", userRole);
+
+            List<WorkflowExceptionSummaryDTO> workflows = dashboardService.getPendingWorkflowsWithExceptionsByRole(userRole);
+
+            if (workflows.isEmpty()) {
+                return ResponseEntity.ok().body(Map.of(
+                    "message", "No pending workflows with exceptions found for your role",
+                    "role", userRole,
+                    "count", 0,
+                    "timestamp", LocalDateTime.now()
+                ));
+            }
+
+            return ResponseEntity.ok(Map.of(
+                "workflows", workflows,
+                "count", workflows.size(),
+                "role", userRole,
+                "timestamp", LocalDateTime.now()
+            ));
+
+        } catch (SecurityException e) {
+            log.warn("🔒 Unauthorized access attempt: {}", e.getMessage());
+            return ResponseEntity.status(403).body(Map.of(
+                "error", "Unauthorized",
+                "message", "User not authenticated or missing role"
+            ));
+        } catch (Exception e) {
+            log.error("💥 Error fetching workflows with exceptions: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of(
+                        "error", "Server Error", 
+                        "message", "Failed to fetch workflows with exceptions",
+                        "timestamp", LocalDateTime.now()
+                    ));
+        }
+    }
+
 
     @GetMapping("/role-exceptions")
     @Operation(summary = "Get exceptions for user's role")
@@ -232,6 +294,9 @@ public class DashboardController {
 
         return new UserContext(UUID.fromString(userId), userRole);
     }
+    
+
+    
 
     // Inner class for user context
     private static class UserContext {
@@ -246,4 +311,9 @@ public class DashboardController {
         public UUID getUserId() { return userId; }
         public String getUserRole() { return userRole; }
     }
+    
+    
+    
+ 
+
 }

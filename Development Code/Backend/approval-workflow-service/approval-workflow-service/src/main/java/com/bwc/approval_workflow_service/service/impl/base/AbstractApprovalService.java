@@ -159,7 +159,7 @@ public abstract class AbstractApprovalService<I extends BaseApprovalActionReques
             if (request instanceof HRApprovalActionRequestDTO hrRequest) {
                 hrRequest.validateHRException();
             } else if (request instanceof TravelDeskApprovalActionRequestDTO travelRequest) {
-                travelRequest.validateTravelDeskException();
+                travelRequest.validateTravelDeskException(); // This now only requires exceptionReason
             }
         }
     }

@@ -1,12 +1,9 @@
 package com.bwc.approval_workflow_service.client;
-
 import com.bwc.approval_workflow_service.config.FeignConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.UUID;
-
 @FeignClient(
     name = "travel-request-service",
     contextId = "expenseBillClient",  // ✅ Unique context ID added
@@ -14,7 +11,6 @@ import java.util.UUID;
     configuration = FeignConfig.class
 )
 public interface ExpenseBillServiceClient {
-
     @PostMapping("/api/expense-bills/workflow/{workflowId}/submit")
     ResponseEntity<Void> submitBillsForReview(
             @PathVariable UUID workflowId,

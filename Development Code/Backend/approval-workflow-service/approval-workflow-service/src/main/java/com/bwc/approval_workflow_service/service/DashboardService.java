@@ -334,4 +334,33 @@ public class DashboardService {
                 .sorted(Comparator.comparing(WorkflowStepDTO::getSequenceOrder))
                 .collect(Collectors.toList());
     }
+    
+    
+    @Transactional(readOnly = true)
+    public List<WorkflowExceptionSummaryDTO> getPendingWorkflowsWithExceptionsByRole(String role) {
+        log.info("Fetching pending workflows with exceptions for role: {}", role);
+
+        List<Object[]> results = workflowRepository.findPendingWorkflowsWithExceptionsByRole(role);
+
+        return results.stream()
+                .map(obj -> {
+                    ApprovalWorkflow w = (ApprovalWorkflow) obj[0];
+                    String reason = (String) obj[1];
+
+                    return WorkflowExceptionSummaryDTO.builder()
+                            .workflowId(w.getWorkflowId())
+                            .employeeDepartment(w.getEmployeeDepartment())
+                            .currentStep(w.getCurrentStep())
+                            .currentApproverRole(w.getCurrentApproverRole())
+                            .workflowType(w.getWorkflowType())
+                            .employeeName(w.getEmployeeName())
+                            .status(w.getStatus())
+                            .exceptionReasonse(reason)
+                            .uri("/api/v1/dashboard/workflows/" + w.getWorkflowId())
+                            .build();
+                })
+                .toList();
+    }
+
+
 }
