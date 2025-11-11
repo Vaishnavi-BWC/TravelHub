@@ -12,10 +12,10 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 public class TravelDeskApprovalActionRequestDTO extends BaseApprovalActionRequestDTO {
-    private String bookingReference;
+    private String bookingReference;        // Optional for exceptions
+    private Boolean travelArrangementsConfirmed;
     private String alternativeSuggestions;
     private String exceptionReason;
-    private Boolean travelArrangementsConfirmed;
 
     @Override
     public boolean canRaiseException() {
@@ -24,20 +24,18 @@ public class TravelDeskApprovalActionRequestDTO extends BaseApprovalActionReques
 
     @Override
     protected String getRoleSpecificExceptionReason() {
-        return exceptionReason;
+        return this.exceptionReason;
     }
 
     /**
-     * 🔒 Validate Travel Desk-specific business rules for exceptions
+     * 🔒 Validate Travel Desk specific exception requirements
      */
     public void validateTravelDeskException() {
-        if (getActionType() == ApprovalActionType.RAISE_EXCEPTION) {
-            if (exceptionReason == null || exceptionReason.trim().isEmpty()) {
-                throw new IllegalArgumentException("Exception reason is required for Travel Desk");
+        if (this.getActionType() == ApprovalActionType.RAISE_EXCEPTION) {
+            if (this.exceptionReason == null || this.exceptionReason.trim().isEmpty()) {
+                throw new IllegalArgumentException("exceptionReason is required for RAISE_EXCEPTION");
             }
-            if (bookingReference == null || bookingReference.trim().isEmpty()) {
-                throw new IllegalArgumentException("Booking reference must be specified when raising exception");
-            }
+            // ✅ No booking reference validation - it's optional for exceptions
         }
     }
 }

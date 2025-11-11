@@ -40,7 +40,6 @@ public class TravelDeskApprovalService
                       ApprovalActionType.SUGGEST_ALTERNATIVE, ApprovalActionType.RAISE_EXCEPTION);
     }
 
-    // ✅ Add this missing method
     @Override
     protected String getExceptionReason(TravelDeskApprovalActionRequestDTO request) {
         return request.getExceptionReason();
@@ -100,11 +99,32 @@ public class TravelDeskApprovalService
             }
 
             case RAISE_EXCEPTION -> {
-                workflow.setStatus("EXCEPTION_RAISED_BY_TRAVEL_DESK");
-                message = "Travel Desk raised operational exception: " + request.getExceptionReason();
+                // Complete current step and move to next step
+                currentStep.setStatus("COMPLETED");
+                currentStep.setCompletedAt(LocalDateTime.now());
+
+                Optional<WorkflowStep> nextStepOpt = workflow.getSteps().stream()
+                        .filter(step -> step.getSequenceOrder() > currentStep.getSequenceOrder())
+                        .min(Comparator.comparing(WorkflowStep::getSequenceOrder));
+
+                if (nextStepOpt.isPresent()) {
+                    WorkflowStep nextStep = nextStepOpt.get();
+                    nextStep.setStatus("ACTIVE");
+                    workflow.setCurrentStep(nextStep.getStepName());
+                    workflow.setCurrentApproverRole(nextStep.getApproverRole());
+                    workflow.setPreviousStep(currentStep.getStepName());
+                    nextStepName = nextStep.getStepName();
+
+                    message = "Travel Desk raised exception and forwarded to " + nextStep.getApproverRole() + ".";
+                    notifyNextStep(workflow, nextStep.getApproverRole());
+                } else {
+                    workflow.setStatus("COMPLETED");
+                    workflow.setCompletedAt(LocalDateTime.now());
+                    message = "Travel Desk raised exception and workflow completed.";
+                }
+
                 exceptionRaised = true;
-                log.warn("🚨 Travel Desk Operational Exception: {} - Booking: {}", 
-                        request.getExceptionReason(), request.getBookingReference());
+                log.warn("🚨 Travel Desk Operational Exception: {}", request.getExceptionReason());
             }
 
             default -> throw new WorkflowException("Unsupported action type: " + request.getActionType());

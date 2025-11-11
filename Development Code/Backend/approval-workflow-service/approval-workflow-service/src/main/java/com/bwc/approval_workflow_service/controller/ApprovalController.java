@@ -220,35 +220,31 @@ public class ApprovalController {
     }
 
     private void populateTravelDeskFields(TravelDeskApprovalActionRequestDTO travelDto, 
-                                        Map<String, Object> requestBody, 
-                                        ApprovalActionType actionType) {
-        if (requestBody.containsKey("bookingReference")) {
-            travelDto.setBookingReference((String) requestBody.get("bookingReference"));
-        }
-        if (requestBody.containsKey("travelArrangementsConfirmed")) {
-            travelDto.setTravelArrangementsConfirmed((Boolean) requestBody.get("travelArrangementsConfirmed"));
-        }
-        
-        if (actionType == ApprovalActionType.SUGGEST_ALTERNATIVE) {
-            if (requestBody.containsKey("alternativeSuggestions")) {
-                travelDto.setAlternativeSuggestions((String) requestBody.get("alternativeSuggestions"));
-            } else {
-                throw new IllegalArgumentException("alternativeSuggestions is required for SUGGEST_ALTERNATIVE");
-            }
-        }
-        
-        if (actionType == ApprovalActionType.RAISE_EXCEPTION) {
-            if (requestBody.containsKey("exceptionReason")) {
-                travelDto.setExceptionReason((String) requestBody.get("exceptionReason"));
-            } else {
-                throw new IllegalArgumentException("exceptionReason is required for RAISE_EXCEPTION");
-            }
-            if (!requestBody.containsKey("bookingReference") || 
-                ((String) requestBody.get("bookingReference")).trim().isEmpty()) {
-                throw new IllegalArgumentException("bookingReference is required when Travel Desk raises exceptions");
-            }
-        }
-    }
+            Map<String, Object> requestBody, 
+            ApprovalActionType actionType) {
+    	if (requestBody.containsKey("bookingReference")) {
+    		travelDto.setBookingReference((String) requestBody.get("bookingReference"));
+    	}
+		if (requestBody.containsKey("travelArrangementsConfirmed")) {
+		travelDto.setTravelArrangementsConfirmed((Boolean) requestBody.get("travelArrangementsConfirmed"));
+		}
+		
+		if (actionType == ApprovalActionType.SUGGEST_ALTERNATIVE) {
+		if (requestBody.containsKey("alternativeSuggestions")) {
+		travelDto.setAlternativeSuggestions((String) requestBody.get("alternativeSuggestions"));
+		} else {
+		throw new IllegalArgumentException("alternativeSuggestions is required for SUGGEST_ALTERNATIVE");
+		}
+		}
+		
+		if (actionType == ApprovalActionType.RAISE_EXCEPTION) {
+		if (requestBody.containsKey("exceptionReason")) {
+		travelDto.setExceptionReason((String) requestBody.get("exceptionReason"));
+		} else {
+		throw new IllegalArgumentException("exceptionReason is required for RAISE_EXCEPTION");
+		}
+	}
+}
 
     /**
      * 🔒 Validate HR exception requirements
