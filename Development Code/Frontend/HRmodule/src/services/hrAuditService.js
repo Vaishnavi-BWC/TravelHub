@@ -1,5 +1,5 @@
 // services/hrAuditService.js
-const HR_AUDIT_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/hr/approvals';
+const HR_AUDIT_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/dashboard';
 
 export const hrAuditService = {
   async getAuditTrail(filters = {}) {
@@ -17,7 +17,7 @@ export const hrAuditService = {
       });
       
       const queryString = queryParams.toString();
-      const url = `${HR_AUDIT_API_BASE_URL}/history${queryString ? `?${queryString}` : ''}`;
+      const url = `${HR_AUDIT_API_BASE_URL}/action-history`;
 
       console.log('🔗 Making HR API call to:', url);
 

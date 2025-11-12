@@ -20,10 +20,12 @@ const Dashboard = () => {
   } = useApp();
 
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const [dashboardSummary, setDashboardSummary] = useState({});
   const [loadingApprovals, setLoadingApprovals] = useState(true);
+  const [loadingSummary, setLoadingSummary] = useState(true);
   const [userName, setUserName] = useState('HR'); // State for user name
 
-  // Load dashboard data including approvals count and user name
+  // Load dashboard data including approvals count, dashboard summary and user name
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
@@ -32,8 +34,11 @@ const Dashboard = () => {
           await employeesData.loadAllEmployeesForDashboard();
         }
 
-        // Load pending approvals count
+        // Load pending approvals count (for PendingApprovals component)
         await loadPendingApprovalsCount();
+
+        // Load dashboard summary (for DashboardStats component)
+        await loadDashboardSummary();
 
         // Load user name
         await loadUserName();
@@ -60,9 +65,9 @@ const Dashboard = () => {
         if(namearray.length>1){
           setUserName(namearray[0]);
         } else {
-        setUserName(profileData.fullName);
+          setUserName(profileData.fullName);
+        }
       }
-    }
     } catch (err) {
       console.error('❌ Error fetching HR profile:', err);
       // Fallback to localStorage data
@@ -71,7 +76,7 @@ const Dashboard = () => {
     }
   };
 
-  // Function to load pending approvals count
+  // Function to load pending approvals count (for PendingApprovals component)
   const loadPendingApprovalsCount = async () => {
     try {
       setLoadingApprovals(true);
@@ -92,6 +97,24 @@ const Dashboard = () => {
       setPendingApprovalsCount(0); // Set to 0 on error
     } finally {
       setLoadingApprovals(false);
+    }
+  };
+
+  // Function to load dashboard summary (for DashboardStats component)
+  const loadDashboardSummary = async () => {
+    try {
+      setLoadingSummary(true);
+      console.log('🔄 Fetching dashboard summary...');
+      
+      const summaryData = await hrService.getDashboardSummary();
+      console.log('✅ Dashboard summary fetched:', summaryData);
+      
+      setDashboardSummary(summaryData);
+    } catch (err) {
+      console.error('❌ Error fetching dashboard summary:', err);
+      setDashboardSummary({}); // Set empty object on error
+    } finally {
+      setLoadingSummary(false);
     }
   };
 
@@ -126,12 +149,14 @@ const Dashboard = () => {
   const handleRefresh = useCallback(() => {
     refreshAllData();
     loadPendingApprovalsCount(); // Refresh approvals count too
+    loadDashboardSummary(); // Refresh dashboard summary
     loadUserName(); // Refresh user name too
-  }, [refreshAllData, loadPendingApprovalsCount, loadUserName]);
+  }, [refreshAllData, loadPendingApprovalsCount, loadDashboardSummary, loadUserName]);
 
   // Show loading only if both employees and approvals are loading
   const isLoading = (employeesData.dashboardLoading && employees.length === 0 && employeesData.allEmployees.length === 0) || 
-                   (loadingApprovals && pendingApprovalsCount === 0);
+                   (loadingApprovals && pendingApprovalsCount === 0) ||
+                   (loadingSummary && Object.keys(dashboardSummary).length === 0);
 
   if (isLoading) {
     return (
@@ -160,7 +185,7 @@ const Dashboard = () => {
           employees={employeesData.allEmployees}
           totalEmployees={totalEmployees}
           activeEmployeesCount={activeEmployeesCount}
-          pendingApprovalsCount={pendingApprovalsCount} // Pass the count directly
+          dashboardSummary={dashboardSummary} // Pass the dashboard summary data
           onViewEmployees={handleViewEmployees}
           onViewApprovals={handleViewApprovals}
           onViewExceptions={handleViewExceptions}
@@ -217,7 +242,12 @@ const Dashboard = () => {
                 <div className="quickActionIcon orange">
                   <i className="fas fa-exclamation-triangle"></i>
                 </div>
-                <span>View Exceptions</span>
+                <span>
+                  View Exceptions
+                  {dashboardSummary.raisedExceptionsCount > 0 && (
+                    <span className="badge-count">({dashboardSummary.raisedExceptionsCount})</span>
+                  )}
+                </span>
               </button>
             </div>
           </div>

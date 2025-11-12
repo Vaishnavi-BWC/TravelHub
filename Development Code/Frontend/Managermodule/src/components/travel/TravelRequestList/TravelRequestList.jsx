@@ -1,4 +1,3 @@
-// components/travel/TravelRequestList/TravelRequestList.js
 import React, { useState, useEffect } from 'react'
 import './TravelRequestList.css'
 
@@ -16,13 +15,17 @@ const TravelRequestList = ({
   columns,
   onApprove,
   onReject,
-  showActions = true
+  onRequestChanges,
+  showActions = true,
+  onRefresh // Add this new prop for refresh functionality
 }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(5)
   const [showRejectPopup, setShowRejectPopup] = useState(false)
+  const [showChangesPopup, setShowChangesPopup] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [changesReason, setChangesReason] = useState('')
 
   // Calculate pagination
   const totalItems = requests.length
@@ -77,6 +80,13 @@ const TravelRequestList = ({
     setShowRejectPopup(true)
   }
 
+  const handleRequestChangesClick = (e, request) => {
+    e.stopPropagation()
+    setSelectedRequest(request)
+    setChangesReason('')
+    setShowChangesPopup(true)
+  }
+
   const handleRejectConfirm = async () => {
     if (!rejectReason.trim()) {
       alert('Please enter a reason for rejection.')
@@ -96,10 +106,35 @@ const TravelRequestList = ({
     }
   }
 
+  const handleChangesConfirm = async () => {
+    if (!changesReason.trim()) {
+      alert('Please specify the changes needed.')
+      return
+    }
+
+    if (onRequestChanges && selectedRequest) {
+      await onRequestChanges(
+        selectedRequest.travelRequestId || selectedRequest.id,
+        selectedRequest.workflowId || selectedRequest.workflow_id,
+        selectedRequest,
+        changesReason
+      );
+      setShowChangesPopup(false)
+      setSelectedRequest(null)
+      setChangesReason('')
+    }
+  }
+
   const handleRejectCancel = () => {
     setShowRejectPopup(false)
     setSelectedRequest(null)
     setRejectReason('')
+  }
+
+  const handleChangesCancel = () => {
+    setShowChangesPopup(false)
+    setSelectedRequest(null)
+    setChangesReason('')
   }
 
   const renderPaginationButtons = () => {
@@ -171,11 +206,16 @@ const TravelRequestList = ({
 
   // Check if request is pending and actions should be shown
   const shouldShowActions = (request) => {
-    return showActions && (request.status === 'PENDING' || request.status === 'pending')
+    return showActions && (request.status === 'PENDING' || request.status === 'pending' || request.status=== undefined);
   }
 
   return (
     <div className="card travel-request-list-card">
+      <div className="cardHeader">
+          <h3>Team Request For Approval</h3>
+          <p>Manage all employee requests awaiting your approval in one place.</p>
+          <br></br>
+        </div>
       {/* Reject Popup Modal */}
       {showRejectPopup && (
         <div className="reject-popup-overlay">
@@ -218,7 +258,49 @@ const TravelRequestList = ({
         </div>
       )}
 
-      <div className="card-header-flex travel-request-list-header">
+      {/* Request Changes Popup Modal */}
+      {showChangesPopup && (
+        <div className="reject-popup-overlay">
+          <div className="reject-popup-modal">
+            <div className="reject-popup-header">
+              <h3>Request Changes</h3>
+              <button 
+                className="reject-popup-close"
+                onClick={handleChangesCancel}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="reject-popup-body">
+              <p>Please specify what changes are needed for this request:</p>
+              <textarea
+                className="reject-reason-textarea"
+                value={changesReason}
+                onChange={(e) => setChangesReason(e.target.value)}
+                placeholder="Enter required changes..."
+                rows="4"
+              />
+            </div>
+            <div className="reject-popup-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={handleChangesCancel}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-warning"
+                onClick={handleChangesConfirm}
+                disabled={!changesReason.trim()}
+              >
+                Request Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="travel-request-list-header">
         <div className="travel-request-list-filter-buttons">
           {filterOptions.map((option) => (
             <button
@@ -230,19 +312,36 @@ const TravelRequestList = ({
             </button>
           ))}
         </div>
-        <div className="travel-request-list-search-box">
-          <i className="fas fa-search travel-request-list-search-icon"></i>
-          <input
-            type="text"
-            placeholder={searchPlaceholder}
-            className="travel-request-list-search-input"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
+        
+        {/* Updated search section with refresh button */}
+        <div className="travel-request-list-search-section" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className="travel-request-list-search-box">
+            <i className="fas fa-search travel-request-list-search-icon"></i>
+            <input
+              type="text"
+              placeholder={searchPlaceholder}
+              className="travel-request-list-search-input"
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+            />
+          </div>
+          
+          {/* Refresh Button */}
+          {onRefresh && (
+            <button 
+              onClick={onRefresh}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap', height: 'fit-content' }}
+            >
+              <i className="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="card-body">
+      <div className="card-body1">
+        <br></br>
         <div className="travel-request-list-table-container">
           <table className="travel-request-list-table">
             <thead>
@@ -284,7 +383,9 @@ const TravelRequestList = ({
                       {formatDate(request.startDate)} to {formatDate(request.endDate)}
                     </td>
                     <td className="travel-request-list-stage">
-                      {request.currentStage || 'Initial'}
+                      <div className="stagestatus">
+                        {request.currentStage || 'Initial'}
+                      </div>
                     </td>
                     <td>
                       <span className={`travel-request-list-status status-${getStatusVariant(request.status)}`}>
@@ -322,6 +423,13 @@ const TravelRequestList = ({
                               <i className="fas fa-check"></i>
                             </button>
                             <button
+                              className="travel-request-list-btn-icon travel-request-list-btn-changes"
+                              onClick={(e) => handleRequestChangesClick(e, request)}
+                              title="Request Changes"
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                            <button
                               className="travel-request-list-btn-icon travel-request-list-btn-reject"
                               onClick={(e) => handleRejectClick(e, request)}
                               title="Reject Request"
@@ -356,12 +464,12 @@ const TravelRequestList = ({
         {totalItems > 0 && (
           <div className="travel-request-list-pagination">
             <div className="travel-request-list-pagination-info">
-              Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} entries
+              {/* Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} entries */}
             </div>
             
             <div className="travel-request-list-pagination-controls">
               <div className="travel-request-list-pagination-items-per-page">
-                <label htmlFor="itemsPerPage">Show:</label>
+                {/* <label htmlFor="itemsPerPage">Show:</label>
                 <select
                   id="itemsPerPage"
                   value={itemsPerPage}
@@ -372,7 +480,7 @@ const TravelRequestList = ({
                   <option value={10}>10</option>
                   <option value={20}>20</option>
                   <option value={50}>50</option>
-                </select>
+                </select> */}
               </div>
 
               <div className="travel-request-list-pagination-buttons">

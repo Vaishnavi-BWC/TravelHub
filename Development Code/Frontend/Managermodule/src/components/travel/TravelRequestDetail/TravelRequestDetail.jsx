@@ -11,6 +11,36 @@ const TravelRequestDetail = ({
   onRequestChanges,
   isLoading = false 
 }) => {
+  // COMPREHENSIVE DEBUGGING - This will tell us exactly what's wrong
+  console.log('🚨 [TRAVEL REQUEST DETAIL DEBUG]', {
+    // Request Analysis
+    requestExists: !!request,
+    requestId: request?.travelRequestId || request?.id,
+    requestStatus: request?.status,
+    requestStatusType: typeof request?.status,
+    
+    // Props Analysis
+    isTeamRequest: isTeamRequest,
+    isTeamRequestType: typeof isTeamRequest,
+    hasOnApprove: !!onApprove,
+    hasOnReject: !!onReject,
+    hasOnRequestChanges: !!onRequestChanges,
+    
+    // Condition Analysis
+    statusIsPENDING: request?.status === 'PENDING',
+    statusIsPendingLower: request?.status?.toLowerCase() === 'pending',
+    statusIncludesPending: request?.status?.toUpperCase().includes('PENDING'),
+    
+    // Final Decision Factors
+    meetsTeamCondition: isTeamRequest,
+    meetsStatusCondition: request?.status === 'PENDING' || request?.status?.toLowerCase() === 'pending',
+    meetsAllConditions: isTeamRequest && (request?.status === 'PENDING' || request?.status?.toLowerCase() === 'pending'),
+    
+    // Full Data for Investigation
+    fullRequest: request,
+    fullProps: { isTeamRequest, onApprove, onReject, onRequestChanges, isLoading }
+  });
+
   if (!request) {
     return (
       <div className="error-state">
@@ -19,6 +49,33 @@ const TravelRequestDetail = ({
       </div>
     );
   }
+
+  // ENHANCED CONDITION - More flexible and robust
+  const shouldShowApprovalActions = () => {
+    if (!isTeamRequest) {
+      console.log('❌ Cannot show actions: isTeamRequest is false');
+      return false;
+    }
+    
+    if (!request.status) {
+      console.log('❌ Cannot show actions: request.status is undefined');
+      return false;
+    }
+    
+    const status = request.status.toString().toUpperCase();
+    const isPending = status.includes('PENDING');
+    
+    console.log('🔍 Status Check:', {
+      originalStatus: request.status,
+      normalizedStatus: status,
+      isPending: isPending
+    });
+    
+    return isPending;
+  };
+
+  const showActions = shouldShowApprovalActions();
+  console.log('🎯 FINAL DECISION - Show Approval Actions:', showActions);
 
   const renderApprovalProcess = () => {
     if (request.status === 'DRAFT') {
@@ -95,14 +152,31 @@ const TravelRequestDetail = ({
 
   return (
     <>
+      {/* VISUAL DEBUG PANEL - Remove after fixing */}
+      {/* <div className="debug-panel" style={{
+        background: '#fff3cd',
+        border: '2px solid #ffc107',
+        padding: '15px',
+        margin: '15px 0',
+        borderRadius: '8px',
+        fontSize: '14px',
+        fontFamily: 'monospace'
+      }}>
+        <h4 style={{ margin: '0 0 10px 0', color: '#856404' }}>🔧 DEBUG PANEL</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div><strong>isTeamRequest:</strong> {isTeamRequest ? '✅ TRUE' : '❌ FALSE'}</div>
+          <div><strong>Status:</strong> {request.status || 'NULL'}</div>
+          <div><strong>Show Actions:</strong> {showActions ? '✅ YES' : '❌ NO'}</div>
+          <div><strong>Has onApprove:</strong> {onApprove ? '✅ YES' : '❌ NO'}</div>
+          <div><strong>Has onReject:</strong> {onReject ? '✅ YES' : '❌ NO'}</div>
+          <div><strong>Request ID:</strong> {request.travelRequestId || request.id}</div>
+        </div>
+      </div> */}
+
       <div className="card">
         <div className="card-header-flex">
           <div>
             <h3>Travel Request ID - {request.travelRequestId}</h3>
-            {/* <p>Request ID: {request.travelRequestId}</p> */}
-            {/* {isTeamRequest && (
-              <p>Employee: {request.employeeName} ({request.department})</p>
-            )} */}
           </div>
           <div>
             <span className={`status ${request.status?.toLowerCase()}`}>
@@ -165,8 +239,8 @@ const TravelRequestDetail = ({
         </div>
       </div>
 
-      {/* Show approval actions only for team requests that are pending */}
-      {isTeamRequest && (request.status === 'PENDING' || request.status === 'pending') && (
+      {/* ENHANCED APPROVAL ACTIONS CONDITION */}
+      {showActions ? (
         <ApprovalActions
           request={request}
           onApprove={onApprove}
@@ -174,6 +248,16 @@ const TravelRequestDetail = ({
           onRequestChanges={onRequestChanges}
           isLoading={isLoading}
         />
+      ) : (
+        <div className="card" style={{ background: '#f8f9fa' }}>
+          <div className="card-body">
+            <p style={{ textAlign: 'center', color: '#6c757d', margin: 0 }}>
+              <i className="fas fa-info-circle"></i> Approval actions are not available for this request.
+              {!isTeamRequest && " (Not a team request)"}
+              {isTeamRequest && request.status && !request.status.toString().toUpperCase().includes('PENDING') && ` (Status: ${request.status})`}
+            </p>
+          </div>
+        </div>
       )}
     </>
   );

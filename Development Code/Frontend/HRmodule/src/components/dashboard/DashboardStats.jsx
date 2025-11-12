@@ -6,24 +6,12 @@ const DashboardStats = ({
   employees = [], 
   totalEmployees = 0,
   activeEmployeesCount = 0,
-  approvals = [], 
-  pendingApprovalsCount = 0, // Add this new prop
+  dashboardSummary = {}, // New prop for dashboard summary data
   onViewEmployees, 
   onViewApprovals,
   onViewExceptions,
   onViewReimbursements
 }) => {
-  // Use the provided pendingApprovalsCount or calculate from approvals array
-  const pendingApprovals = useMemo(() => {
-    if (pendingApprovalsCount > 0) {
-      return pendingApprovalsCount;
-    }
-    return approvals.filter(req => {
-      const status = req.status?.toLowerCase();
-      return status === 'pending' || status === 'submitted';
-    }).length;
-  }, [approvals, pendingApprovalsCount]);
-
   const statsData = useMemo(() => {
     return [
       {
@@ -43,26 +31,41 @@ const DashboardStats = ({
       {
         icon: <i className="fas fa-clipboard-list statIconSvg"></i>,
         title: "Pending Approvals",
-        value: pendingApprovals, // Use the calculated count
+        value: dashboardSummary.pendingApprovalsCount || 0,
         tone: "pending",
         onClick: onViewApprovals
       },
       {
         icon: <i className="fas fa-exclamation-triangle"></i>,
         title: "Pending Exceptions",
-        value: 0,
+        value: dashboardSummary.raisedExceptionsCount || 0,
         tone: "exception",
         onClick: onViewExceptions
       },
       {
         icon: <i className="fas fa-file-invoice-dollar"></i>,
         title: "Reimbursements",
-        value: 0,
+        value: 0, // This can be added to the API later
         tone: "reimbursement",
         onClick: onViewReimbursements
-      }
+      },
+      // {
+      //   icon: <i className="fas fa-clock"></i>,
+      //   title: "Awaiting Clarification",
+      //   value: dashboardSummary.awaitingClarificationCount || 0,
+      //   tone: "warning",
+      //   onClick: onViewApprovals
+      // }
     ];
-  }, [totalEmployees, activeEmployeesCount, pendingApprovals, onViewEmployees, onViewApprovals, onViewExceptions, onViewReimbursements]);
+  }, [
+    totalEmployees, 
+    activeEmployeesCount, 
+    dashboardSummary, 
+    onViewEmployees, 
+    onViewApprovals, 
+    onViewExceptions, 
+    onViewReimbursements
+  ]);
 
   return (
     <div className="statsContainer">

@@ -1,20 +1,19 @@
 // components/dashboard/PendingApprovals.js
 import React, { useState, useEffect } from 'react';
 import { Badge } from '../common/Badge';
-import { approvalService } from '../../services/approvalService'; // Import the service directly
+import { approvalService } from '../../services/approvalService';
 
 const PendingApprovals = ({ 
   onViewAll, 
   onRequestSelect,
-  onApprovalsUpdate, // Add this new prop
-  limit = 3 // Make limit configurable
+  onApprovalsUpdate,
+  limit = 3
 }) => {
   const [approvals, setApprovals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [processingRequest, setProcessingRequest] = useState(null);
 
-  // Fetch approvals directly when component mounts
   useEffect(() => {
     fetchPendingApprovals();
   }, []);
@@ -28,9 +27,8 @@ const PendingApprovals = ({
       const apiData = await approvalService.getPendingApprovals();
       console.log('✅ HR approvals fetched:', apiData);
       
-      // Transform the data to match our frontend format
-      const transformedData = transformApprovalData(apiData);
-      setApprovals(transformedData);
+      // Use API data directly
+      setApprovals(apiData || []);
       
     } catch (err) {
       console.error('❌ Error fetching HR approvals:', err);
@@ -41,98 +39,42 @@ const PendingApprovals = ({
     }
   };
 
-  /**
-   * Transform HR API data to consistent frontend format
-   */
-  const transformApprovalData = (apiData) => {
-    if (!Array.isArray(apiData)) {
-      console.warn('Expected array but got:', apiData);
-      return [];
-    }
-    
-    return apiData.map(item => {
-      // Format request ID as T-last 5 characters
-      const originalRequestId = item.travelRequestId || item.id || 'unknown';
-      const formattedRequestId = `T-${originalRequestId.slice(-5)}`;
-      
-      // Format dates from createdAt
-      const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        try {
-          return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-          });
-        } catch {
-          return 'Invalid Date';
-        }
-      };
+  // Format request ID as T-last 5 characters
+  const formatRequestId = (travelRequestId) => {
+    if (!travelRequestId) return 'N/A';
+    return `T-${travelRequestId.slice(-5)}`;
+  };
 
-      const createdDate = formatDate(item.createdAt);
-      const dueDate = formatDate(item.dueDate);
-      const dates = dueDate !== 'N/A' ? `${createdDate} - ${dueDate}` : createdDate;
-
-      return {
-        id: formattedRequestId,
-        travelRequestId: item.travelRequestId,
-        workflowId: item.workflowId,
-        type: 'travel',
-        title: 'Travel Request Approval',
-        employee: {
-          name: 'Unknown Employee',
-          id: 'N/A',
-          department: 'Unknown Department'
-        },
-        dates: dates,
-        details: 'Travel request pending HR compliance check',
-        status: (item.status?.toLowerCase() || 'pending'),
-        stage: item.currentStep || 'HR Compliance',
-        approverRemark: item.comments || '',
-        createdAt: item.createdAt,
-        priority: (item.priority?.toLowerCase() || 'medium'),
-        workflowType: item.workflowType,
-        currentStep: item.currentStep,
-        currentApproverRole: item.currentApproverRole,
-        nextStep: item.nextStep,
-        previousStep: item.previousStep,
-        estimatedCost: item.estimatedCost,
-        actualCost: item.actualCost,
-        isOverpriced: item.isOverpriced,
-        overpricedReason: item.overpricedReason,
-        dueDate: item.dueDate,
-        completedAt: item.completedAt,
-        _original: item
-      };
-    });
+  // Format budget display
+  const formatBudget = (budget) => {
+    if (!budget) return '$0';
+    return `$${budget}`;
   };
 
   // Filter and limit pending approvals
-  const pendingApprovals = approvals
-    .filter(req => req.status === 'pending')
+  const pendingApprovals = (approvals || [])
+    .filter(req => !req.status || req.status.toLowerCase() === 'pending')
     .slice(0, limit);
 
   const handleQuickApprove = async (request, e) => {
-    e.stopPropagation(); // Prevent row click
+    e.stopPropagation();
     
-    const confirmed = window.confirm(`Are you sure you want to approve request ${request.id}?`);
+    const formattedId = formatRequestId(request.travelRequestId);
+    const confirmed = window.confirm(`Are you sure you want to approve request ${formattedId}?`);
     if (!confirmed) return;
 
-    setProcessingRequest(request.id);
+    setProcessingRequest(request.travelRequestId);
     try {
-      console.log('✅ Approving request:', request.id);
+      console.log('✅ Approving request:', request.travelRequestId);
       await approvalService.approveRequest(request.workflowId, "Approved via dashboard");
       
-      // Refresh the list after successful approval
       await fetchPendingApprovals();
       
-      // Notify parent to update counts
       if (onApprovalsUpdate) {
         onApprovalsUpdate();
       }
       
-      // Show success message
-      alert(`Request ${request.id} approved successfully!`);
+      alert(`Request ${formattedId} approved successfully!`);
       
     } catch (error) {
       console.error('Error approving request:', error);
@@ -143,31 +85,29 @@ const PendingApprovals = ({
   };
 
   const handleQuickReject = async (request, e) => {
-    e.stopPropagation(); // Prevent row click
+    e.stopPropagation();
     
-    const reason = prompt(`Please enter reason for rejecting request ${request.id}:`);
-    if (reason === null) return; // User cancelled
+    const formattedId = formatRequestId(request.travelRequestId);
+    const reason = prompt(`Please enter reason for rejecting request ${formattedId}:`);
+    if (reason === null) return;
     
     if (!reason.trim()) {
       alert("Please provide a reason for rejection.");
       return;
     }
 
-    setProcessingRequest(request.id);
+    setProcessingRequest(request.travelRequestId);
     try {
-      console.log('❌ Rejecting request:', request.id);
+      console.log('❌ Rejecting request:', request.travelRequestId);
       await approvalService.rejectRequest(request.workflowId, reason);
       
-      // Refresh the list after successful rejection
       await fetchPendingApprovals();
       
-      // Notify parent to update counts
       if (onApprovalsUpdate) {
         onApprovalsUpdate();
       }
       
-      // Show success message
-      alert(`Request ${request.id} rejected successfully!`);
+      alert(`Request ${formattedId} rejected successfully!`);
       
     } catch (error) {
       console.error('Error rejecting request:', error);
@@ -202,7 +142,7 @@ const PendingApprovals = ({
           </button>
           {pendingApprovals.length > 0 && (
             <button className="btn btnPrimary" onClick={onViewAll}>
-              View All ({approvals.filter(req => req.status === 'pending').length})
+              View All ({approvals.filter(req => !req.status || req.status.toLowerCase() === 'pending').length})
             </button>
           )}
         </div>
@@ -230,10 +170,11 @@ const PendingApprovals = ({
               <thead>
                 <tr>
                   <th>Request ID</th>
-                  <th>Type</th>
+                  <th>Purpose</th>
                   <th>Employee</th>
                   <th>Department</th>
-                  <th>Status</th>
+                  <th>Budget</th>
+                  <th>Destination</th>
                   <th>Stage</th>
                   <th>Actions</th>
                 </tr>
@@ -241,39 +182,35 @@ const PendingApprovals = ({
               <tbody>
                 {pendingApprovals.map((request) => (
                   <tr 
-                    key={request.id}
+                    key={request.travelRequestId}
                     className="clickable-row"
                     onClick={() => handleRowClick(request)}
                   >
                     <td>
-                      <span className="request-id">{request.id}</span>
+                      <span className="request-id">
+                        {formatRequestId(request.travelRequestId)}
+                      </span>
                     </td>
                     <td>
-                      <span className={`request-type ${request.type?.toLowerCase()}`}>
-                        {request.type}
+                      <span className={`request-type ${request.purpose?.toLowerCase()}`}>
+                        {request.purpose}
                       </span>
                     </td>
                     <td>
                       <div className="employee-info">
-                        <strong>{request.employee?.name || 'Unknown Employee'}</strong>
-                        {request.employee?.id && (
-                          <small>ID: {request.employee.id}</small>
-                        )}
+                        <strong>{request.employeeName}</strong>
                       </div>
                     </td>
-                    <td>{request.employee?.department || 'Unknown Department'}</td>
+                    <td>{request.employeeDepartment}</td>
+                    <td>{formatBudget(request.estimatedBudget)}</td>
+                    <td>{request.travelDestination || 'N/A'}</td>
                     <td>
-                      <Badge variant={request.status}>
-                        {request.status?.charAt(0).toUpperCase() + request.status?.slice(1)}
-                      </Badge>
-                    </td>
-                    <td>
-                      <span className="stage-badge">{request.stage}</span>
+                      <span className="stage-badge">{request.currentStep}</span>
                     </td>
                     <td>
                       <div className="action-buttons">
                         <button
-                          className="btnIcon"
+                          className="btn-sm1"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRowClick(request);
@@ -284,27 +221,38 @@ const PendingApprovals = ({
                           <i className="fas fa-eye"></i>
                         </button>
                         <button
-                          className="btnIcon btnSuccess"
+                          className="btn-sm1 btnSuccess"
                           onClick={(e) => handleQuickApprove(request, e)}
                           title="Quick Approve"
-                          disabled={loading || processingRequest === request.id}
+                          disabled={loading || processingRequest === request.travelRequestId}
                         >
-                          {processingRequest === request.id ? (
+                          {processingRequest === request.travelRequestId ? (
                             <i className="fas fa-spinner fa-spin"></i>
                           ) : (
-                            <i className="fas fa-check-circle"></i>
+                            <i className="fas fa-check"></i>
                           )}
                         </button>
+                         <button
+                             // onClick={() => handleRequestChange(
+                               // exception.exceptionId || exception.id,
+                                //exception.employeeName || exception.employee?.name
+                              //)}
+                              //disabled={actionLoading}
+                              className="btn-sm1"
+                              title="Request Changes"
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
                         <button
-                          className="btnIcon btnDanger"
+                          className="btn-sm1 btnDanger"
                           onClick={(e) => handleQuickReject(request, e)}
                           title="Quick Reject"
-                          disabled={loading || processingRequest === request.id}
+                          disabled={loading || processingRequest === request.travelRequestId}
                         >
-                          {processingRequest === request.id ? (
+                          {processingRequest === request.travelRequestId ? (
                             <i className="fas fa-spinner fa-spin"></i>
                           ) : (
-                            <i className="fas fa-times-circle"></i>
+                            <i className="fas fa-times"></i>
                           )}
                         </button>
                       </div>

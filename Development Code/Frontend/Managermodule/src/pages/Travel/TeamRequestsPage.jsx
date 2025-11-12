@@ -1,4 +1,3 @@
-// pages/Travel/TeamRequestsPage.js
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTravel } from '../../contexts/TravelContext';
 import { useNavigation } from '../../hooks/useNavigation';
@@ -6,6 +5,14 @@ import TravelRequestList from '../../components/travel/TravelRequestList/TravelR
 import { managerService } from '../../services/managerService';
 import { calculateSLA } from '../../utils/helpers/calculationHelpers';
 import './TeamRequestsPage.css';
+
+// Cache configuration
+const CACHE_KEYS = {
+  TEAM_REQUESTS: 'team_requests_cache',
+  TIMESTAMP: 'team_requests_timestamp'
+};
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const TeamRequestsPage = () => {
   const { teamRequests, loading } = useTravel();
@@ -19,14 +26,47 @@ const TeamRequestsPage = () => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState(''); // 'success' or 'error'
 
+  // Cache utilities
+  const getCache = (key) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : null;
+    } catch (error) {
+      console.error('Error reading cache:', error);
+      return null;
+    }
+  };
+
+  const setCache = (key, data) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.error('Error setting cache:', error);
+    }
+  };
+
+  const clearCache = () => {
+    try {
+      Object.values(CACHE_KEYS).forEach(key => {
+        localStorage.removeItem(key);
+      });
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    }
+  };
+
+  const isCacheValid = (timestamp) => {
+    return Date.now() - timestamp < CACHE_DURATION;
+  };
+
   // Format request ID to T-lastPart
   const formatRequestId = (requestId) => {
     if (!requestId) return 'T-0000';
-    
+
     if (typeof requestId === 'string' && requestId.startsWith('T-')) {
       return requestId;
     }
-    
+
     const idString = requestId.toString();
     const lastPart = idString.slice(-6);
     return `T-${lastPart}`;
@@ -42,23 +82,51 @@ const TeamRequestsPage = () => {
     }, 3000); // Auto hide after 3 seconds
   };
 
-  // Fetch manager approvals
-  useEffect(() => {
-    const fetchManagerApprovals = async () => {
-      try {
-        setManagerLoading(true);
-        setError(null);
-        const approvals = await managerService.getTeamRequests();
-        setManagerApprovals(approvals || []);
-      } catch (err) {
-        console.error('Error fetching manager approvals:', err);
-        setError(err.message);
-        setManagerApprovals([]);
-      } finally {
-        setManagerLoading(false);
-      }
-    };
+  // Fetch manager approvals with cache
+  const fetchManagerApprovals = async (forceRefresh = false) => {
+    try {
+      setManagerLoading(true);
+      setError(null);
 
+      // Check cache first (unless force refresh)
+      if (!forceRefresh) {
+        const cachedRequests = getCache(CACHE_KEYS.TEAM_REQUESTS);
+        const cacheTimestamp = getCache(CACHE_KEYS.TIMESTAMP);
+
+        if (cachedRequests && cacheTimestamp && isCacheValid(cacheTimestamp)) {
+          console.log('📦 Using cached team requests data');
+          setManagerApprovals(cachedRequests);
+          setManagerLoading(false);
+          return;
+        }
+      }
+
+      console.log('🔄 Fetching fresh team requests...');
+      const approvals = await managerService.getTeamRequests();
+
+      // Update cache
+      setCache(CACHE_KEYS.TEAM_REQUESTS, approvals || []);
+      setCache(CACHE_KEYS.TIMESTAMP, Date.now());
+
+      setManagerApprovals(approvals || []);
+
+    } catch (err) {
+      console.error('Error fetching manager approvals:', err);
+      setError(err.message);
+      setManagerApprovals([]);
+    } finally {
+      setManagerLoading(false);
+    }
+  };
+
+  // Force refresh function
+  const handleForceRefresh = async () => {
+    clearCache();
+    await fetchManagerApprovals(true);
+    showPopupMessage('Data refreshed successfully!', 'success');
+  };
+
+  useEffect(() => {
     fetchManagerApprovals();
   }, []);
 
@@ -66,7 +134,7 @@ const TeamRequestsPage = () => {
     let filtered = managerApprovals;
 
     if (filter !== 'All') {
-      filtered = filtered.filter(req => 
+      filtered = filtered.filter(req =>
         req.status === filter || req.status === filter.toLowerCase()
       );
     }
@@ -94,13 +162,13 @@ const TeamRequestsPage = () => {
   };
 
   // New function to handle approval actions
-  const handleApprovalAction = async (action, requestId, workflowId, requestData, rejectReason = '') => {
+  const handleApprovalAction = async (action, requestId, workflowId, requestData, remark = '') => {
     try {
       console.log(`🔄 Processing ${action} action for request:`, requestId);
 
       if (action === 'approve') {
         await managerService.approveTeamRequest(
-          requestId, 
+          requestId,
           'Approved via team requests page',
           workflowId,
           requestData
@@ -108,17 +176,25 @@ const TeamRequestsPage = () => {
         showPopupMessage('✅ Request approved successfully!', 'success');
       } else if (action === 'reject') {
         await managerService.rejectTeamRequest(
-          requestId, 
-          rejectReason || 'Rejected via team requests page',
+          requestId,
+          remark || 'Rejected via team requests page',
           workflowId,
           requestData
         );
         showPopupMessage('❌ Request rejected successfully!', 'error');
+      } else if (action === 'requestChanges') {
+        await managerService.requestChangesTeamRequest(
+          requestId,
+          remark || 'Changes requested via team requests page',
+          workflowId,
+          requestData
+        );
+        showPopupMessage('📝 Changes requested successfully!', 'info');
       }
 
-      // Refresh the data after successful action
-      const updatedApprovals = await managerService.getTeamRequests();
-      setManagerApprovals(updatedApprovals || []);
+      // Clear cache and refresh data after successful action
+      clearCache();
+      await fetchManagerApprovals(true);
 
     } catch (error) {
       console.error(`Error performing ${action} action:`, error);
@@ -154,9 +230,9 @@ const TeamRequestsPage = () => {
         <div className="error-icon">⚠️</div>
         <h3>Unable to load team requests</h3>
         <p>{error}</p>
-        <button 
+        <button
           className="btn btn-primary"
-          onClick={() => window.location.reload()}
+          onClick={() => fetchManagerApprovals(true)}
         >
           Retry
         </button>
@@ -168,19 +244,20 @@ const TeamRequestsPage = () => {
     <div className="team-requests-page">
       {/* Popup Message */}
       {showMessage && (
-        <div className={`message-popup ${messageType === 'success' ? 'message-success' : 'message-error'}`}>
+        <div className={`message-popup ${messageType === 'success' ? 'message-success' : messageType === 'error' ? 'message-error' : 'message-info'}`}>
           <div className="message-content">
             <span className="message-icon">
-              {messageType === 'success' ? '✅' : '❌'}
+              {messageType === 'success' ? '✅' : messageType === 'error' ? '❌' : '📝'}
             </span>
             <span className="message-text">{message}</span>
           </div>
         </div>
       )}
 
-      <div className="page-header">
+      {/* <div className="page-header">
         <br></br>
-      </div>
+      </div> */}
+
       <TravelRequestList
         requests={enhancedRequests}
         filter={filter}
@@ -193,13 +270,17 @@ const TeamRequestsPage = () => {
         filterOptions={['All', 'PENDING', 'APPROVED', 'REJECTED']}
         searchPlaceholder="Search by employee, destination, or purpose..."
         columns={['ID', 'Employee', 'Destination', 'Dates', 'Current Stage', 'Status', 'SLA Status', 'Actions']}
-        onApprove={(requestId, workflowId, requestData) => 
+        onApprove={(requestId, workflowId, requestData) =>
           handleApprovalAction('approve', requestId, workflowId, requestData)
         }
-        onReject={(requestId, workflowId, requestData, rejectReason) => 
+        onReject={(requestId, workflowId, requestData, rejectReason) =>
           handleApprovalAction('reject', requestId, workflowId, requestData, rejectReason)
         }
+        onRequestChanges={(requestId, workflowId, requestData, changesReason) =>
+          handleApprovalAction('requestChanges', requestId, workflowId, requestData, changesReason)
+        }
         showActions={true}
+        onRefresh={handleForceRefresh} // Add this line
       />
     </div>
   );
