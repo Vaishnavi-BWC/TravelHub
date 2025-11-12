@@ -7,5 +7,6 @@ public enum ApprovalActionType {
     REQUEST_CLARIFICATION,
     REQUEST_DOCUMENTATION,
     SUGGEST_ALTERNATIVE,
-    RAISE_EXCEPTION
+    RAISE_EXCEPTION,
+    SUBMIT_BILLS  // New action for employee bill submission
 }

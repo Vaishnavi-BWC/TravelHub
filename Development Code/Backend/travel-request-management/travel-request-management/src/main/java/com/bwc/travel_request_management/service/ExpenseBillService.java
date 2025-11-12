@@ -27,7 +27,7 @@ public interface ExpenseBillService {
     void deleteBill(UUID billId);
     Resource downloadBill(UUID billId);
     
-    BigDecimal  getTotalApprovedAmount(UUID travelRequestId);
+    BigDecimal getTotalApprovedAmount(UUID travelRequestId);
     Long getPendingBillsCount(UUID travelRequestId);
     
     ExpenseBillDTO updateBillDetails(UUID billId, ExpenseBillDTO billDTO);

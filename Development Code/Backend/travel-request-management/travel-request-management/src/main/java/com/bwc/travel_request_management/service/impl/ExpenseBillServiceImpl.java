@@ -1,6 +1,7 @@
 package com.bwc.travel_request_management.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -8,21 +9,25 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.bwc.travel_request_management.client.WorkflowServiceClient;
 import com.bwc.travel_request_management.dto.ExpenseBillDTO;
 import com.bwc.travel_request_management.dto.ExpenseBillSummaryDTO;
 import com.bwc.travel_request_management.entity.ExpenseBill;
+import com.bwc.travel_request_management.entity.TravelRequest;
 import com.bwc.travel_request_management.exception.FileStorageException;
 import com.bwc.travel_request_management.exception.ResourceNotFoundException;
 import com.bwc.travel_request_management.mapper.ExpenseBillMapper;
 import com.bwc.travel_request_management.repository.ExpenseBillRepository;
+import com.bwc.travel_request_management.repository.TravelRequestRepository;
 import com.bwc.travel_request_management.service.ExpenseBillService;
+import com.bwc.travel_request_management.service.ExpenseTrackingService;
 import com.bwc.travel_request_management.service.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
@@ -34,11 +39,16 @@ import lombok.extern.slf4j.Slf4j;
 public class ExpenseBillServiceImpl implements ExpenseBillService {
 
     private final ExpenseBillRepository billRepository;
+    private final TravelRequestRepository travelRequestRepository;
     private final FileStorageService fileStorageService;
-    private final WorkflowServiceClient workflowServiceClient;
     private final ExpenseBillMapper mapper;
+    
+    @Lazy
+    @Autowired
+    private ExpenseTrackingService expenseTrackingService;
 
     private static final String BILL_NOT_FOUND = "Expense bill not found with id: ";
+    private static final String REQUEST_NOT_FOUND = "Travel request not found with id: ";
 
     @Override
     @Transactional
@@ -47,6 +57,12 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
         
         log.info("Uploading expense bill for travel request: {}, workflow: {}, employee: {}", 
                 travelRequestId, workflowId, employeeId);
+
+        // ✅ ADD DATE VALIDATION: Get travel request and validate bill date
+        TravelRequest travelRequest = travelRequestRepository.findById(travelRequestId)
+                .orElseThrow(() -> new ResourceNotFoundException(REQUEST_NOT_FOUND + travelRequestId));
+        
+        validateBillDateWithinTravelPeriod(billDTO.getBillDate(), travelRequest.getStartDate(), travelRequest.getEndDate());
 
         // Validate file
         validateBillFile(file);
@@ -76,12 +92,27 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
         log.info("Expense bill uploaded successfully: {} for travel request: {}", 
                 savedBill.getBillId(), travelRequestId);
 
+        // Update travel request totals automatically
+        expenseTrackingService.updateTravelRequestTotals(travelRequestId);
+
         // Generate download URLs
         ExpenseBillDTO responseDTO = mapper.toDto(savedBill);
         responseDTO.setDownloadUrl(generateDownloadUrl(savedBill.getBillId()));
         responseDTO.setViewUrl(generateViewUrl(savedBill.getBillId()));
 
         return responseDTO;
+    }
+    
+    /**
+     * ✅ ADDED: Validate that bill date falls within travel request dates
+     */
+    private void validateBillDateWithinTravelPeriod(LocalDate billDate, LocalDate travelStartDate, LocalDate travelEndDate) {
+        if (billDate.isBefore(travelStartDate) || billDate.isAfter(travelEndDate)) {
+            throw new IllegalArgumentException(
+                String.format("Expense bill date %s must be within travel period %s to %s", 
+                    billDate, travelStartDate, travelEndDate)
+            );
+        }
     }
 
     @Override
@@ -155,18 +186,23 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
         ExpenseBill updatedBill = billRepository.save(bill);
         log.info("Expense bill status updated: {} -> {}", billId, status);
 
+        // Update travel request totals when status changes
+        expenseTrackingService.updateTravelRequestTotals(bill.getTravelRequestId());
+
         ExpenseBillDTO dto = mapper.toDto(updatedBill);
         dto.setDownloadUrl(generateDownloadUrl(billId));
         dto.setViewUrl(generateViewUrl(billId));
         
         return dto;
     }
-
+    
     @Override
     @Transactional
     public void deleteBill(UUID billId) {
         ExpenseBill bill = billRepository.findById(billId)
                 .orElseThrow(() -> new ResourceNotFoundException(BILL_NOT_FOUND + billId));
+
+        UUID travelRequestId = bill.getTravelRequestId(); // Store before deletion
 
         // Delete physical file
         fileStorageService.deleteFile(bill.getFileName());
@@ -174,6 +210,9 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
         // Delete database record
         billRepository.delete(bill);
         log.info("Expense bill deleted: {}", billId);
+
+        // Update travel request totals after deletion
+        expenseTrackingService.updateTravelRequestTotals(travelRequestId);
     }
 
     @Override
@@ -191,7 +230,6 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
         return total != null ? total : BigDecimal.ZERO;
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public Long getPendingBillsCount(UUID travelRequestId) {
@@ -204,6 +242,15 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
         ExpenseBill bill = billRepository.findById(billId)
                 .orElseThrow(() -> new ResourceNotFoundException(BILL_NOT_FOUND + billId));
 
+        // ✅ ADD DATE VALIDATION: If bill date is being updated, validate it
+        if (billDTO.getBillDate() != null) {
+            TravelRequest travelRequest = travelRequestRepository.findById(bill.getTravelRequestId())
+                    .orElseThrow(() -> new ResourceNotFoundException(REQUEST_NOT_FOUND + bill.getTravelRequestId()));
+            
+            validateBillDateWithinTravelPeriod(billDTO.getBillDate(), travelRequest.getStartDate(), travelRequest.getEndDate());
+            bill.setBillDate(billDTO.getBillDate());
+        }
+
         // Only allow updating certain fields
         if (billDTO.getDescription() != null) {
             bill.setDescription(billDTO.getDescription());
@@ -211,14 +258,14 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
         if (billDTO.getAmount() != null) {
             bill.setAmount(billDTO.getAmount());
         }
-        if (billDTO.getBillDate() != null) {
-            bill.setBillDate(billDTO.getBillDate());
-        }
         if (billDTO.getExpenseCategory() != null) {
             bill.setExpenseCategory(billDTO.getExpenseCategory());
         }
 
         ExpenseBill updatedBill = billRepository.save(bill);
+
+        // Update travel request totals when details change
+        expenseTrackingService.updateTravelRequestTotals(bill.getTravelRequestId());
         
         ExpenseBillDTO responseDTO = mapper.toDto(updatedBill);
         responseDTO.setDownloadUrl(generateDownloadUrl(billId));
@@ -226,7 +273,7 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
         
         return responseDTO;
     }
-
+    
     @Override
     public List<ExpenseBill.ExpenseCategory> getExpenseCategories() {
         return Arrays.asList(ExpenseBill.ExpenseCategory.values());
@@ -237,20 +284,20 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
     public ExpenseBillSummaryDTO getExpenseBillSummary(UUID workflowId) {
         List<ExpenseBill> bills = billRepository.findByWorkflowId(workflowId);
 
-        // ✅ Total Amount (BigDecimal sum)
+        // Total Amount (BigDecimal sum)
         BigDecimal totalAmount = bills.stream()
                 .map(ExpenseBill::getAmount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // ✅ Approved Amount
+        // Approved Amount
         BigDecimal approvedAmount = bills.stream()
                 .filter(bill -> ExpenseBill.BillStatus.APPROVED.equals(bill.getBillStatus()))
                 .map(ExpenseBill::getAmount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // ✅ Counts
+        // Counts
         long pendingCount = bills.stream()
                 .filter(bill -> ExpenseBill.BillStatus.PENDING.equals(bill.getBillStatus()))
                 .count();
@@ -274,8 +321,7 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
                 .bills(mapper.toDtoList(bills))
                 .build();
     }
-
-
+    
     @Override
     @Transactional(readOnly = true)
     public boolean hasPendingBills(UUID workflowId) {

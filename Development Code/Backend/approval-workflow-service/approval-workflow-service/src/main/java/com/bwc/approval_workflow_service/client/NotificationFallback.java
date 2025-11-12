@@ -22,4 +22,10 @@ public class NotificationFallback implements NotificationServiceClient {
                 notification.getWorkflowId(),
                 notification.getAdditionalData());
     }
+
+	@Override
+	public void notifyEmployee(WorkflowNotificationDTO dto) {
+		// TODO Auto-generated method stub
+		
+	}
 }

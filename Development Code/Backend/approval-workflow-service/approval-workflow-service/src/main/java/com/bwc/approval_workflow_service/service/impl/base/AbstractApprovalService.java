@@ -214,6 +214,22 @@ public abstract class AbstractApprovalService<I extends BaseApprovalActionReques
             log.warn("⚠️ Notification failed: {}", e.getMessage(), e);
         }
     }
+    
+ // Add this method to AbstractApprovalService to handle pre-travel completion
+    protected void checkAndTransitionToPostTravel(ApprovalWorkflow workflow) {
+        // Check if we just completed the last pre-travel step
+        WorkflowStep preTravelCompletedStep = workflow.getSteps().stream()
+                .filter(step -> "PRE_TRAVEL_COMPLETED".equals(step.getStepName()))
+                .findFirst()
+                .orElse(null);
+                
+        if (preTravelCompletedStep != null && "COMPLETED".equals(preTravelCompletedStep.getStatus())) {
+            // This indicates we should transition to post-travel
+            // In a real implementation, you might want to call a service method here
+            log.info("🔄 Pre-travel completed for workflow {}, ready for post-travel transition", 
+                    workflow.getWorkflowId());
+        }
+    }
 
     protected abstract String getExceptionReason(I request);
     protected abstract O handleApproval(ApprovalWorkflow workflow, I request, ActorAction action);

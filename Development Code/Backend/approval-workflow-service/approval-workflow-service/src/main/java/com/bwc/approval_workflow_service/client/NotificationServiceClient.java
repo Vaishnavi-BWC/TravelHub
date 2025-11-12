@@ -20,4 +20,6 @@ public interface NotificationServiceClient {
 
     @PostMapping("/api/notifications/exception")
     void notifyException(@RequestBody WorkflowNotificationDTO notification);
+
+	void notifyEmployee(WorkflowNotificationDTO dto);
 }
