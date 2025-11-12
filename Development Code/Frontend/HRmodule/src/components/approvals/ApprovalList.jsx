@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import Badge from '../common/Badge';
 import { LoadingSpinner } from '../common/LoadingSpinner';
-import '../../components/audit/AuditTrail.css'
+import './ApprovalList.css';
 
 const ApprovalList = ({
   approvals,
@@ -15,6 +15,17 @@ const ApprovalList = ({
   const [requestFilter, setRequestFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [processingRequest, setProcessingRequest] = useState(null);
+
+  // Function to format travel request ID
+  const formatTravelRequestId = (id) => {
+    if (!id) return 'N/A';
+    
+    // Get the last 5 characters of the ID
+    const lastFiveChars = id.slice(-5);
+    
+    // Return formatted as T-XXXXX
+    return `T-${lastFiveChars}`;
+  };
 
   const filteredRequests = useMemo(() => {
     if (!approvals || !Array.isArray(approvals)) return [];
@@ -32,10 +43,11 @@ const ApprovalList = ({
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(r =>
-        r.id?.toLowerCase().includes(searchLower) ||
-        r.employee?.name?.toLowerCase().includes(searchLower) ||
-        r.type?.toLowerCase().includes(searchLower) ||
-        r.employee?.department?.toLowerCase().includes(searchLower)
+        r.travelRequestId?.toLowerCase().includes(searchLower) ||
+        r.employeeName?.toLowerCase().includes(searchLower) ||
+        r.purpose?.toLowerCase().includes(searchLower) ||
+        r.employeeDepartment?.toLowerCase().includes(searchLower) ||
+        formatTravelRequestId(r.travelRequestId)?.toLowerCase().includes(searchLower) // Include formatted ID in search
       );
     }
 
@@ -53,12 +65,13 @@ const ApprovalList = ({
       return;
     }
 
-    const confirmed = window.confirm(`Are you sure you want to approve request ${request.id}?`);
+    const formattedId = formatTravelRequestId(request.travelRequestId);
+    const confirmed = window.confirm(`Are you sure you want to approve request ${formattedId}?`);
     if (!confirmed) return;
 
-    setProcessingRequest(request.id);
+    setProcessingRequest(request.travelRequestId);
     try {
-      await onApprove(request.id, "Approved via quick action");
+      await onApprove(request.travelRequestId, "Approved via quick action");
     } catch (error) {
       console.error('Error approving request:', error);
       alert(`Failed to approve request: ${error.message}`);
@@ -74,7 +87,8 @@ const ApprovalList = ({
       return;
     }
 
-    const reason = prompt(`Please enter reason for rejecting request ${request.id}:`);
+    const formattedId = formatTravelRequestId(request.travelRequestId);
+    const reason = prompt(`Please enter reason for rejecting request ${formattedId}:`);
     if (reason === null) return;
 
     if (!reason.trim()) {
@@ -82,9 +96,9 @@ const ApprovalList = ({
       return;
     }
 
-    setProcessingRequest(request.id);
+    setProcessingRequest(request.travelRequestId);
     try {
-      await onReject(request.id, reason);
+      await onReject(request.travelRequestId, reason);
     } catch (error) {
       console.error('Error rejecting request:', error);
       alert(`Failed to reject request: ${error.message}`);
@@ -129,10 +143,10 @@ const ApprovalList = ({
 
         <div className="searchAndControls">
           <div className="searchBox">
-            <i className="fas fa-search searchIcon"></i>
+            <i className="fas fa-search searchIcon"></i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             <input
               type="text"
-              placeholder="Search by ID, employee, type, or department..."
+              placeholder=" Search by ID, type.."
               className="searchInput"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -182,7 +196,7 @@ const ApprovalList = ({
                   <th>Type</th>
                   <th>Employee</th>
                   <th>Department</th>
-                  <th>Dates</th>
+                  <th>Budget</th>
                   <th>Current Stage</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -191,38 +205,39 @@ const ApprovalList = ({
               <tbody>
                 {filteredRequests.map((request) => (
                   <tr
-                    key={request.id}
+                    key={request.travelRequestId}
                     className="table-row clickable-row"
                     onClick={() => handleRowClick(request)}
                   >
                     <td>
-                      <span className="request-id">{request.id}</span>
+                      <span className="request-id" title={`Original ID: ${request.travelRequestId}`}>
+                        {formatTravelRequestId(request.travelRequestId)}
+                      </span>
                     </td>
                     <td>
-                      <span className={`request-type ${request.type?.toLowerCase()}`}>
-                        {request.type}
+                      <span className={`request-type ${request.purpose?.toLowerCase() || ''} ${request.workflowType || ''}`.trim()}>
+                        {request.purpose}
                       </span>
                     </td>
                     <td>
                       <div className="employee-info">
-                        <strong>{request.employee.name}</strong>
-                        <small>ID: {request.employee.id}</small>
+                        <strong>{request.employeeName}</strong>
                       </div>
                     </td>
-                    <td>{request.employee.department}</td>
-                    <td>{request.dates}</td>
+                    <td>{request.employeeDepartment}</td>
+                    <td>{request.estimatedBudget || '$0'}</td>
                     <td>
-                      <span className="stage-badge">{request.stage}</span>
+                      <span className="stage-badge">{request.currentStep}</span>
                     </td>
                     <td>
                       <Badge variant={request.status}>
-                        {request.status?.charAt(0).toUpperCase() + request.status?.slice(1)}
+                        {request.status?.charAt(0).toUpperCase() + request.status?.slice(1) || 'Pending'}
                       </Badge>
                     </td>
                     <td>
                       <div className="action-buttons">
                         <button
-                          className="btnIcon"
+                          className="btn-sm1"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRowClick(request);
@@ -230,33 +245,45 @@ const ApprovalList = ({
                           title="View Details"
                           disabled={loading}
                         >
-                          <i className="fas fa-eye"></i>
+                           <i className="fas fa-eye"></i>
                         </button>
-                        {request.status === "pending" && (
+                        
+                        {(request.status === "pending" || request.status === "PENDING" || request.status === "IN_PROGRESS" || request.status === undefined) && (
                           <>
                             <button
-                              className="btnIcon btnSuccess"
+                              className="btn-sm1 btnSuccess"
                               onClick={(e) => handleQuickApprove(request, e)}
                               title="Quick Approve"
-                              disabled={loading || processingRequest === request.id}
+                              disabled={loading || processingRequest === request.travelRequestId}
                             >
-                              {processingRequest === request.id ? (
+                              {processingRequest === request.travelRequestId ? (
                                 <i className="fas fa-spinner fa-spin"></i>
                               ) : (
-                                <i className="fas fa-check-circle"></i>
+                                    <i className="fas fa-check"></i>
                               )}
                             </button>
                             <button
-                              className="btnIcon btnDanger"
+                              className="btn-sm1 btnDanger"
                               onClick={(e) => handleQuickReject(request, e)}
                               title="Quick Reject"
-                              disabled={loading || processingRequest === request.id}
+                              disabled={loading || processingRequest === request.travelRequestId}
                             >
-                              {processingRequest === request.id ? (
+                              {processingRequest === request.travelRequestId ? (
                                 <i className="fas fa-spinner fa-spin"></i>
                               ) : (
-                                <i className="fas fa-times-circle"></i>
+                                <i className="fas fa-times"></i>
                               )}
+                            </button>
+                            <button
+                             // onClick={() => handleRequestChange(
+                               // exception.exceptionId || exception.id,
+                                //exception.employeeName || exception.employee?.name
+                              //)}
+                              //disabled={actionLoading}
+                              className="btn-sm1"
+                              title="Request Changes"
+                            >
+                              <i className="fas fa-edit"></i>
                             </button>
                           </>
                         )}

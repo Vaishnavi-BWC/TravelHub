@@ -3,7 +3,9 @@ const AUTH_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8081/api/auth
 const EMPLOYEE_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8080/ems/api/v1/employees';
 const TRAVEL_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8090/travel-management/api';
 const WORKFLOW_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/workflows';
-
+const Manager_api = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/dashboard';
+const Manager_apporval_api = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/workflows';
+const TRAVEL_API = 'http://bwc-90.brainwaveconsulting.co.in:8090/travel-management/api';
 // Helper function to get current user info from auth API
 const getCurrentUserInfo = async () => {
   try {
@@ -123,11 +125,16 @@ const getWorkflowStatus = async (travelRequestId) => {
 };
 
 // NEW: Helper function to get all travel requests
+// NEW: Helper function to get all travel requests
 const getAllTravelRequests = async () => {
   try {
     console.log('🔍 Fetching all travel requests...');
 
-    const response = await fetch(`${TRAVEL_API_BASE_URL}/travel-requests`, {
+    const userInfo = await getCurrentUserInfo();
+    console.log('✅ Current user info obtained:', userInfo);
+
+
+    const response = await fetch(`${TRAVEL_API}/travel-requests/getRequestsByEmployee/${userInfo.id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -171,30 +178,9 @@ const getAllTravelRequests = async () => {
 const getTravelRequestsFilteredByEmployee = async () => {
   try {
     console.log('🔍 Starting filtered travel requests fetch...');
-
-    // Step 1: Get current user info from /me API
-    const userInfo = await getCurrentUserInfo();
-    console.log('✅ Current user info obtained:', userInfo);
-
-    if (!userInfo.id || userInfo.id === 'unknown-user-id') {
-      throw new Error('Unable to get valid user ID from authentication');
-    }
-
-    // Step 2: Get all travel requests
     const allRequests = await getAllTravelRequests();
-    console.log('✅ All travel requests fetched:', allRequests.length);
-
-    // Step 3: Filter requests where employeeId matches current user ID
-    const filteredRequests = allRequests.filter(request => {
-      const matches = request.employeeId === userInfo.id;
-      if (matches) {
-        console.log(`✅ Matching request found: ${request.travelRequestId} for employee: ${request.employeeId}`);
-      }
-      return matches;
-    });
-
-    console.log(`✅ Filtered ${filteredRequests.length} requests for employee ID: ${userInfo.id}`);
-    return filteredRequests;
+    console.log('✅ All travel requests fetched:', allRequests);
+    return allRequests;
 
   } catch (error) {
     console.error('❌ Error fetching filtered travel requests:', error);
@@ -324,9 +310,9 @@ export const managerService = {
    */
   async getTeamRequests() {
     try {
-      console.log('🔍 Making API call to:', `${MANAGER_API_BASE_URL}/approvals/pending`);
+      console.log('🔍 Making API call to:', `${Manager_api}/pending-approvals`);
 
-      const response = await fetch(`${MANAGER_API_BASE_URL}/approvals/pending`, {
+      const response = await fetch(`${Manager_api}/pending-approvals`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -434,22 +420,12 @@ export const managerService = {
       console.log('👤 Current user info for approval:', userInfo);
 
       const requestBody = {
-        workflowId: workflowId,
-        action: "APPROVE",
-        approverRole: userInfo.role,
-        approverId: userInfo.id,
-        approverName: userInfo.name,
         comments: remarks || "Approved via dashboard",
-        escalationReason: "",
-        amountApproved: requestData?.estimatedBudget || requestData?.totalAmount || 0,
-        reimbursementAmount: 0,
-        markOverpriced: false,
-        overpricedReason: ""
       };
 
       console.log('📤 Sending approval request body:', requestBody);
 
-      const response = await fetch(`${MANAGER_API_BASE_URL}/approvals/${workflowId}/action`, {
+      const response = await fetch(`${Manager_apporval_api}/${workflowId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -510,22 +486,12 @@ export const managerService = {
       console.log('👤 Current user info for rejection:', userInfo);
 
       const requestBody = {
-        workflowId: workflowId,
-        action: "REJECT",
-        approverRole: userInfo.role,
-        approverId: userInfo.id,
-        approverName: userInfo.name,
         comments: remarks || "Rejected via dashboard",
-        escalationReason: "",
-        amountApproved: 0,
-        reimbursementAmount: 0,
-        markOverpriced: false,
-        overpricedReason: ""
       };
 
       console.log('📤 Sending rejection request body:', requestBody);
 
-      const response = await fetch(`${MANAGER_API_BASE_URL}/approvals/${workflowId}/action`, {
+      const response = await fetch(`${Manager_apporval_api}/${workflowId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -562,6 +528,69 @@ export const managerService = {
     } catch (error) {
       console.error('Error rejecting team request:', error);
       throw new Error(`Failed to reject team request: ${error.message}`);
+    }
+  },
+
+  /**
+   * NEW: Request changes for team member request with workflow_id and full data
+   */
+  async requestChangesTeamRequest(requestId, remarks, workflowId, requestData) {
+    try {
+      console.log('📝 Requesting changes for request:', {
+        requestId,
+        workflowId,
+        remarks,
+        requestData
+      });
+
+      const userInfo = await getCurrentUserInfo();
+      console.log('👤 Current user info for changes request:', userInfo);
+
+      const requestBody = {
+        comments: `CHANGES REQUESTED: ${remarks || "Please make the requested changes"}`,
+        returnReason: " Changes requested via dashboard by vaishnavi"
+      };
+
+      console.log('📤 Sending request changes body:', requestBody);
+
+      // Using reject endpoint with "CHANGES REQUESTED" prefix in comments
+      const response = await fetch(`${Manager_apporval_api}/${workflowId}/return`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+        credentials: 'include'
+      });
+
+      console.log('📊 Request Changes API Response status:', response.status);
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorText = await response.text();
+          console.error('🔴 Server error response:', errorText);
+          if (errorText) {
+            try {
+              const parsedError = JSON.parse(errorText);
+              errorMessage = parsedError.message || parsedError.error || errorMessage;
+            } catch {
+              errorMessage = errorText || errorMessage;
+            }
+          }
+        } catch (e) {
+          console.error('Error reading error response:', e);
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log('✅ Changes requested successfully:', data);
+      return data.data || data;
+
+    } catch (error) {
+      console.error('Error requesting changes for team request:', error);
+      throw new Error(`Failed to request changes for team request: ${error.message}`);
     }
   },
 

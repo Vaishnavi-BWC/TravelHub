@@ -162,7 +162,7 @@ const PendingApprovals = ({
             </thead>
             <tbody>
               {requests.length > 0 ? (
-                requests.slice(0, 3).map((request) => (
+                requests.slice(0, 2).map((request) => (
                   <tr
                     key={request.travelRequestId || request.id}
                     className="pending-approvals-row clickable-row"

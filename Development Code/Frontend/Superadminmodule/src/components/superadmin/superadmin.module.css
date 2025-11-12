@@ -1361,3 +1361,343 @@
   margin-bottom: 10px;
   margin-left: 20px;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Add to superadmin.module.css */
+
+/* Date Range */
+.dateRange {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dateInput {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* User Details */
+.userDetail {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* Budget */
+.budget {
+  font-weight: 600;
+  color: #059669;
+}
+
+/* Step Info */
+.stepInfo {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* View Button */
+.viewBtn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s;
+}
+
+.viewBtn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.viewBtn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalBody {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modalFooter {
+  padding: 20px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px;
+}
+
+.closeBtn:hover {
+  color: #374151;
+}
+
+/* Section Styles */
+.section {
+  margin-bottom: 24px;
+}
+
+.section h4 {
+  margin-bottom: 12px;
+  color: #374151;
+  font-weight: 600;
+}
+
+/* Info Grid */
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoItem label {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+/* Milestone Styles */
+.milestoneContainer {
+  position: relative;
+}
+
+.milestoneItem {
+  margin-bottom: 20px;
+}
+
+.milestoneHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.milestoneIndicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.milestoneDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+}
+
+.milestoneDot.completed {
+  background: #10b981;
+}
+
+.milestoneDot.pending {
+  background: #6b7280;
+}
+
+.milestoneDot.rejected {
+  background: #ef4444;
+}
+
+.milestoneLine {
+  width: 2px;
+  height: 40px;
+  margin-top: 4px;
+}
+
+.milestoneLine.completed {
+  background: #10b981;
+}
+
+.milestoneLine.pending {
+  background: #e5e7eb;
+}
+
+.milestoneLine.rejected {
+  background: #fca5a5;
+}
+
+.milestoneInfo h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.approverRole {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.completionTime {
+  font-size: 12px;
+  color: #059669;
+  display: block;
+  margin-top: 2px;
+}
+
+/* Actions List */
+.actionsList {
+  margin-left: 44px;
+  margin-top: 8px;
+}
+
+.actionItem {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.actionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.decision {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.decision.approve {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.decision.reject {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.decision.submit {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.actionTime {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.actionDetails {
+  font-size: 14px;
+}
+
+.comments {
+  margin-top: 8px;
+  padding: 8px;
+  background: white;
+  border-radius: 4px;
+  border-left: 3px solid #3b82f6;
+}
+
+/* Exceptions */
+.exceptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exceptionItem {
+  padding: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+/* Status Badges */
+.statusBadge.success { background: #d1fae5; color: #065f46; }
+.statusBadge.warning { background: #fef3c7; color: #92400e; }
+.statusBadge.error { background: #fee2e2; color: #991b1b; }
+.statusBadge.info { background: #dbeafe; color: #1e40af; }
+.statusBadge.default { background: #f3f4f6; color: #374151; }
+
+/* Date Info */
+.dateInfo {
+  font-size: 12px;
+  line-height: 1.4;
+}

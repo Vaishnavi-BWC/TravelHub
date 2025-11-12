@@ -1,7 +1,7 @@
 // services/approvalService.js
-const HR_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/hr/approvals';
+const HR_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/workflows';
 const AUTH_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8081/api/auth';
-
+const HR_API_URL='http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/dashboard'
 // Helper function to get current HR user info
 const getCurrentHRUserInfo = async () => {
   try {
@@ -53,9 +53,9 @@ export const approvalService = {
    */
   getPendingApprovals: async () => {
     try {
-      console.log('🔍 Making HR API call to:', `${HR_API_BASE_URL}/pending`);
+      console.log('🔍 Making HR API call to:', `${HR_API_URL}/pending-approvals`);
       
-      const response = await fetch(`${HR_API_BASE_URL}/pending`, {
+      const response = await fetch(`${HR_API_URL}/pending-approvals`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -122,22 +122,22 @@ export const approvalService = {
       // Prepare the exact request body as required
       const requestBody = {
         workflowId: workflowId,
-        action: "APPROVE",
-        approverRole: userInfo.role,
+        actionType: "APPROVE",
+        // approverRole: userInfo.role,
         approverId: userInfo.userId,
         approverName: userInfo.name,
         comments: remarks || "Approved by HR",
-        escalationReason: "",
-        amountApproved: 0,
-        reimbursementAmount: 0,
-        markOverpriced: false,
-        overpricedReason: ""
+        // escalationReason: "",
+        // amountApproved: 0,
+        // reimbursementAmount: 0,
+        // markOverpriced: false,
+        // overpricedReason: ""
       };
 
       console.log('📤 Sending HR approval request body:', requestBody);
 
       // Use workflowId as path variable in the URL
-      const response = await fetch(`${HR_API_BASE_URL}/${workflowId}/action`, {
+      const response = await fetch(`${HR_API_BASE_URL}/${workflowId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -191,22 +191,17 @@ export const approvalService = {
       // Prepare the exact request body as required
       const requestBody = {
         workflowId: workflowId,
-        action: "REJECT",
-        approverRole: userInfo.role,
+        actionType: "APPROVE",
+        // approverRole: userInfo.role,
         approverId: userInfo.userId,
         approverName: userInfo.name,
         comments: remarks || "Rejected by HR",
-        escalationReason: "",
-        amountApproved: 0,
-        reimbursementAmount: 0,
-        markOverpriced: false,
-        overpricedReason: ""
       };
 
       console.log('📤 Sending HR rejection request body:', requestBody);
 
       // Use workflowId as path variable in the URL
-      const response = await fetch(`${HR_API_BASE_URL}/${workflowId}/action`, {
+      const response = await fetch(`${HR_API_BASE_URL}/${workflowId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

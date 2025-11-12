@@ -5,6 +5,15 @@ import { managerService } from '../../services/managerService';
 import { travelService } from '../../services/travelService'; 
 import './MyRequestPage.css';
 
+// Cache configuration
+const CACHE_KEYS = {
+  REQUESTS: 'my_requests_cache',
+  WORKFLOWS: 'my_workflows_cache',
+  TIMESTAMP: 'my_requests_timestamp'
+};
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 const MyRequests = () => {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
@@ -26,14 +35,70 @@ const MyRequests = () => {
     totalPages: 0
   });
 
-  // Fetch workflow status for a single request
+  // Cache utilities
+  const getCache = (key) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : null;
+    } catch (error) {
+      console.error('Error reading cache:', error);
+      return null;
+    }
+  };
+
+  const setCache = (key, data) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.error('Error setting cache:', error);
+    }
+  };
+
+  const clearCache = () => {
+    try {
+      Object.values(CACHE_KEYS).forEach(key => {
+        localStorage.removeItem(key);
+      });
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    }
+  };
+
+  const isCacheValid = (timestamp) => {
+    return Date.now() - timestamp < CACHE_DURATION;
+  };
+
+  // Fetch workflow status for a single request with cache
   const fetchWorkflowStatus = async (travelRequestId) => {
+    // Check cache first
+    const cachedWorkflows = getCache(CACHE_KEYS.WORKFLOWS) || {};
+    const cachedData = cachedWorkflows[travelRequestId];
+    
+    if (cachedData && isCacheValid(cachedData.timestamp)) {
+      console.log(`📦 Using cached workflow for: ${travelRequestId}`);
+      setWorkflowStatuses(prev => ({
+        ...prev,
+        [travelRequestId]: cachedData.data
+      }));
+      return cachedData.data;
+    }
+
     try {
       setLoadingWorkflows(prev => ({ ...prev, [travelRequestId]: true }));
       console.log(`🔄 Fetching workflow for: ${travelRequestId}`);
       
       const workflowData = await managerService.getWorkflowStatus(travelRequestId);
       console.log(`✅ Workflow data for ${travelRequestId}:`, workflowData);
+      
+      // Update cache
+      const updatedCache = {
+        ...cachedWorkflows,
+        [travelRequestId]: {
+          data: workflowData,
+          timestamp: Date.now()
+        }
+      };
+      setCache(CACHE_KEYS.WORKFLOWS, updatedCache);
       
       setWorkflowStatuses(prev => ({
         ...prev,
@@ -65,47 +130,6 @@ const MyRequests = () => {
     console.log('✅ All workflow statuses fetched');
   };
 
-  // Fetch my travel requests with pagination
-  const fetchMyRequests = async (page = 0, size = 5) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('🔄 Fetching my travel requests...');
-      
-      // Get all requests first
-      const allRequests = await managerService.getTravelRequestsFilteredByEmployee();
-      
-      // Apply filters and search
-      const filtered = applyFilters(allRequests, searchTerm, statusFilter);
-      
-      // Implement client-side pagination
-      const startIndex = page * size;
-      const endIndex = startIndex + size;
-      const paginatedRequests = filtered.slice(startIndex, endIndex);
-      
-      console.log('✅ My travel requests fetched:', paginatedRequests.length);
-      
-      setRequests(allRequests);
-      setFilteredRequests(paginatedRequests);
-      setPagination({
-        currentPage: page,
-        pageSize: size,
-        totalElements: filtered.length,
-        totalPages: Math.ceil(filtered.length / size)
-      });
-
-      // Fetch workflow statuses for the paginated requests
-      await fetchAllWorkflowStatuses(paginatedRequests);
-      
-    } catch (err) {
-      console.error('❌ Error fetching my requests:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Apply filters and search
   const applyFilters = useCallback((requests, search, status) => {
     let filtered = requests;
@@ -134,6 +158,86 @@ const MyRequests = () => {
 
     return filtered;
   }, [workflowStatuses]);
+
+  // Fetch my travel requests with cache and pagination
+  const fetchMyRequests = async (page = 0, size = 5, forceRefresh = false) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Check cache first (unless force refresh)
+      if (!forceRefresh) {
+        const cachedRequests = getCache(CACHE_KEYS.REQUESTS);
+        const cacheTimestamp = getCache(CACHE_KEYS.TIMESTAMP);
+        
+        if (cachedRequests && cacheTimestamp && isCacheValid(cacheTimestamp)) {
+          console.log('📦 Using cached requests data');
+          const allRequests = cachedRequests;
+          
+          // Apply filters and search
+          const filtered = applyFilters(allRequests, searchTerm, statusFilter);
+          
+          // Implement client-side pagination
+          const startIndex = page * size;
+          const endIndex = startIndex + size;
+          const paginatedRequests = filtered.slice(startIndex, endIndex);
+          
+          console.log('✅ My travel requests from cache:', paginatedRequests.length);
+          
+          setRequests(allRequests);
+          setFilteredRequests(paginatedRequests);
+          setPagination({
+            currentPage: page,
+            pageSize: size,
+            totalElements: filtered.length,
+            totalPages: Math.ceil(filtered.length / size)
+          });
+
+          // Fetch workflow statuses for the paginated requests
+          await fetchAllWorkflowStatuses(paginatedRequests);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      console.log('🔄 Fetching fresh travel requests...');
+      
+      // Get all requests from API
+      const allRequests = await managerService.getTravelRequestsFilteredByEmployee();
+      
+      // Update cache
+      setCache(CACHE_KEYS.REQUESTS, allRequests);
+      setCache(CACHE_KEYS.TIMESTAMP, Date.now());
+      
+      // Apply filters and search
+      const filtered = applyFilters(allRequests, searchTerm, statusFilter);
+      
+      // Implement client-side pagination
+      const startIndex = page * size;
+      const endIndex = startIndex + size;
+      const paginatedRequests = filtered.slice(startIndex, endIndex);
+      
+      console.log('✅ Fresh travel requests fetched:', paginatedRequests.length);
+      
+      setRequests(allRequests);
+      setFilteredRequests(paginatedRequests);
+      setPagination({
+        currentPage: page,
+        pageSize: size,
+        totalElements: filtered.length,
+        totalPages: Math.ceil(filtered.length / size)
+      });
+
+      // Fetch workflow statuses for the paginated requests
+      await fetchAllWorkflowStatuses(paginatedRequests);
+      
+    } catch (err) {
+      console.error('❌ Error fetching my requests:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Get status display text, class, and stage
   const getStatusInfo = useCallback((request, workflowData) => {
@@ -316,8 +420,9 @@ const handleDeleteClick = useCallback(async (request) => {
       // Call the travelService delete method
       await travelService.deleteTravelRequest(request.travelRequestId);
       
-      // Refresh the requests list after successful deletion
-      await fetchMyRequests(pagination.currentPage, pagination.pageSize);
+      // Clear cache and refresh the requests list after successful deletion
+      clearCache();
+      await fetchMyRequests(pagination.currentPage, pagination.pageSize, true);
       
       alert('Request deleted successfully!');
     } catch (error) {
@@ -328,7 +433,13 @@ const handleDeleteClick = useCallback(async (request) => {
 }, [pagination.currentPage, pagination.pageSize]);
 
   const handleRefresh = useCallback(() => {
-    fetchMyRequests(pagination.currentPage, pagination.pageSize);
+    // Force refresh by clearing cache
+    clearCache();
+    fetchMyRequests(pagination.currentPage, pagination.pageSize, true);
+  }, [pagination.currentPage, pagination.pageSize]);
+
+  const handleForceRefresh = useCallback(() => {
+    fetchMyRequests(pagination.currentPage, pagination.pageSize, true);
   }, [pagination.currentPage, pagination.pageSize]);
 
   // Helper function to check if request is editable (draft status)
@@ -369,7 +480,10 @@ const handleDeleteClick = useCallback(async (request) => {
   return (
     <div className="card">
       <div className="cardHeader">
-        <h2>My Travel Requests</h2>
+        {/* <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}> */}
+          <h3>My Travel Requests</h3>
+          <p>Complete history of all your request in the system</p>
+        {/* </div> */}
        <br></br>
       </div>
 
@@ -437,6 +551,15 @@ const handleDeleteClick = useCallback(async (request) => {
               <i className="fas fa-times"></i>
             </button>
           )}
+          &nbsp;&nbsp;
+             <button 
+            onClick={handleForceRefresh}
+            className="btn btnSecondary"
+            title="Force refresh data"
+            style={{marginLeft: 'auto'}}
+          >
+            <i className="fas fa-sync-alt"></i> Refresh
+          </button>
         </div>
       </div>
 

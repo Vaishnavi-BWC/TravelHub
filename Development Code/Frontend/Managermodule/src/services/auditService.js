@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/manager/approvals';
+const API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/dashboard';
 
 export const auditService = {
   async getAuditTrail(filters = {}) {
@@ -16,7 +16,7 @@ export const auditService = {
       });
 
       const queryString = queryParams.toString();
-      const url = `${API_BASE_URL}/history${queryString ? `?${queryString}` : ''}`;
+      const url = `${API_BASE_URL}/action-history`;
 
       console.log('🔗 Making API call to:', url);
 

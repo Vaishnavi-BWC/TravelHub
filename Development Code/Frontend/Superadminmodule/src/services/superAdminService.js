@@ -1,10 +1,126 @@
+// services/superAdminService.js
 import { api } from './api';
 
 // Base URL configuration
 const SLA_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/admin';
 const POLICY_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8082/pms/api';
+const TRAVEL_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8090/travel-management/api';
+const WORKFLOW_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/dashboard';
+
 export const SuperAdminService = {
-  // SLA Settings API Methods
+  // ==================== TRAVEL REQUESTS API ====================
+  getTravelRequests: async (params = {}) => {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      // Add pagination parameters
+      if (params.page) queryParams.append('page', params.page - 1); // Backend usually uses 0-based
+      if (params.limit) queryParams.append('size', params.limit);
+      
+      // Add search and filter parameters
+      if (params.search) queryParams.append('search', params.search);
+      if (params.status) queryParams.append('status', params.status);
+      if (params.startDate) queryParams.append('startDate', params.startDate);
+      if (params.endDate) queryParams.append('endDate', params.endDate);
+
+      const url = `${TRAVEL_API_BASE_URL}/travel-requests?${queryParams.toString()}`;
+      
+      console.log('🔍 Fetching travel requests from:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      console.log('📊 Travel Requests API Response status:', response.status);
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.text();
+          if (errorData) {
+            const parsedError = JSON.parse(errorData);
+            errorMessage = parsedError.message || errorMessage;
+          }
+        } catch {
+          // Ignore parsing errors
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log('✅ Travel requests fetched successfully. Count:', data.length);
+      return data;
+
+    } catch (error) {
+      console.error('❌ Error fetching travel requests:', error);
+
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        throw new Error('Cannot connect to travel service. Please check if the service is running.');
+      }
+
+      throw error;
+    }
+  },
+
+  // ==================== WORKFLOW DETAILS API ====================
+  getWorkflowDetail: async (travelRequestId) => {
+    try {
+      const url = `${WORKFLOW_API_BASE_URL}/workflows/${travelRequestId}`;
+      
+      console.log('🔍 Fetching workflow detail from:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      console.log('📊 Workflow Detail API Response status:', response.status);
+
+      if (!response.ok) {
+        // If workflow not found, return null instead of throwing error
+        if (response.status === 404) {
+          console.log(`⚠️ Workflow not found for travel request: ${travelRequestId}`);
+          return null;
+        }
+        
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.text();
+          if (errorData) {
+            const parsedError = JSON.parse(errorData);
+            errorMessage = parsedError.message || errorMessage;
+          }
+        } catch {
+          // Ignore parsing errors
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log('✅ Workflow detail fetched successfully for:', travelRequestId);
+      return data;
+
+    } catch (error) {
+      console.error(`❌ Error fetching workflow detail for ${travelRequestId}:`, error);
+      
+      // Return null instead of throwing to prevent breaking the entire logs load
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        console.error('Cannot connect to workflow service. Please check if the service is running.');
+        return null;
+      }
+      
+      throw error;
+    }
+  },
+
+  // ==================== SLA SETTINGS API METHODS ====================
   getSlaSettings: async (workflowType = 'PRE_TRAVEL') => {
     try {
       console.log('🔍 Fetching SLA settings for workflow type:', workflowType);
@@ -204,147 +320,7 @@ export const SuperAdminService = {
     }
   },
 
-  // All other existing methods remain the same...
-  getSuperAdminProfile: async () => {
-    try {
-      const response = await api.get('/super-admin/profile');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  updateSuperAdminProfile: async (profileData) => {
-    try {
-      const response = await api.put('/super-admin/profile', profileData);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  getDashboardStats: async () => {
-    try {
-      const response = await api.get('/super-admin/dashboard/stats');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  getFinancialData: async () => {
-    try {
-      const response = await api.get('/super-admin/financial-data');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  getUsers: async (params = {}) => {
-    try {
-      const response = await api.get('/super-admin/users', { params });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  createUser: async (userData) => {
-    try {
-      const response = await api.post('/super-admin/users', userData);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  updateUserStatus: async (userId, status) => {
-    try {
-      const response = await api.patch(`/super-admin/users/${userId}/status`, { status });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-
-  getReports: async (params = {}) => {
-    try {
-      const response = await api.get('/super-admin/reports', { params });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  generateReport: async (reportData) => {
-    try {
-      const response = await api.post('/super-admin/reports/generate', reportData);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  downloadReport: async (reportId) => {
-    try {
-      const response = await api.get(`/super-admin/reports/${reportId}/download`, {
-        responseType: 'blob'
-      });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  getSystemLogs: async (params = {}) => {
-    try {
-      const response = await api.get('/super-admin/system-logs', { params });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  getOverrideRequests: async (params = {}) => {
-    try {
-      const response = await api.get('/super-admin/override-requests', { params });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  handleOverrideRequest: async (requestId, action, reason = '') => {
-    try {
-      const response = await api.post(`/super-admin/override-requests/${requestId}/handle`, {
-        action,
-        reason
-      });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  getSystemSettings: async () => {
-    try {
-      const response = await api.get('/super-admin/system-settings');
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
-
-  updateSystemSettings: async (settings) => {
-    try {
-      const response = await api.put('/super-admin/system-settings', settings);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  },
+  // ==================== POLICY MANAGEMENT API ====================
   getPolicies: async (params = {}) => {
     try {
       const response = await fetch(`${POLICY_API_BASE_URL}/policies`, {
@@ -390,7 +366,6 @@ export const SuperAdminService = {
     }
   },
 
-  // services/superAdminService.js - FIXED createPolicy method
   createPolicy: async (policyData) => {
     try {
       console.log('🚀 Creating policy with data:', JSON.stringify(policyData, null, 2));
@@ -448,7 +423,7 @@ export const SuperAdminService = {
       throw error;
     }
   },
-  // services/superAdminService.js - ENHANCED updatePolicy method
+
   updatePolicy: async (policyId, policyData) => {
     try {
       console.log('✏️ Updating policy:', { policyId, policyData });
@@ -496,6 +471,7 @@ export const SuperAdminService = {
       throw error;
     }
   },
+
   deletePolicy: async (policyId) => {
     try {
       const response = await fetch(`${POLICY_API_BASE_URL}/policies/${policyId}`, {
@@ -614,9 +590,6 @@ export const SuperAdminService = {
     }
   },
 
-
-  // Update specific grade in a policy
-  // Update specific grade in a policy - with multiple structure attempts
   updatePolicyGrade: async (policyId, grade, gradeData) => {
     try {
       console.log('🔍 Updating policy grade:', { policyId, grade, gradeData });
@@ -691,6 +664,147 @@ export const SuperAdminService = {
     } catch (error) {
       console.error('❌ Error updating policy grade:', error);
       throw error;
+    }
+  },
+
+  // ==================== OTHER ADMIN API METHODS ====================
+  getSuperAdminProfile: async () => {
+    try {
+      const response = await api.get('/super-admin/profile');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  updateSuperAdminProfile: async (profileData) => {
+    try {
+      const response = await api.put('/super-admin/profile', profileData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getDashboardStats: async () => {
+    try {
+      const response = await api.get('/super-admin/dashboard/stats');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getFinancialData: async () => {
+    try {
+      const response = await api.get('/super-admin/financial-data');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getUsers: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin/users', { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  createUser: async (userData) => {
+    try {
+      const response = await api.post('/super-admin/users', userData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  updateUserStatus: async (userId, status) => {
+    try {
+      const response = await api.patch(`/super-admin/users/${userId}/status`, { status });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getReports: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin/reports', { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  generateReport: async (reportData) => {
+    try {
+      const response = await api.post('/super-admin/reports/generate', reportData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  downloadReport: async (reportId) => {
+    try {
+      const response = await api.get(`/super-admin/reports/${reportId}/download`, {
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getSystemLogs: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin/system-logs', { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getOverrideRequests: async (params = {}) => {
+    try {
+      const response = await api.get('/super-admin/override-requests', { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  handleOverrideRequest: async (requestId, action, reason = '') => {
+    try {
+      const response = await api.post(`/super-admin/override-requests/${requestId}/handle`, {
+        action,
+        reason
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  getSystemSettings: async () => {
+    try {
+      const response = await api.get('/super-admin/system-settings');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  updateSystemSettings: async (settings) => {
+    try {
+      const response = await api.put('/super-admin/system-settings', settings);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
     }
   },
 };

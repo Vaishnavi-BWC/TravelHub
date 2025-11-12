@@ -1,3 +1,4 @@
+// contexts/SuperAdminContext.js
 import React, { createContext, useContext, useReducer } from 'react';
 import superAdminService from '../services/superAdminService';
 
@@ -20,6 +21,8 @@ const ACTION_TYPES = {
   SET_SIDEBAR_OPEN: 'SET_SIDEBAR_OPEN',
   SET_SELECTED_USER: 'SET_SELECTED_USER',
   SET_SELECTED_POLICY: 'SET_SELECTED_POLICY',
+  SET_TRAVEL_REQUESTS: 'SET_TRAVEL_REQUESTS',
+  SET_WORKFLOW_DETAILS: 'SET_WORKFLOW_DETAILS',
 };
 
 const initialState = {
@@ -39,6 +42,8 @@ const initialState = {
   financialData: [],
   selectedUser: null,
   selectedPolicy: null,
+  travelRequests: [],
+  workflowDetails: {},
 };
 
 const superAdminReducer = (state, action) => {
@@ -75,6 +80,16 @@ const superAdminReducer = (state, action) => {
       return { ...state, selectedUser: action.payload };
     case ACTION_TYPES.SET_SELECTED_POLICY:
       return { ...state, selectedPolicy: action.payload };
+    case ACTION_TYPES.SET_TRAVEL_REQUESTS:
+      return { ...state, travelRequests: action.payload, loading: false };
+    case ACTION_TYPES.SET_WORKFLOW_DETAILS:
+      return { 
+        ...state, 
+        workflowDetails: {
+          ...state.workflowDetails,
+          [action.payload.travelRequestId]: action.payload.data
+        }
+      };
     default:
       return state;
   }
@@ -275,6 +290,7 @@ export const SuperAdminProvider = ({ children }) => {
         dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
       }
     },
+
     updatePolicyGrade: async (policyId, grade, gradeData) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
@@ -298,6 +314,7 @@ export const SuperAdminProvider = ({ children }) => {
         throw error;
       }
     },
+
     // Get active policy for city and grade
     getActivePolicy: async (city, cityCategory, grade) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
@@ -340,14 +357,84 @@ export const SuperAdminProvider = ({ children }) => {
       }
     },
 
-    // System Logs
+    // ==================== SYSTEM LOGS & WORKFLOW ACTIONS ====================
+
+    // Load travel requests (System Logs)
+    loadTravelRequests: async (params = {}) => {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
+      try {
+        const travelRequests = await superAdminService.getTravelRequests(params);
+        dispatch({ type: ACTION_TYPES.SET_TRAVEL_REQUESTS, payload: travelRequests });
+        return travelRequests;
+      } catch (error) {
+        dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
+        throw error;
+      }
+    },
+
+    // Load workflow detail for a specific travel request
+    loadWorkflowDetail: async (travelRequestId) => {
+      try {
+        const workflowDetail = await superAdminService.getWorkflowDetail(travelRequestId);
+        
+        // Store workflow detail in state for caching
+        dispatch({ 
+          type: ACTION_TYPES.SET_WORKFLOW_DETAILS, 
+          payload: { 
+            travelRequestId, 
+            data: workflowDetail 
+          } 
+        });
+        
+        return workflowDetail;
+      } catch (error) {
+        console.error(`Error loading workflow detail for ${travelRequestId}:`, error);
+        throw error;
+      }
+    },
+
+    // Load combined system logs with workflow details
     loadSystemLogs: async (params = {}) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
-        const logs = await superAdminService.getSystemLogs(params);
-        dispatch({ type: ACTION_TYPES.SET_SYSTEM_LOGS, payload: logs });
+        // Load travel requests
+        const travelRequests = await actions.loadTravelRequests(params);
+
+        // Load workflow details for each request
+        const logsWithWorkflows = await Promise.all(
+          travelRequests.map(async (request) => {
+            try {
+              const workflowDetail = await actions.loadWorkflowDetail(request.travelRequestId);
+              return {
+                ...request,
+                workflowDetail,
+                id: request.travelRequestId,
+                timestamp: request.createdAt,
+                user: request.employeeId,
+                action: 'TRAVEL_REQUEST',
+                description: `Travel request from ${request.origin} to ${request.travelDestination}`,
+                status: request.status
+              };
+            } catch (error) {
+              console.error(`Error loading workflow for ${request.travelRequestId}:`, error);
+              return {
+                ...request,
+                workflowDetail: null,
+                id: request.travelRequestId,
+                timestamp: request.createdAt,
+                user: request.employeeId,
+                action: 'TRAVEL_REQUEST',
+                description: `Travel request from ${request.origin} to ${request.travelDestination}`,
+                status: request.status
+              };
+            }
+          })
+        );
+
+        dispatch({ type: ACTION_TYPES.SET_SYSTEM_LOGS, payload: logsWithWorkflows });
       } catch (error) {
         dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
+        throw error;
       }
     },
 
