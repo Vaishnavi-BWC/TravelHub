@@ -53,6 +53,9 @@ public class WorkflowStep {
     @Column(nullable = false)
     @Builder.Default
     private String status = "PENDING";
+    
+    @Column(name = "original_workflow_type")
+    private String originalWorkflowType; // PRE_TRAVEL or POST_TRAVEL
 
     @CreationTimestamp
     private LocalDateTime createdAt;

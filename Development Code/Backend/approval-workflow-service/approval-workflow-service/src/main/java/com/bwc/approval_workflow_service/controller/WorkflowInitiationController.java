@@ -45,7 +45,6 @@ public class WorkflowInitiationController {
         } catch (Exception e) {
             log.error("❌ Failed to update travel request status for {}: {}", travelRequest.travelRequestId(), e.getMessage());
         }
-
         return ResponseEntity.ok(response);
     }
 }

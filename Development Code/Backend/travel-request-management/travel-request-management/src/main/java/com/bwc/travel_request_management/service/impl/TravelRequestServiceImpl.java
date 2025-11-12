@@ -35,7 +35,10 @@ import lombok.extern.slf4j.Slf4j;
 public class TravelRequestServiceImpl implements TravelRequestService {
 
     private static final String REQUEST_NOT_FOUND = "Travel Request not found with id: ";
-
+    private static final String BOOKING_NOT_FOUND_MSG = "Booking not found with id: ";
+    private static final String REQUEST_NOT_FOUND_MSG = "Travel Request not found with id: ";
+    
+    
     private final EmployeeServiceClient employeeServiceClient;
     private final TravelRequestRepository repository;
     private final TravelRequestManualMapper mapper;
@@ -96,6 +99,11 @@ public class TravelRequestServiceImpl implements TravelRequestService {
                     "Error while fetching active policy for the given destination and grade"
             );
         }
+        
+        
+        
+        
+        
 
         // ✅ Step 3: Save the Travel Request entity
         TravelRequest entity = mapper.toEntity(dto);
@@ -133,7 +141,11 @@ public class TravelRequestServiceImpl implements TravelRequestService {
 
         return mapper.toDto(saved);
     }
-
+    
+    
+    
+    
+    
     /**
      * 🚀 Async workflow initiation with retry logic and comprehensive error handling
      */

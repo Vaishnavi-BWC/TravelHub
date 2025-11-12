@@ -17,6 +17,7 @@ import com.bwc.travel_request_management.exception.ResourceNotFoundException;
 import com.bwc.travel_request_management.mapper.TravelBookingMapper;
 import com.bwc.travel_request_management.repository.TravelBookingRepository;
 import com.bwc.travel_request_management.repository.TravelRequestRepository;
+import com.bwc.travel_request_management.service.ExpenseTrackingService;
 import com.bwc.travel_request_management.service.TravelBookingService;
 
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,9 @@ public class TravelBookingServiceImpl implements TravelBookingService {
     private final TravelBookingRepository bookingRepository;
     private final TravelRequestRepository requestRepository;
     private final TravelBookingMapper mapper;
-
+    @Lazy
+    @Autowired
+    private ExpenseTrackingService expenseTrackingService;
     /**
      * Self proxy injection for transactional safety.
      * Required to ensure internal method calls respect @Transactional.
@@ -63,6 +66,9 @@ public class TravelBookingServiceImpl implements TravelBookingService {
 
         TravelBooking saved = bookingRepository.save(booking);
         log.info("✅ Booking added successfully: {} for request: {}", saved.getBookingId(), requestId);
+
+        // ✅ ADD THIS: Update travel request totals automatically
+        expenseTrackingService.updateTravelRequestTotals(requestId);
 
         return mapper.toDto(saved);
     }
@@ -112,10 +118,19 @@ public class TravelBookingServiceImpl implements TravelBookingService {
         TravelBooking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException(BOOKING_NOT_FOUND_MSG + bookingId));
 
+        UUID travelRequestId = booking.getTravelRequest().getTravelRequestId(); // Store before deletion
+
         bookingRepository.delete(booking);
         log.info("🗑️ Booking deleted: {}", bookingId);
-    }
 
+        // ✅ ADD THIS: Update travel request totals after deletion
+        expenseTrackingService.updateTravelRequestTotals(travelRequestId);
+    }
+    
+    
+    
+    
+    
     // ----------------------------------------------------------------
     // SUMMARY
     // ----------------------------------------------------------------

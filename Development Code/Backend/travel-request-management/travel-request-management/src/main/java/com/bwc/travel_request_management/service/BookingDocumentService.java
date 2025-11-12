@@ -17,7 +17,7 @@ public interface BookingDocumentService {
     void deleteDocument(UUID documentId);
     void deleteAllDocumentsForBooking(UUID bookingId);
     void deleteAllDocumentsForRequest(UUID requestId);
-    Resource downloadDocument(UUID documentId); // Fixed: Using Spring Resource
+    Resource downloadDocument(UUID documentId);
     String getDocumentContentType(UUID documentId);
     String getDocumentOriginalName(UUID documentId);
 }

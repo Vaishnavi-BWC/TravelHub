@@ -192,7 +192,6 @@ public class ExpenseBillController {
         return ResponseEntity.ok(expenseBillService.getExpenseCategories());
     }
     
-    
     @Operation(summary = "Submit bills for review and progress workflow to Travel Desk")
     @PostMapping("/workflow/{workflowId}/submit")
     public ResponseEntity<Void> submitBillsForReview(
