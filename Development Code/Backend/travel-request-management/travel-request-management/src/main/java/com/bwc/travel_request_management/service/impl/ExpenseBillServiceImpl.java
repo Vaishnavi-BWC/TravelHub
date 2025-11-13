@@ -52,11 +52,11 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
 
     @Override
     @Transactional
-    public ExpenseBillDTO uploadExpenseBill(UUID travelRequestId, UUID workflowId, UUID employeeId,
+    public ExpenseBillDTO uploadExpenseBill(UUID travelRequestId, UUID employeeId,
                                            MultipartFile file, ExpenseBillDTO billDTO) {
         
-        log.info("Uploading expense bill for travel request: {}, workflow: {}, employee: {}", 
-                travelRequestId, workflowId, employeeId);
+        log.info("Uploading expense bill for travel request: {}, employee: {}", 
+                travelRequestId, employeeId);
 
         // ✅ ADD DATE VALIDATION: Get travel request and validate bill date
         TravelRequest travelRequest = travelRequestRepository.findById(travelRequestId)
@@ -73,7 +73,6 @@ public class ExpenseBillServiceImpl implements ExpenseBillService {
         // Create bill entity
         ExpenseBill bill = ExpenseBill.builder()
                 .travelRequestId(travelRequestId)
-                .workflowId(workflowId)
                 .employeeId(employeeId)
                 .billDate(billDTO.getBillDate())
                 .expenseCategory(billDTO.getExpenseCategory())

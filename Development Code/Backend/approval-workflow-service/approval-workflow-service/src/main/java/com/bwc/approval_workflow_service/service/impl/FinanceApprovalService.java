@@ -40,7 +40,7 @@ public class FinanceApprovalService
         return List.of(ApprovalActionType.APPROVE, ApprovalActionType.REJECT, ApprovalActionType.REQUEST_CLARIFICATION);
     }
 
-    // ✅ Add this missing method
+    // Add this missing method
     @Override
     protected String getExceptionReason(FinanceApprovalActionRequestDTO request) {
         return null; // Finance cannot raise exceptions

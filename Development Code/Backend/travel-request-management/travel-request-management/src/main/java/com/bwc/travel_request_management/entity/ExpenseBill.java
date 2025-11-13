@@ -38,9 +38,6 @@ public class ExpenseBill {
     @Column(name = "travel_request_id", nullable = false, columnDefinition = "uuid")
     private UUID travelRequestId;
 
-    @Column(name = "workflow_id", nullable = false, columnDefinition = "uuid")
-    private UUID workflowId;
-
     @Column(name = "employee_id", nullable = false, columnDefinition = "uuid")
     private UUID employeeId;
 
@@ -55,7 +52,6 @@ public class ExpenseBill {
 
     @Column(name = "amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
-
 
     @Column(name = "currency", length = 3)
     @Builder.Default

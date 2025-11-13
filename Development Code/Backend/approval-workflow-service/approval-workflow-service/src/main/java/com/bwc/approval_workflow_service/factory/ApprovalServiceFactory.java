@@ -27,7 +27,7 @@ public class ApprovalServiceFactory {
             throw new IllegalArgumentException("No ApprovalService found for actor type: " + actorType);
         }
 
-        // ✅ Safe because you control bean naming and types
+        // Safe because you control bean naming and types
         return (ApprovalService<I, O>) service;
     }
 }

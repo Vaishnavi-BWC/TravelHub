@@ -20,4 +20,7 @@ public interface ActorActionRepository extends JpaRepository<ActorAction, UUID> 
     
     @Query("SELECT a FROM ActorAction a WHERE a.actorRole = :role ORDER BY a.actionTakenAt DESC")
     List<ActorAction> findActionsByRole(@Param("role") String role);
+    
+    @Query("SELECT COUNT(a) FROM ActorAction a")
+    long count();
 }

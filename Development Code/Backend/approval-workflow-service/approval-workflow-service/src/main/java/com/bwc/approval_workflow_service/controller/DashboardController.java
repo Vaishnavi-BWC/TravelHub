@@ -275,6 +275,10 @@ public class DashboardController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    
+    
+    
+    
 
     // Helper method to extract user context from security context
     private UserContext getCurrentUserContext() {
@@ -294,6 +298,7 @@ public class DashboardController {
 
         return new UserContext(UUID.fromString(userId), userRole);
     }
+    
     
 
     

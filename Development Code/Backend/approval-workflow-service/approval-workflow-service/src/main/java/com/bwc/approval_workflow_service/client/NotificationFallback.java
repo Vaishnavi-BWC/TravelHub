@@ -23,9 +23,10 @@ public class NotificationFallback implements NotificationServiceClient {
                 notification.getAdditionalData());
     }
 
-	@Override
-	public void notifyEmployee(WorkflowNotificationDTO dto) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public void notifyEmployee(WorkflowNotificationDTO dto) {
+        log.warn("📨 Notification service unavailable - Would notify employee {} about workflow {}",
+                dto.getEmployeeEmail(),
+                dto.getWorkflowId());
+    }
 }

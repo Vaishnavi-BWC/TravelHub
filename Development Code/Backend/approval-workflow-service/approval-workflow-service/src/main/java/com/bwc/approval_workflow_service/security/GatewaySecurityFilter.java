@@ -27,7 +27,7 @@ public class GatewaySecurityFilter implements Filter {
 
         String path = httpReq.getRequestURI();
         
-        // 🟢 Skip gateway validation for public endpoints
+        //  Skip gateway validation for public endpoints
         if (isPublicEndpoint(path)) {
             log.debug("[Workflow] Skipping gateway validation for public endpoint: {}", path);
             chain.doFilter(request, response);
@@ -36,7 +36,7 @@ public class GatewaySecurityFilter implements Filter {
 
         String headerSecret = httpReq.getHeader("X-Internal-Gateway-Secret");
 
-        // 🟢 DEBUG
+        //  DEBUG
         log.debug("[Workflow] Path: {}", path);
         log.debug("[Workflow] Expected Secret: {}", expectedGatewaySecret);
         log.debug("[Workflow] Received Header Secret: {}", headerSecret);

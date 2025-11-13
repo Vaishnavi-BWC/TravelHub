@@ -29,17 +29,17 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // ✅ Allow all origins
+        //  Allow all origins
         configuration.setAllowedOriginPatterns(List.of("*"));
 
-        // ✅ Allow credentials
+        // Allow credentials
         configuration.setAllowCredentials(true);
 
-        // ✅ Allow all headers and methods
+        // Allow all headers and methods
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
 
-        // ✅ (Optional) expose headers if frontend needs them
+        // (Optional) expose headers if frontend needs them
         configuration.addExposedHeader("*");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

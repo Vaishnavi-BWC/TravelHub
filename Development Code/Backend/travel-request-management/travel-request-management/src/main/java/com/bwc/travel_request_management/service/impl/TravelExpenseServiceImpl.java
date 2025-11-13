@@ -39,28 +39,6 @@ public class TravelExpenseServiceImpl implements TravelExpenseService {
         expense.setTravelRequest(request);
         TravelExpense saved = expenseRepository.save(expense);
 
-        // AFTER COMMIT trigger: start post-travel workflow
-        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
-                new org.springframework.transaction.support.TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        try {
-                            com.bwc.travel_request_management.client.dto.CreateWorkflowRequest wfReq =
-                                    com.bwc.travel_request_management.client.dto.CreateWorkflowRequest.builder()
-                                            .travelRequestId(request.getTravelRequestId())
-                                            .employeeId(request.getEmployeeId())
-                                            .workflowType("POST")
-                                            .estimatedCost(null)
-                                            .projectId(request.getProjectId())
-                                            .build();
-                            workflowServiceClient.createWorkflow(wfReq);
-                            log.info("Started post-travel workflow for request {}", request.getTravelRequestId());
-                        } catch (Exception e) {
-                            log.warn("Failed to create post-travel workflow: {}", e.getMessage());
-                        }
-                    }
-                });
-
         return mapper.toDto(saved);
     }
 
