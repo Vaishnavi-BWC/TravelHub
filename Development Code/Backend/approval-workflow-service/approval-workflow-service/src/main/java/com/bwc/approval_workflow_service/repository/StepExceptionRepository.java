@@ -39,5 +39,8 @@ public interface StepExceptionRepository extends JpaRepository<StepException, UU
     
     
     
+    @Query("SELECT COUNT(e) FROM StepException e")
+    long count();
+    
     
 }

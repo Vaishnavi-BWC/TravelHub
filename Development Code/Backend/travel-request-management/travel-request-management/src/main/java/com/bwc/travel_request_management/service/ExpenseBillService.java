@@ -13,7 +13,7 @@ import com.bwc.travel_request_management.entity.ExpenseBill;
 
 public interface ExpenseBillService {
     
-    ExpenseBillDTO uploadExpenseBill(UUID travelRequestId, UUID workflowId, UUID employeeId,
+    ExpenseBillDTO uploadExpenseBill(UUID travelRequestId, UUID employeeId,
                                     MultipartFile file, ExpenseBillDTO billDTO);
     
     ExpenseBillDTO getBill(UUID billId);

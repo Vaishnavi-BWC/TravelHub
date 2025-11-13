@@ -23,7 +23,6 @@ public class ExpenseBillDTO {
 
     private UUID billId;
     private UUID travelRequestId;
-    private UUID workflowId;
     private UUID employeeId;
 
     @JsonFormat(pattern = "yyyy-MM-dd")

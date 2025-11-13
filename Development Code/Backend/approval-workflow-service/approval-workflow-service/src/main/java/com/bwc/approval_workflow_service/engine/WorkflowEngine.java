@@ -1,6 +1,8 @@
 package com.bwc.approval_workflow_service.engine;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.security.core.Authentication;
@@ -13,10 +15,18 @@ import com.bwc.approval_workflow_service.dto.FinanceApprovalActionRequestDTO;
 import com.bwc.approval_workflow_service.dto.HRApprovalActionRequestDTO;
 import com.bwc.approval_workflow_service.dto.ManagerApprovalActionRequestDTO;
 import com.bwc.approval_workflow_service.dto.TravelDeskApprovalActionRequestDTO;
+import com.bwc.approval_workflow_service.entity.ActorAction;
+import com.bwc.approval_workflow_service.entity.ApprovalWorkflow;
+import com.bwc.approval_workflow_service.entity.WorkflowConfiguration;
+import com.bwc.approval_workflow_service.entity.WorkflowStep;
 import com.bwc.approval_workflow_service.enums.ApprovalActionType;
+import com.bwc.approval_workflow_service.exception.WorkflowException;
 import com.bwc.approval_workflow_service.factory.ApprovalServiceFactory;
+import com.bwc.approval_workflow_service.repository.ApprovalWorkflowRepository;
+import com.bwc.approval_workflow_service.repository.WorkflowConfigurationRepository;
 import com.bwc.approval_workflow_service.service.ApprovalService;
 
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -25,8 +35,15 @@ public class WorkflowEngine {
 
     private final ApprovalServiceFactory factory;
 
-    public WorkflowEngine(ApprovalServiceFactory factory) {
+    private final ApprovalWorkflowRepository workflowRepository;
+    private final WorkflowConfigurationRepository configRepository;
+
+    public WorkflowEngine(ApprovalServiceFactory factory,
+                          ApprovalWorkflowRepository workflowRepository,
+                          WorkflowConfigurationRepository configRepository) {
         this.factory = factory;
+        this.workflowRepository = workflowRepository;
+        this.configRepository = configRepository;
     }
 
     public <I extends BaseApprovalActionRequestDTO, O extends BaseApprovalActionResponseDTO> O process(I requestDto) {
@@ -39,14 +56,14 @@ public class WorkflowEngine {
             // Enrich request with user details from security context
             enrichRequestWithUserDetails(requestDto);
 
-            log.info("🔹 Processing {} action for actor type [{}] on workflow [{}]",
+            log.info("Processing {} action for actor type [{}] on workflow [{}]",
                     requestDto.getActionType(), actorType, requestDto.getWorkflowId());
 
             ApprovalService<I, O> service = factory.getService(actorType);
             return service.processApproval(requestDto);
             
         } catch (SecurityException e) {
-            log.error("🔒 Security violation processing request: {}", e.getMessage());
+            log.error("Security violation processing request: {}", e.getMessage());
             throw e;
         } catch (IllegalArgumentException e) {
             log.error("❌ Invalid request: {}", e.getMessage());
@@ -158,9 +175,102 @@ public class WorkflowEngine {
             }
         }
     }
+    
+    
+    @Transactional
+    public void progressPostTravelStep(UUID workflowId, UUID actorId, String action, String targetStepName) {
 
+        log.info("➡️ POST_TRAVEL progression: workflow {} → {}", workflowId, targetStepName);
+
+        ApprovalWorkflow workflow = workflowRepository.findByIdWithStepsAndActions(workflowId)
+                .orElseThrow(() -> new WorkflowException("Workflow not found: " + workflowId));
+
+        // get current active step
+        WorkflowStep current = workflow.getSteps().stream()
+                .filter(s -> "ACTIVE".equalsIgnoreCase(s.getStatus()))
+                .findFirst()
+                .orElseThrow(() -> new WorkflowException("No active step found"));
+
+        // mark completed
+        current.setStatus("COMPLETED");
+        current.setCompletedAt(LocalDateTime.now());
+
+        // record actor action
+        ActorAction actionLog = ActorAction.builder()
+                .step(current)
+                .actorId(actorId)
+                .actorRole(current.getApproverRole())
+                .decision(action)
+                .comments("POST_TRAVEL progression")
+                .actionTakenAt(LocalDateTime.now())
+                .build();
+        current.addActorAction(actionLog);
+
+        // find target step
+        Optional<WorkflowStep> targetOpt =
+                workflow.getSteps().stream()
+                        .filter(s -> s.getStepName().equalsIgnoreCase(targetStepName))
+                        .findFirst();
+
+        // append POST_TRAVEL steps if not loaded yet
+        if (targetOpt.isEmpty()) {
+            appendPostTravelSteps(workflow);
+            targetOpt = workflow.getSteps().stream()
+                    .filter(s -> s.getStepName().equalsIgnoreCase(targetStepName))
+                    .findFirst();
+        }
+
+        WorkflowStep next = targetOpt.orElseThrow(
+                () -> new WorkflowException("POST_TRAVEL step not found: " + targetStepName)
+        );
+
+        // activate next step
+        next.setStatus("ACTIVE");
+        workflow.setCurrentStep(next.getStepName());
+        workflow.setCurrentApproverRole(next.getApproverRole());
+        workflow.setPreviousStep(current.getStepName());
+
+        workflowRepository.save(workflow);
+
+        log.info("✅ Workflow {} moved to {}", workflowId, next.getStepName());
+    }
+
+    @Transactional
+    public void appendPostTravelSteps(ApprovalWorkflow workflow) {
+
+        log.info("📌 Appending POST_TRAVEL steps for workflow {}", workflow.getWorkflowId());
+
+        List<WorkflowConfiguration> configs =
+                configRepository.findByWorkflowTypeAndIsActiveTrueOrderBySequenceOrder("POST_TRAVEL");
+
+        if (configs == null || configs.isEmpty()) {
+            throw new WorkflowException("POST_TRAVEL configuration missing in DB");
+        }
+
+        int lastOrder = workflow.getSteps().stream()
+                .mapToInt(WorkflowStep::getSequenceOrder)
+                .max()
+                .orElse(0);
+
+        for (WorkflowConfiguration cfg : configs) {
+            WorkflowStep step = WorkflowStep.builder()
+                    .workflow(workflow)
+                    .stepName(cfg.getStepName())
+                    .approverRole(cfg.getApproverRole())
+                    .sequenceOrder(lastOrder + cfg.getSequenceOrder())
+                    .originalWorkflowType("POST_TRAVEL")
+                    .status("PENDING")
+                    .build();
+
+            workflow.addStep(step);
+        }
+
+        log.info("✅ POST_TRAVEL steps appended: {}", workflow.getWorkflowId());
+    }
+
+    
     /**
-     * 🎯 Get current user's actor type
+     *  Get current user's actor type
      */
     public String getCurrentActorType() {
         return resolveActorTypeFromSecurity();

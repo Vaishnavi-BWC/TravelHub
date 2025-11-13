@@ -1,5 +1,6 @@
 package com.bwc.approval_workflow_service.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,7 +15,7 @@ import com.bwc.approval_workflow_service.entity.ApprovalWorkflow;
 @Repository
 public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkflow, UUID> {
 
-    // ✅ Fetch workflow with steps and actions (detailed view)
+    //  Fetch workflow with steps and actions (detailed view)
     @Query("""
         SELECT DISTINCT w 
         FROM ApprovalWorkflow w
@@ -25,11 +26,11 @@ public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkfl
     Optional<ApprovalWorkflow> findByIdWithStepsAndActions(@Param("workflowId") UUID workflowId);
 
 
-    // ✅ Find by travel request ID and workflow type
+    //  Find by travel request ID and workflow type
     Optional<ApprovalWorkflow> findByTravelRequestIdAndWorkflowType(UUID travelRequestId, String workflowType);
 
 
-    // ✅ Find workflows currently in progress for a given role
+    //  Find workflows currently in progress for a given role
     @Query("""
         SELECT w 
         FROM ApprovalWorkflow w 
@@ -39,7 +40,7 @@ public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkfl
     List<ApprovalWorkflow> findPendingApprovalsByRole(@Param("approverRole") String approverRole);
 
 
-    // ✅ Find workflows where a user has taken some action
+    //  Find workflows where a user has taken some action
     @Query("""
         SELECT DISTINCT w 
         FROM ApprovalWorkflow w 
@@ -50,7 +51,7 @@ public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkfl
     List<ApprovalWorkflow> findWorkflowsWithUserActions(@Param("actorId") UUID actorId);
 
 
-    // ✅ Find workflows with exceptions raised by a specific user
+    //  Find workflows with exceptions raised by a specific user
     @Query("""
         SELECT DISTINCT w 
         FROM ApprovalWorkflow w 
@@ -62,7 +63,7 @@ public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkfl
     List<ApprovalWorkflow> findWorkflowsWithUserExceptions(@Param("userId") UUID userId);
 
 
-    // ✅ Find workflows awaiting clarification for a role
+    //  Find workflows awaiting clarification for a role
     @Query("""
         SELECT w 
         FROM ApprovalWorkflow w 
@@ -92,5 +93,30 @@ public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkfl
     	    ORDER BY e.raisedAt DESC
     	""")
     	List<Object[]> findPendingWorkflowsWithExceptionsByRole(@Param("role") String role);
+
+
+
+        /**
+         * Find all workflows (for admin access)
+         */
+        @Query("SELECT w FROM ApprovalWorkflow w ORDER BY w.createdAt DESC")
+        List<ApprovalWorkflow> findAllWorkflows();
+        
+        /**
+         * Count workflows by status (for admin dashboard)
+         */
+        @Query("SELECT w.status, COUNT(w) FROM ApprovalWorkflow w GROUP BY w.status")
+        List<Object[]> countWorkflowsByStatus();
+        
+        /**
+         * Find recent workflows (for admin dashboard)
+         */
+        @Query("SELECT w FROM ApprovalWorkflow w WHERE w.createdAt >= :since ORDER BY w.createdAt DESC")
+        List<ApprovalWorkflow> findRecentWorkflows(@Param("since") LocalDateTime since);
+
+        
+        @Query("SELECT COUNT(w) FROM ApprovalWorkflow w")
+        long count();
+
 
 }

@@ -93,7 +93,51 @@ public class ApprovalController {
             ));
         }
     }
+    
+    
+    /**
+     * POST-TRAVEL: Employee submits bills → Move to TRAVEL_DESK_REVIEW
+     */
+    @PostMapping("/{workflowId}/progress-to-travel-desk")
+    public ResponseEntity<?> progressToTravelDesk(
+            @PathVariable UUID workflowId,
+            @RequestHeader("X-User-Id") UUID actorId,
+            @RequestParam("action") String action) {
 
+        log.info("📤 Moving workflow {} to TRAVEL_DESK_REVIEW by actor {}", workflowId, actorId);
+
+        try {
+            workflowEngine.progressPostTravelStep(workflowId, actorId, action, "TRAVEL_DESK_REVIEW");
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Error progressing to Travel Desk Review: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(createErrorResponse("Workflow Progress Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * POST-TRAVEL: Travel Desk completes review → Move to FINANCE (Reimbursement)
+     */
+    @PostMapping("/{workflowId}/progress-to-finance")
+    public ResponseEntity<?> progressToFinance(
+            @PathVariable UUID workflowId,
+            @RequestHeader("X-User-Id") UUID actorId,
+            @RequestParam("action") String action) {
+
+        log.info(" Moving workflow {} to FINANCE_REIMBURSEMENT by actor {}", workflowId, actorId);
+
+        try {
+            workflowEngine.progressPostTravelStep(workflowId, actorId, action, "REIMBURSEMENT");
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Error progressing to Finance: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(createErrorResponse("Workflow Progress Error", e.getMessage()));
+        }
+    }
+    
+    
+    
+    
     /**
      * 🔧 Enhanced generic handler with exception intelligence
      */
@@ -304,6 +348,9 @@ public class ApprovalController {
         }
         return null;
     }
+    
+    
+    
 
     private Map<String, Object> createErrorResponse(String error, String message) {
         return Map.of(

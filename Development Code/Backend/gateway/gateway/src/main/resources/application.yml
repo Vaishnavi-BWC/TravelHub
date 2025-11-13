@@ -64,7 +64,7 @@ spring:
                    /api/finance/**,
                    /api/hr/**,
                    /api/travel-desk/**,
-                   /api/admin/**,
+                   /api/v1/admin/**,
                    /api/v1/dashboard/**,
                    /api/workflows/initiation/**
           filters:

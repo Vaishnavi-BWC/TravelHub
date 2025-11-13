@@ -59,9 +59,10 @@ public class SecurityConfig {
 						.requestMatchers("/api/hr/**").hasRole("HR")
 						.requestMatchers("/api/travel-desk/**").hasRole("TRAVEL_DESK")
 						.requestMatchers("/api/admin/**").hasRole("ADMIN")
-
+						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 						// 🟡 Authenticated workflows - allow SERVICE role for internal calls
 						.requestMatchers("/api/workflows/**")
+						
 						.hasAnyRole("SERVICE", "EMPLOYEE", "USER", "MANAGER", "FINANCE", "HR", "TRAVEL_DESK", "ADMIN")
 
 						// 🔒 Everything else requires auth

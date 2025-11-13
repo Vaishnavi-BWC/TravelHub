@@ -44,11 +44,13 @@ public class ExpenseBillController {
     private final ExpenseBillService expenseBillService;
     private final WorkflowServiceClient workflowServiceClient;
 
+    // ================================================================
+    // Upload Bill
+    // ================================================================
     @Operation(summary = "Upload expense bill")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ExpenseBillDTO> uploadExpenseBill(
             @RequestParam("travelRequestId") UUID travelRequestId,
-            @RequestParam("workflowId") UUID workflowId,
             @RequestParam("file") MultipartFile file,
             @RequestHeader("X-User-Id") UUID employeeId,
             @RequestParam("billDate") String billDate,
@@ -57,20 +59,19 @@ public class ExpenseBillController {
             @RequestParam("amount") String amountStr,
             @RequestParam(value = "currency", required = false, defaultValue = "INR") String currency) {
 
-        log.info("Uploading expense bill for travel request: {}, workflow: {}, employee: {}", 
-                travelRequestId, workflowId, employeeId);
+        log.info("Uploading expense bill for travel request: {}, employee: {}",
+                travelRequestId,  employeeId);
 
         BigDecimal amount;
+
         try {
             amount = new BigDecimal(amountStr);
-        } catch (NumberFormatException e) {
-            log.error("Invalid amount value: {}", amountStr);
+        } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
 
-        ExpenseBillDTO billDTO = ExpenseBillDTO.builder()
+        ExpenseBillDTO dto = ExpenseBillDTO.builder()
                 .travelRequestId(travelRequestId)
-                .workflowId(workflowId)
                 .employeeId(employeeId)
                 .billDate(java.time.LocalDate.parse(billDate))
                 .expenseCategory(expenseCategory)
@@ -79,10 +80,8 @@ public class ExpenseBillController {
                 .currency(currency)
                 .build();
 
-        ExpenseBillDTO uploadedBill = expenseBillService.uploadExpenseBill(
-                travelRequestId, workflowId, employeeId, file, billDTO);
-
-        return ResponseEntity.ok(uploadedBill);
+        return ResponseEntity.ok(expenseBillService.uploadExpenseBill(
+                travelRequestId,employeeId, file, dto));
     }
 
 
@@ -192,25 +191,57 @@ public class ExpenseBillController {
         return ResponseEntity.ok(expenseBillService.getExpenseCategories());
     }
     
-    @Operation(summary = "Submit bills for review and progress workflow to Travel Desk")
+    // ================================================================
+    // Submit bills → Workflow step moves to TRAVEL_DESK_REVIEW
+    // ================================================================
+    @Operation(summary = "Submit bills for review")
     @PostMapping("/workflow/{workflowId}/submit")
     public ResponseEntity<Void> submitBillsForReview(
-            @Parameter(description = "Workflow ID") @PathVariable UUID workflowId,
+            @PathVariable UUID workflowId,
             @RequestHeader("X-User-Id") UUID employeeId) {
 
-        // Check if there are any bills to submit
         if (!expenseBillService.hasPendingBills(workflowId)) {
             return ResponseEntity.badRequest().build();
         }
 
-        log.info("Bills submitted for review for workflow: {} by employee: {}", workflowId, employeeId);
-        
+        log.info("Bills submitted for review. workflowId={}, employee={}", workflowId, employeeId);
+
         try {
-            // Call workflow service to progress to Travel Desk for bill review
-            workflowServiceClient.progressToTravelDeskReview(workflowId, employeeId, "BILLS_SUBMITTED_FOR_REVIEW");
+            workflowServiceClient.progressToTravelDeskReview(
+                    workflowId,
+                    employeeId,
+                    "BILLS_SUBMITTED_FOR_REVIEW"
+            );
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Failed to progress workflow to Travel Desk after bill submission: {}", workflowId, e);
+            log.error("Workflow update failed:", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    
+    // ================================================================
+    // Travel desk completes bill review → Workflow step moves to FINANCE
+    // ================================================================
+    @Operation(summary = "Mark bill review completed by Travel Desk")
+    @PostMapping("/workflow/{workflowId}/review-completed")
+    public ResponseEntity<Void> markReviewCompleted(
+            @PathVariable UUID workflowId,
+            @RequestHeader("X-User-Id") UUID travelDeskUser) {
+
+        if (expenseBillService.hasPendingBills(workflowId)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            workflowServiceClient.progressToFinance(
+                    workflowId,
+                    travelDeskUser,
+                    "BILL_REVIEW_COMPLETED"
+            );
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Failed updating workflow:", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

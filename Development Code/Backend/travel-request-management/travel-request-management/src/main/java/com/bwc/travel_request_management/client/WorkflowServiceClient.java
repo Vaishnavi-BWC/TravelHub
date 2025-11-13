@@ -31,7 +31,7 @@ public interface WorkflowServiceClient {
     );
 
 
-    // ✅ NEW: Notify workflow service about booking upload
+    //  NEW: Notify workflow service about booking upload
     @PostMapping("/api/workflows/{workflowId}/upload-booking")
     void markBookingUploaded(@RequestParam UUID uploadedBy);
     
@@ -42,4 +42,11 @@ public interface WorkflowServiceClient {
             @PathVariable UUID workflowId,
             @RequestHeader("X-User-Id") UUID employeeId,
             @RequestParam String action);
+    
+    @PostMapping("/api/workflows/{workflowId}/progress-to-finance")
+    ResponseEntity<Void> progressToFinance(
+            @PathVariable UUID workflowId,
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestParam("action") String action
+    );
 }
