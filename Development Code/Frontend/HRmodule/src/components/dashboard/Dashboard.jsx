@@ -7,6 +7,7 @@ import PendingApprovals from './PendingApprovals';
 import RecentEmployees from './RecentEmployees';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { approvalService } from '../../services/approvalService';
+<<<<<<< HEAD
 import { hrService } from '../../services/hrService';
 
 // Cache configuration
@@ -18,6 +19,9 @@ const CACHE_KEYS = {
 };
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+=======
+import { hrService } from '../../services/hrService'; // Import hr service
+>>>>>>> upstream/main
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -30,6 +34,7 @@ const Dashboard = () => {
   } = useApp();
 
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+<<<<<<< HEAD
   const [exceptionCount, setExceptionCount] = useState(0); // Add exception count state
   const [dashboardSummary, setDashboardSummary] = useState({});
   const [loadingApprovals, setLoadingApprovals] = useState(true);
@@ -113,6 +118,14 @@ const loadExceptionCount = useCallback(async () => {
   }
 }, [getCachedData, setCachedData]);
   // Load dashboard data including approvals count, dashboard summary, exceptions and user name
+=======
+  const [dashboardSummary, setDashboardSummary] = useState({});
+  const [loadingApprovals, setLoadingApprovals] = useState(true);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [userName, setUserName] = useState('HR'); // State for user name
+
+  // Load dashboard data including approvals count, dashboard summary and user name
+>>>>>>> upstream/main
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
@@ -124,9 +137,12 @@ const loadExceptionCount = useCallback(async () => {
         // Load pending approvals count (for PendingApprovals component)
         await loadPendingApprovalsCount();
 
+<<<<<<< HEAD
         // Load exception count (for DashboardStats component)
         await loadExceptionCount();
 
+=======
+>>>>>>> upstream/main
         // Load dashboard summary (for DashboardStats component)
         await loadDashboardSummary();
 
@@ -181,8 +197,38 @@ const loadExceptionCount = useCallback(async () => {
     }
   };
 
+<<<<<<< HEAD
   // Function to load pending approvals count
   // eslint-disable-next-line react-hooks/exhaustive-deps
+=======
+  // Function to load user name
+  const loadUserName = async () => {
+    try {
+      console.log('🔍 Fetching HR user name for dashboard...');
+      
+      const profileData = await hrService.getHRProfile();
+      console.log('✅ HR Profile data received:', profileData);
+      
+      // Set the user name
+      if (profileData && profileData.fullName) {
+        let namearray = profileData.fullName.split(" ");
+        console.log(namearray.length)
+        if(namearray.length>1){
+          setUserName(namearray[0]);
+        } else {
+          setUserName(profileData.fullName);
+        }
+      }
+    } catch (err) {
+      console.error('❌ Error fetching HR profile:', err);
+      // Fallback to localStorage data
+      const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+      setUserName(userData.userName || userData.email || 'HR');
+    }
+  };
+
+  // Function to load pending approvals count (for PendingApprovals component)
+>>>>>>> upstream/main
   const loadPendingApprovalsCount = async () => {
     try {
       setLoadingApprovals(true);
@@ -217,6 +263,7 @@ const loadExceptionCount = useCallback(async () => {
     }
   };
 
+<<<<<<< HEAD
   // Function to load dashboard summary
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadDashboardSummary = async () => {
@@ -232,23 +279,38 @@ const loadExceptionCount = useCallback(async () => {
         return;
       }
 
+=======
+  // Function to load dashboard summary (for DashboardStats component)
+  const loadDashboardSummary = async () => {
+    try {
+      setLoadingSummary(true);
+>>>>>>> upstream/main
       console.log('🔄 Fetching dashboard summary...');
       
       const summaryData = await hrService.getDashboardSummary();
       console.log('✅ Dashboard summary fetched:', summaryData);
       
       setDashboardSummary(summaryData);
+<<<<<<< HEAD
       setCachedData(CACHE_KEYS.DASHBOARD_SUMMARY, summaryData);
     } catch (err) {
       console.error('❌ Error fetching dashboard summary:', err);
       setDashboardSummary({});
+=======
+    } catch (err) {
+      console.error('❌ Error fetching dashboard summary:', err);
+      setDashboardSummary({}); // Set empty object on error
+>>>>>>> upstream/main
     } finally {
       setLoadingSummary(false);
     }
   };
 
+<<<<<<< HEAD
   // Navigation handlers
   // eslint-disable-next-line no-unused-vars
+=======
+>>>>>>> upstream/main
   const handleViewEmployees = useCallback((filter) => {
     navigate('/employees');
   }, [navigate]);
@@ -286,16 +348,26 @@ const loadExceptionCount = useCallback(async () => {
     });
     
     refreshAllData();
+<<<<<<< HEAD
     loadPendingApprovalsCount();
     loadExceptionCount(); // Refresh exception count too
     loadDashboardSummary();
     loadUserName();
   }, [refreshAllData, loadPendingApprovalsCount, loadExceptionCount, loadDashboardSummary, loadUserName]);
+=======
+    loadPendingApprovalsCount(); // Refresh approvals count too
+    loadDashboardSummary(); // Refresh dashboard summary
+    loadUserName(); // Refresh user name too
+  }, [refreshAllData, loadPendingApprovalsCount, loadDashboardSummary, loadUserName]);
+>>>>>>> upstream/main
 
   // Show loading only if critical data is loading
   const isLoading = (employeesData.dashboardLoading && employees.length === 0 && employeesData.allEmployees.length === 0) || 
                    (loadingApprovals && pendingApprovalsCount === 0) ||
+<<<<<<< HEAD
                    (loadingExceptions && exceptionCount === 0) ||
+=======
+>>>>>>> upstream/main
                    (loadingSummary && Object.keys(dashboardSummary).length === 0);
 
   if (isLoading) {
@@ -310,7 +382,19 @@ const loadExceptionCount = useCallback(async () => {
     <div className="dashboard">
       <div className="content">
         <div className="detailHeader">
+<<<<<<< HEAD
           <h2>Welcome {userName}!</h2>
+=======
+          <h2>Welcome {userName}!</h2> {/* Updated to show dynamic user name */}
+          {/* <button 
+            className="btn btnSecondary" 
+            onClick={handleRefresh}
+            disabled={loadingApprovals || employeesData.dashboardLoading}
+            title="Refresh dashboard"
+          >
+            <i className={`fas fa-refresh ${loadingApprovals ? 'fa-spin' : ''}`}></i> Refresh
+          </button> */}
+>>>>>>> upstream/main
         </div>
 
         {/* Pass exceptionCount to DashboardStats */}
@@ -318,10 +402,14 @@ const loadExceptionCount = useCallback(async () => {
           employees={employeesData.allEmployees}
           totalEmployees={totalEmployees}
           activeEmployeesCount={activeEmployeesCount}
+<<<<<<< HEAD
           dashboardSummary={{
             ...dashboardSummary,
             exceptionCount: exceptionCount // Add exception count to dashboard summary
           }}
+=======
+          dashboardSummary={dashboardSummary} // Pass the dashboard summary data
+>>>>>>> upstream/main
           onViewEmployees={handleViewEmployees}
           onViewApprovals={handleViewApprovals}
           onViewExceptions={handleViewExceptions}
@@ -380,8 +468,13 @@ const loadExceptionCount = useCallback(async () => {
                 </div>
                 <span>
                   View Exceptions
+<<<<<<< HEAD
                   {exceptionCount > 0 && (
                     <span className="badge-count">({exceptionCount})</span>
+=======
+                  {dashboardSummary.raisedExceptionsCount > 0 && (
+                    <span className="badge-count">({dashboardSummary.raisedExceptionsCount})</span>
+>>>>>>> upstream/main
                   )}
                 </span>
               </button>

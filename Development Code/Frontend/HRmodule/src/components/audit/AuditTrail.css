@@ -4,6 +4,7 @@
 }
 
 .card {
+<<<<<<< HEAD
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -14,28 +15,53 @@
   margin: auto;
   margin-top: 1%;
   border: 1px solid #e1e5e9;
+=======
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+>>>>>>> upstream/main
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+<<<<<<< HEAD
   padding: 1.5rem 2rem;
   border-bottom: 1px solid #e9ecef;
   background: #f8f9fa;
+=======
+  padding: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+>>>>>>> upstream/main
 }
 
 .header-content h1 {
   margin: 0 0 4px 0;
+<<<<<<< HEAD
   color: #2c3e50;
   font-size: 24px;
   font-weight: 700;
+=======
+  color: #000;
+  font-size: 20px;
+  font-weight: 600;
+>>>>>>> upstream/main
 }
 
 .header-content h2 {
   margin: 0;
+<<<<<<< HEAD
   color: #6c757d;
   font-size: 16px;
+=======
+  color: #666;
+  font-size: 14px;
+>>>>>>> upstream/main
   font-weight: 400;
 }
 
@@ -46,18 +72,28 @@
 }
 
 .request-count {
+<<<<<<< HEAD
   color: #6c757d;
+=======
+  color: #666;
+>>>>>>> upstream/main
   font-size: 14px;
 }
 
 .export-btn {
+<<<<<<< HEAD
   padding: 8px 16px;
   background: #1a4f8c;
+=======
+  padding: 6px 12px;
+  background: #0056b3;
+>>>>>>> upstream/main
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+<<<<<<< HEAD
   font-weight: 600;
   transition: all 0.15s ease;
 }
@@ -65,16 +101,28 @@
 .export-btn:hover {
   background: #153d6f;
 }
+=======
+  font-weight: 700;
+}
+
+>>>>>>> upstream/main
 
 .filters-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
+<<<<<<< HEAD
   background: rgba(255, 255, 255, 0.3);
   flex-wrap: wrap;
   gap: 12px;
   border-bottom: 1px solid #e9ecef;
+=======
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.3);
+  flex-wrap: wrap;
+  gap: 12px;
+>>>>>>> upstream/main
 }
 
 .search-filter {
@@ -88,33 +136,54 @@
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
+<<<<<<< HEAD
   color: #6c757d;
   font-size: 14px;
+=======
+  color: #999;
+>>>>>>> upstream/main
 }
 
 .search-input {
   width: 100%;
+<<<<<<< HEAD
   padding: 10px 10px 10px 32px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
   background: white;
   transition: all 0.2s ease;
+=======
+  padding: 8px 8px 8px 32px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.8);
+>>>>>>> upstream/main
 }
 
 .search-input:focus {
   outline: none;
+<<<<<<< HEAD
   border-color: #1a4f8c;
   box-shadow: 0 0 0 2px rgba(26, 79, 140, 0.1);
+=======
+  border-color: #007bff;
+>>>>>>> upstream/main
 }
 
 .filter-buttons {
   display: flex;
+<<<<<<< HEAD
   gap: 8px;
+=======
+  gap: 6px;
+>>>>>>> upstream/main
   flex-wrap: wrap;
 }
 
 .filter-btn {
+<<<<<<< HEAD
   padding: 8px 16px;
   border: 1px solid #d1d5db;
   background: white;
@@ -134,6 +203,24 @@
 .filter-btn-active {
   background: #1a4f8c;
   border-color: #1a4f8c;
+=======
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+}
+
+.filter-btn:hover {
+  background: #f5f5f5;
+}
+
+.filter-btn-active {
+  background: #007bff;
+  border-color: #007bff;
+>>>>>>> upstream/main
   color: white;
 }
 
@@ -164,6 +251,7 @@
 
 .empty-state {
   color: #666;
+<<<<<<< HEAD
   padding: 60px 20px;
 }
 
@@ -189,21 +277,53 @@
 .retry-btn {
   padding: 8px 16px;
   background: #1a4f8c;
+=======
+}
+
+.empty-icon {
+  font-size: 40px;
+  color: #ccc;
+  margin-bottom: 12px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.empty-state p {
+  margin: 0 0 16px 0;
+  color: #666;
+}
+
+.retry-btn {
+  padding: 6px 12px;
+  background: #007bff;
+>>>>>>> upstream/main
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+<<<<<<< HEAD
   font-weight: 500;
   transition: all 0.15s ease;
 }
 
 .retry-btn:hover {
   background: #153d6f;
+=======
+}
+
+.retry-btn:hover {
+  background: #0056b3;
+>>>>>>> upstream/main
 }
 
 .table-container {
   overflow-x: auto;
+<<<<<<< HEAD
   border: 1px solid #e1e5e9;
   border-radius: 6px;
   background: white;
@@ -263,20 +383,63 @@
 .request-history-table th:nth-child(7) { width: 200px; } /* HR Action */
 .request-history-table th:nth-child(8) { width: 140px; } /* Actions */
 
+=======
+  background: transparent;
+  padding-top: 2%;
+}
+
+.request-history-table {
+  width: 96%;
+  border-collapse: collapse;
+  font-size: 16px;
+  padding: 20px;
+  background: transparent;
+  margin: auto;
+}
+
+.request-history-table th {
+  background: rgba(0, 0, 0, 0.03);
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+}
+
+.request-history-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  vertical-align: middle;
+  background: transparent;
+}
+
+.request-history-table tr:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+>>>>>>> upstream/main
 /* Specific column styling */
 .request-id-cell {
   font-family: 'Courier New', monospace;
   font-weight: 600;
+<<<<<<< HEAD
   color: #1f2937;
   background: #f8f9fa;
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 13px;
+=======
+  color: #000;
+>>>>>>> upstream/main
 }
 
 .employee-cell {
   color: #333;
+<<<<<<< HEAD
   font-weight: 500;
+=======
+>>>>>>> upstream/main
 }
 
 .type-cell {
@@ -288,7 +451,10 @@
   color: #28a745;
   text-align: center;
   font-family: 'Courier New', monospace;
+<<<<<<< HEAD
   font-size: 14px;
+=======
+>>>>>>> upstream/main
 }
 
 .date-cell {
@@ -298,32 +464,51 @@
 
 .finance-action-cell {
   color: #555;
+<<<<<<< HEAD
   line-height: 1.4;
   text-align: left;
   padding: 12px 16px;
+=======
+  max-width: 180px;
+  line-height: 1.4;
+>>>>>>> upstream/main
 }
 
 .actions-cell {
   text-align: center;
 }
 
+<<<<<<< HEAD
 /* Action Buttons - Borderless */
 .action-buttons {
   display: flex;
   gap: 8px;
+=======
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 4px;
+>>>>>>> upstream/main
   justify-content: center;
 }
 
 .view-btn, .print-btn {
+<<<<<<< HEAD
   padding: 8px 12px;
   border: none;
   border-radius: 4px;
+=======
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+>>>>>>> upstream/main
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 6px;
+<<<<<<< HEAD
   transition: all 0.15s ease;
   background: transparent;
 }
@@ -344,10 +529,47 @@
 .print-btn:hover {
   background: rgba(40, 167, 69, 0.1);
   transform: translateY(-1px);
+=======
+  transition: all 0.3s ease;
+  backdrop-filter: blur(15px);
+  background: rgba(255, 255, 255, 0.1);
+  /* box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2); */
+}
+
+.view-btn {
+  color: rgba(59, 130, 246, 0.9);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.view-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 15px rgba(59, 130, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.print-btn {
+  color: rgba(34, 197, 94, 0.9);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.print-btn:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 15px rgba(34, 197, 94, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+>>>>>>> upstream/main
 }
 
 /* Status badges */
 .status-badge {
+<<<<<<< HEAD
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -449,32 +671,79 @@
   background: #1a4f8c;
   color: white;
   border-color: #1a4f8c;
+=======
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  min-width: 70px;
+  text-align: center;
+}
+
+.status-approved {
+  background: rgba(40, 167, 69, 0.7);
+  color:white;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-rejected {
+  background: rgba(220, 53, 69, 0.2);
+  color: rgba(220, 53, 69, 0.9);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.status-pending {
+  background: rgba(255, 193, 7, 0.2);
+  color: rgba(255, 193, 7, 0.9);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.status-default {
+  background: rgba(108, 117, 125, 0.2);
+  color: rgba(108, 117, 125, 0.9);
+  border: 1px solid rgba(108, 117, 125, 0.3);
+>>>>>>> upstream/main
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .card {
     margin: 8px;
+<<<<<<< HEAD
     padding: 1rem;
     width: calc(100% - 16px);
+=======
+>>>>>>> upstream/main
   }
   
   .card-header {
     padding: 16px;
     flex-direction: column;
     gap: 12px;
+<<<<<<< HEAD
     text-align: center;
+=======
+>>>>>>> upstream/main
   }
   
   .header-actions {
     width: 100%;
+<<<<<<< HEAD
     justify-content: center;
+=======
+    justify-content: space-between;
+>>>>>>> upstream/main
   }
   
   .filters-section {
     padding: 12px 16px;
     flex-direction: column;
+<<<<<<< HEAD
     gap: 12px;
+=======
+    gap: 8px;
+>>>>>>> upstream/main
   }
   
   .search-filter {
@@ -485,12 +754,15 @@
   .filter-buttons {
     width: 100%;
     justify-content: center;
+<<<<<<< HEAD
     gap: 6px;
   }
   
   .filter-btn {
     padding: 6px 12px;
     font-size: 13px;
+=======
+>>>>>>> upstream/main
   }
   
   .request-history-table {
@@ -499,17 +771,26 @@
   
   .request-history-table th,
   .request-history-table td {
+<<<<<<< HEAD
     padding: 12px 8px;
+=======
+    padding: 8px 6px;
+>>>>>>> upstream/main
   }
   
   .action-buttons {
     flex-direction: column;
+<<<<<<< HEAD
     gap: 4px;
+=======
+    gap: 2px;
+>>>>>>> upstream/main
   }
   
   .view-btn, .print-btn {
     width: 100%;
     justify-content: center;
+<<<<<<< HEAD
     font-size: 12px;
     padding: 6px 10px;
   }
@@ -518,17 +799,96 @@
     flex-direction: column;
     gap: 12px;
     padding: 16px;
+=======
+  }
+}
+/* Pagination Styles */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 14px;
+}
+
+.items-per-page-select {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  font-size: 14px;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  /* border: 1px solid #000; */
+  margin-left: 65%;
+}
+
+.pagination-btn {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #007bff;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-btn-active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Responsive Pagination */
+@media (max-width: 768px) {
+  .pagination-container {
+    flex-direction: column;
+    gap: 12px;
+>>>>>>> upstream/main
   }
   
   .pagination-controls {
     order: -1;
+<<<<<<< HEAD
     margin-left: 0;
     width: 100%;
     justify-content: center;
+=======
+>>>>>>> upstream/main
   }
   
   .pagination-info {
     justify-content: center;
+<<<<<<< HEAD
     text-align: center;
   }
 }
@@ -555,5 +915,7 @@
     min-width: 60px;
     font-size: 11px;
     padding: 4px 8px;
+=======
+>>>>>>> upstream/main
   }
 }

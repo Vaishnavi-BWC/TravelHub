@@ -1,4 +1,5 @@
 // components/superadmin/users/UserManagement.js
+<<<<<<< HEAD
 import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEmployees } from "../../../hooks/useEmployees";
@@ -19,6 +20,19 @@ import {
 } from "react-icons/fa";
 
 import "../styles/UserManagement.css";
+=======
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useEmployees } from '../../../hooks/useEmployees';
+import { useApp } from '../../../contexts/AppContext';
+import {
+  FaSearch, FaSync, FaPlus, FaEye, FaEdit,
+  FaToggleOn, FaToggleOff, FaSpinner,
+  FaAngleLeft, FaAngleRight, FaAngleDoubleLeft, FaAngleDoubleRight
+} from 'react-icons/fa';
+
+import '../styles/UserManagement.css';
+>>>>>>> upstream/main
 
 const UserManagement = () => {
   const navigate = useNavigate();
@@ -44,10 +58,21 @@ const UserManagement = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Status update handler with animations
+<<<<<<< HEAD
   const handleStatusUpdate = useCallback(
     async (employeeId, currentStatus) => {
       try {
         setStatusUpdateLoading(employeeId);
+=======
+  const handleStatusUpdate = useCallback(async (employeeId, currentStatus) => {
+    try {
+      setStatusUpdateLoading(employeeId);
+
+      setStatusAnimations(prev => ({
+        ...prev,
+        [employeeId]: 'updating'
+      }));
+>>>>>>> upstream/main
 
         setStatusAnimations((prev) => ({
           ...prev,
@@ -98,9 +123,46 @@ const UserManagement = () => {
       } finally {
         setStatusUpdateLoading(null);
       }
+<<<<<<< HEAD
     },
     [deactivateEmployee, activateEmployee, showNotification]
   );
+=======
+
+      setStatusAnimations(prev => ({
+        ...prev,
+        [employeeId]: 'success'
+      }));
+
+      setTimeout(() => {
+        setStatusAnimations(prev => {
+          const newState = { ...prev };
+          delete newState[employeeId];
+          return newState;
+        });
+      }, 1500);
+
+    } catch (error) {
+      console.error('❌ Error updating employee status:', error);
+      showNotification('Failed to update employee status: ' + error.message, 'error');
+
+      setStatusAnimations(prev => ({
+        ...prev,
+        [employeeId]: 'error'
+      }));
+
+      setTimeout(() => {
+        setStatusAnimations(prev => {
+          const newState = { ...prev };
+          delete newState[employeeId];
+          return newState;
+        });
+      }, 2000);
+    } finally {
+      setStatusUpdateLoading(null);
+    }
+  }, [deactivateEmployee, activateEmployee, showNotification]);
+>>>>>>> upstream/main
 
   const filteredEmployees = useMemo(() => {
     let filtered = employees;
@@ -113,6 +175,7 @@ const UserManagement = () => {
     }
 
     if (searchTerm) {
+<<<<<<< HEAD
       filtered = filtered.filter(
         (e) =>
           e.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -120,6 +183,14 @@ const UserManagement = () => {
           e.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           e.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           e.employee_code?.toLowerCase().includes(searchTerm.toLowerCase())
+=======
+      filtered = filtered.filter(e =>
+        e.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.employee_code?.toLowerCase().includes(searchTerm.toLowerCase())
+>>>>>>> upstream/main
       );
     }
 
@@ -214,6 +285,7 @@ const UserManagement = () => {
   return (
     <div className="container">
       <div className="card maincard">
+<<<<<<< HEAD
         <div className="card-header">
           <div className="header-content">
             <h3 style={{ fontWeight: "500", marginBottom: "10px" }}>
@@ -225,6 +297,14 @@ const UserManagement = () => {
             </h6>
           </div>
         </div>
+=======
+         <div className="card-header">
+        <div className="header-content">
+          <h3 style={{fontWeight:'500',marginBottom:'10px'}}>Employee Management</h3>
+          <h6 style={{ color: 'gray', fontSize: '15px', fontWeight: '400' }}>Streamline workforce data and maintain employee records efficiently.</h6>
+        </div>
+      </div>
+>>>>>>> upstream/main
         <div className="cardheaderuser">
           <div className="filterButtons">
             {["All", "active", "inactive"].map((x) => (
@@ -242,7 +322,11 @@ const UserManagement = () => {
 
           <div className="headerActions">
             <div className="searchBox">
+<<<<<<< HEAD
               <FaSearch className="searchIcon" />
+=======
+              <FaSearch className="searchIcon"/>
+>>>>>>> upstream/main
               <input
                 type="text"
                 placeholder="Search employees..."
@@ -269,7 +353,11 @@ const UserManagement = () => {
           </div>
         </div>
 
+<<<<<<< HEAD
         <div className={`cardBody ${isTransitioning ? "page-transition" : ""}`}>
+=======
+        <div className={`cardBody ${isTransitioning ? 'page-transition' : ''}`}>
+>>>>>>> upstream/main
           {loading ? (
             <div className="loadingState smooth-fade-in">
               <FaSpinner className="spinner-icon fa-spin" />
@@ -299,16 +387,24 @@ const UserManagement = () => {
                     {filteredEmployees.map((emp, index) => {
                       const currentStatus = emp.status;
                       const isUpdating = statusUpdateLoading === emp.user_id;
+<<<<<<< HEAD
                       const animationClass = getStatusAnimationClass(
                         emp.user_id
                       );
+=======
+                      const animationClass = getStatusAnimationClass(emp.user_id);
+>>>>>>> upstream/main
 
                       return (
                         <tr
                           key={emp.user_id}
+<<<<<<< HEAD
                           className={`table-row smooth-fade-in row-animation-${
                             index % 5
                           }`}
+=======
+                          className={`table-row smooth-fade-in row-animation-${index % 5}`}
+>>>>>>> upstream/main
                           style={{ animationDelay: `${(index % 10) * 0.05}s` }}
                         >
                           <td className="smooth-slide-in">
@@ -342,6 +438,7 @@ const UserManagement = () => {
                           <td className={`smooth-slide-in ${animationClass}`}>
                             <div className="status-cell">
                               {/* UPDATED: Added active/inactive class to status text */}
+<<<<<<< HEAD
                               <span
                                 className={`status-text ${
                                   currentStatus === "active"
@@ -359,6 +456,14 @@ const UserManagement = () => {
                                 onClick={() =>
                                   handleStatusUpdate(emp.user_id, currentStatus)
                                 }
+=======
+                              <span className={`status-text ${currentStatus === 'active' ? 'active' : 'inactive'}`}>
+                                {currentStatus ? currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1) : 'Unknown'}
+                              </span>
+                              <button
+                                className={`action-btn status-toggle smooth-transition ${animationClass}`}
+                                onClick={() => handleStatusUpdate(emp.user_id, currentStatus)}
+>>>>>>> upstream/main
                                 disabled={isUpdating || loading}
                                 title={
                                   currentStatus === "active"
@@ -368,7 +473,11 @@ const UserManagement = () => {
                               >
                                 {isUpdating ? (
                                   <FaSpinner className="spinner-icon fa-spin pulse-animation" />
+<<<<<<< HEAD
                                 ) : currentStatus === "active" ? (
+=======
+                                ) : currentStatus === 'active' ? (
+>>>>>>> upstream/main
                                   <FaToggleOn className="toggle-icon active" />
                                 ) : (
                                   <FaToggleOff className="toggle-icon inactive" />
@@ -378,7 +487,11 @@ const UserManagement = () => {
                           </td>
                           {/* <td className="smooth-slide-in">
                             <div className="actionButtons">
+<<<<<<< HEAD
                            
+=======
+                              {/* UPDATED: Added view-btn class and view-icon class */}
+>>>>>>> upstream/main
                               <button
                                 className="action-btn view-btn smooth-scale"
                                 onClick={() => handleViewEmployee(emp)}
@@ -387,7 +500,11 @@ const UserManagement = () => {
                               >
                                 <FaEye className="action-icon view-icon" />
                               </button>
+<<<<<<< HEAD
                      
+=======
+                              {/* UPDATED: Added edit-btn class and edit-icon class */}
+>>>>>>> upstream/main
                               <button
                                 className="action-btn edit-btn smooth-scale"
                                 onClick={() => handleEditEmployee(emp)}
@@ -449,23 +566,32 @@ const UserManagement = () => {
             <div className="paginationButtons">
               <button
                 onClick={() => handlePageChange(1)}
+<<<<<<< HEAD
                 disabled={
                   pagination.currentPage === 0 || loading || isTransitioning
                 }
+=======
+                disabled={pagination.currentPage === 0 || loading || isTransitioning}
+>>>>>>> upstream/main
                 className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleDoubleLeft />
               </button>
               <button
                 onClick={handlePrevPage}
+<<<<<<< HEAD
                 disabled={
                   pagination.currentPage === 0 || loading || isTransitioning
                 }
+=======
+                disabled={pagination.currentPage === 0 || loading || isTransitioning}
+>>>>>>> upstream/main
                 className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleLeft />
               </button>
 
+<<<<<<< HEAD
               {Array.from(
                 { length: Math.min(5, pagination.totalPages) },
                 (_, i) => {
@@ -507,17 +633,50 @@ const UserManagement = () => {
                   loading ||
                   isTransitioning
                 }
+=======
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                let pageNum;
+                if (pagination.totalPages <= 5) {
+                  pageNum = i;
+                } else if (pagination.currentPage <= 2) {
+                  pageNum = i;
+                } else if (pagination.currentPage >= pagination.totalPages - 3) {
+                  pageNum = pagination.totalPages - 5 + i;
+                } else {
+                  pageNum = pagination.currentPage - 2 + i;
+                }
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum + 1)}
+                    className={`pagibtn smooth-transition ${pagination.currentPage === pageNum ? 'btnPrimary' : 'btnSecondary'}`}
+                    disabled={loading || isTransitioning}
+                  >
+                    {pageNum + 1}
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={handleNextPage}
+                disabled={pagination.currentPage >= pagination.totalPages - 1 || loading || isTransitioning}
+>>>>>>> upstream/main
                 className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleRight />
               </button>
               <button
                 onClick={() => handlePageChange(pagination.totalPages)}
+<<<<<<< HEAD
                 disabled={
                   pagination.currentPage >= pagination.totalPages - 1 ||
                   loading ||
                   isTransitioning
                 }
+=======
+                disabled={pagination.currentPage >= pagination.totalPages - 1 || loading || isTransitioning}
+>>>>>>> upstream/main
                 className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleDoubleRight />

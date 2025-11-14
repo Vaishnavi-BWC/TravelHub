@@ -103,7 +103,11 @@ const handlePrint = () => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
+<<<<<<< HEAD
       <div className="modal-content1" onClick={(e) => e.stopPropagation()}>
+=======
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+>>>>>>> upstream/main
         <div className="modal-header">
           <h2>Request Details</h2>
           <button className="close-btn" onClick={onClose}>

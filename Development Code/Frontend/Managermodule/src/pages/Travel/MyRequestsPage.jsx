@@ -14,7 +14,11 @@ const CACHE_KEYS = {
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+<<<<<<< HEAD
 const MyRequests = ({ onStatsUpdate }) => { // Add onStatsUpdate prop
+=======
+const MyRequests = () => {
+>>>>>>> upstream/main
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
@@ -35,6 +39,7 @@ const MyRequests = ({ onStatsUpdate }) => { // Add onStatsUpdate prop
     totalPages: 0
   });
 
+<<<<<<< HEAD
   // Calculate stats from requests and workflow data
   const calculateStats = useCallback((requests, workflowStatuses) => {
     let totalCount = requests.length;
@@ -73,6 +78,8 @@ const MyRequests = ({ onStatsUpdate }) => { // Add onStatsUpdate prop
     }
   }, [calculateStats, onStatsUpdate]);
 
+=======
+>>>>>>> upstream/main
   // Cache utilities
   const getCache = (key) => {
     try {
@@ -114,12 +121,19 @@ const MyRequests = ({ onStatsUpdate }) => { // Add onStatsUpdate prop
     
     if (cachedData && isCacheValid(cachedData.timestamp)) {
       console.log(`📦 Using cached workflow for: ${travelRequestId}`);
+<<<<<<< HEAD
       const newWorkflowStatuses = {
         ...workflowStatuses,
         [travelRequestId]: cachedData.data
       };
       setWorkflowStatuses(newWorkflowStatuses);
       updateStats(requests, newWorkflowStatuses);
+=======
+      setWorkflowStatuses(prev => ({
+        ...prev,
+        [travelRequestId]: cachedData.data
+      }));
+>>>>>>> upstream/main
       return cachedData.data;
     }
 
@@ -140,8 +154,13 @@ const MyRequests = ({ onStatsUpdate }) => { // Add onStatsUpdate prop
       };
       setCache(CACHE_KEYS.WORKFLOWS, updatedCache);
       
+<<<<<<< HEAD
       const newWorkflowStatuses = {
         ...workflowStatuses,
+=======
+      setWorkflowStatuses(prev => ({
+        ...prev,
+>>>>>>> upstream/main
         [travelRequestId]: workflowData
       };
       setWorkflowStatuses(newWorkflowStatuses);
@@ -238,9 +257,12 @@ const MyRequests = ({ onStatsUpdate }) => { // Add onStatsUpdate prop
             totalPages: Math.ceil(filtered.length / size)
           });
 
+<<<<<<< HEAD
           // Update stats with cached data
           updateStats(allRequests, workflowStatuses);
 
+=======
+>>>>>>> upstream/main
           // Fetch workflow statuses for the paginated requests
           await fetchAllWorkflowStatuses(paginatedRequests);
           setLoading(false);
@@ -276,9 +298,12 @@ const MyRequests = ({ onStatsUpdate }) => { // Add onStatsUpdate prop
         totalPages: Math.ceil(filtered.length / size)
       });
 
+<<<<<<< HEAD
       // Update stats with fresh data
       updateStats(allRequests, {});
 
+=======
+>>>>>>> upstream/main
       // Fetch workflow statuses for the paginated requests
       await fetchAllWorkflowStatuses(paginatedRequests);
       
@@ -536,8 +561,15 @@ const handleDeleteClick = useCallback(async (request) => {
   return (
     <div className="card">
       <div className="cardHeader">
+<<<<<<< HEAD
         <h3>My Travel Requests</h3>
         <p>Complete history of all your request in the system</p>
+=======
+        {/* <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}> */}
+          <h3>My Travel Requests</h3>
+          <p>Complete history of all your request in the system</p>
+        {/* </div> */}
+>>>>>>> upstream/main
        <br></br>
       </div>
 

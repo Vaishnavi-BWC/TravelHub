@@ -5,18 +5,25 @@ import CardKPI from '../common/CardKPI';
 const DashboardStats = ({ 
   totalEmployees = 0,
   activeEmployeesCount = 0,
+<<<<<<< HEAD
   dashboardSummary = {},
+=======
+  dashboardSummary = {}, // New prop for dashboard summary data
+>>>>>>> upstream/main
   onViewEmployees, 
   onViewApprovals,
   onViewExceptions,
   onViewReimbursements
 }) => {
+<<<<<<< HEAD
   
   // Add debug logging
   console.log('📊 DashboardStats - dashboardSummary:', dashboardSummary);
   console.log('📊 DashboardStats - exceptionCount:', dashboardSummary.exceptionCount);
   console.log('📊 DashboardStats - raisedExceptionsCount:', dashboardSummary.raisedExceptionsCount);
 
+=======
+>>>>>>> upstream/main
   const statsData = useMemo(() => {
     return [
       {
@@ -43,18 +50,32 @@ const DashboardStats = ({
       {
         icon: <i className="fas fa-exclamation-triangle"></i>,
         title: "Pending Exceptions",
+<<<<<<< HEAD
         // Try both field names to see which one works
         value: dashboardSummary.exceptionCount || dashboardSummary.raisedExceptionsCount || 0,
+=======
+        value: dashboardSummary.raisedExceptionsCount || 0,
+>>>>>>> upstream/main
         tone: "exception",
         onClick: onViewExceptions
       },
       {
         icon: <i className="fas fa-file-invoice-dollar"></i>,
         title: "Reimbursements",
-        value: 0,
+        value: 0, // This can be added to the API later
         tone: "reimbursement",
         onClick: onViewReimbursements
       },
+<<<<<<< HEAD
+=======
+      // {
+      //   icon: <i className="fas fa-clock"></i>,
+      //   title: "Awaiting Clarification",
+      //   value: dashboardSummary.awaitingClarificationCount || 0,
+      //   tone: "warning",
+      //   onClick: onViewApprovals
+      // }
+>>>>>>> upstream/main
     ];
   }, [
     totalEmployees, 

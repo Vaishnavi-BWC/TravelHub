@@ -1,4 +1,4 @@
-const HR_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/hr';
+ const HR_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/hr';
 const AUTH_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8081/api/auth';
 const EMPLOYEE_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8080/ems/api/v1/employees';
 const DASHBOARD_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/dashboard';
@@ -225,10 +225,18 @@ const getDashboardSummaryData = async () => {
     throw error;
   }
 };
+<<<<<<< HEAD
 
 // Helper function to fetch role exceptions - CLEAN VERSION
 const getRoleExceptionsData = async () => {
   try {
+=======
+// Helper function to fetch role exceptions
+const getRoleExceptionsData = async () => {
+  try {
+    //http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/dashboard
+    //http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/dashboard/workflows/with-exceptions/pending
+>>>>>>> upstream/main
     console.log('🔍 Fetching role exceptions...');
     
     const response = await fetch(`${DASHBOARD_API_BASE_URL}/workflows/with-exceptions/pending`, {
@@ -256,6 +264,7 @@ const getRoleExceptionsData = async () => {
     }
 
     const data = await response.json();
+<<<<<<< HEAD
     console.log('✅ Role exceptions fetched successfully:', data);
     
     // Safe data handling
@@ -265,6 +274,19 @@ const getRoleExceptionsData = async () => {
       return workflows;
     } else if (Array.isArray(data)) {
       return data;
+=======
+    console.log('✅ Role exceptions fetched successfully:', data.workflows);
+    const data1=data.workflows;
+    // console.log(data1.length)
+    // Handle different response structures
+    if (data1.length>0) {
+      console.log("hello")
+      return data1;
+    } else if (Array.isArray(data)) {
+      return data.workflows;
+    } else if (data.content && Array.isArray(data.content)) {
+      return data.content;
+>>>>>>> upstream/main
     } else {
       console.warn('Unexpected response structure:', data);
       return [];
@@ -281,6 +303,109 @@ const getRoleExceptionsData = async () => {
   }
 };
 
+<<<<<<< HEAD
+=======
+// Helper function to approve a role exception
+const approveRoleException = async (exceptionId, remarks = '') => {
+  try {
+    console.log('✅ Approving role exception:', exceptionId);
+    
+    const userInfo = await getCurrentUserInfo();
+    
+    const requestBody = {
+      exceptionId: exceptionId,
+      action: 'APPROVE',
+      remarks: remarks || 'Approved by HR',
+      approvedBy: userInfo.id,
+      approvedByName: userInfo.name
+    };
+
+    const response = await fetch(`${DASHBOARD_API_BASE_URL}/role-exceptions/${exceptionId}/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      credentials: 'include'
+    });
+
+    console.log('📊 Approve Exception API Response status:', response.status);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.text();
+        if (errorData) {
+          const parsedError = JSON.parse(errorData);
+          errorMessage = parsedError.message || errorMessage;
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('✅ Role exception approved successfully:', data);
+    return data.data || data;
+
+  } catch (error) {
+    console.error('Error approving role exception:', error);
+    throw new Error(`Failed to approve role exception: ${error.message}`);
+  }
+};
+
+// Helper function to reject a role exception
+const rejectRoleException = async (exceptionId, remarks = '') => {
+  try {
+    console.log('❌ Rejecting role exception:', exceptionId);
+    
+    const userInfo = await getCurrentUserInfo();
+    
+    const requestBody = {
+      exceptionId: exceptionId,
+      action: 'REJECT',
+      remarks: remarks || 'Rejected by HR',
+      rejectedBy: userInfo.id,
+      rejectedByName: userInfo.name
+    };
+
+    const response = await fetch(`${DASHBOARD_API_BASE_URL}/role-exceptions/${exceptionId}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      credentials: 'include'
+    });
+
+    console.log('📊 Reject Exception API Response status:', response.status);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.text();
+        if (errorData) {
+          const parsedError = JSON.parse(errorData);
+          errorMessage = parsedError.message || errorMessage;
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('✅ Role exception rejected successfully:', data);
+    return data.data || data;
+
+  } catch (error) {
+    console.error('Error rejecting role exception:', error);
+    throw new Error(`Failed to reject role exception: ${error.message}`);
+  }
+};
+
+>>>>>>> upstream/main
 export const hrService = {
   async getHRProfile() {
     return await getHRProfileData();
@@ -294,13 +419,46 @@ export const hrService = {
     return await getCurrentUserInfo();
   },
 
+<<<<<<< HEAD
   async getDashboardSummary() {
     return await getDashboardSummaryData();
   },
   
   async getRoleExceptions() {
     return await getRoleExceptionsData();
+=======
+  /**
+   * Fetch dashboard summary data
+   * Returns: {
+   *   "pendingApprovalsCount": 0,
+   *   "completedActionsCount": 0,
+   *   "raisedExceptionsCount": 0,
+   *   "totalWorkflowsInvolved": 0,
+   *   "awaitingClarificationCount": 0,
+   *   "returnedRequestsCount": 0
+   * }
+   */
+  async getDashboardSummary() {
+    return await getDashboardSummaryData();
+  },
+  async getRoleExceptions() {
+    return await getRoleExceptionsData();
+  },
+
+  /**
+   * Approve a role exception request
+   */
+  async approveRoleException(exceptionId, remarks = '') {
+    return await approveRoleException(exceptionId, remarks);
+  },
+
+  /**
+   * Reject a role exception request
+   */
+  async rejectRoleException(exceptionId, remarks = '') {
+    return await rejectRoleException(exceptionId, remarks);
+>>>>>>> upstream/main
   }
 };
 
-export default hrService;
+export default hrService; 

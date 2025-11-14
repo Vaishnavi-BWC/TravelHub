@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUsers, FaCog, FaFileAlt, FaUserShield } from "react-icons/fa";
 import "../styles/quickactions.css"; // Remove "styles from" and use direct import
+=======
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaUsers, FaCog, FaFileAlt, FaUserShield } from 'react-icons/fa';
+import '../styles/quickactions.css'; // Remove "styles from" and use direct import
+>>>>>>> upstream/main
 
 const QuickActions = () => {
   const navigate = useNavigate();
@@ -9,6 +16,7 @@ const QuickActions = () => {
   const quickActions = [
     {
       icon: FaUsers,
+<<<<<<< HEAD
       label: "Manage Users",
       path: "/users",
       color: "blue",
@@ -31,6 +39,30 @@ const QuickActions = () => {
       path: "/override",
       color: "red",
     },
+=======
+      label: 'Manage Users',
+      path: '/users',
+      color: 'blue'
+    },
+    {
+      icon: FaCog,
+      label: 'Configure Policies',
+      path: '/policies',
+      color: 'green'
+    },
+    {
+      icon: FaFileAlt,
+      label: 'Generate Reports',
+      path: '/reports',
+      color: 'purple'
+    },
+    {
+      icon: FaUserShield,
+      label: 'Override Approvals',
+      path: '/override',
+      color: 'red'
+    }
+>>>>>>> upstream/main
   ];
 
   const handleActionClick = (path) => {
@@ -53,11 +85,16 @@ const QuickActions = () => {
                 onClick={() => handleActionClick(action.path)}
                 className="quickActionBtn" // Remove styles.
               >
+<<<<<<< HEAD
                 <div className={`quickActionIcon ${action.color}`}>
                   {" "}
                   {/* Remove styles. */}
                   <IconComponent className="quickActionSvg" />{" "}
                   {/* Remove styles. */}
+=======
+                <div className={`quickActionIcon ${action.color}`}> {/* Remove styles. */}
+                  <IconComponent className="quickActionSvg" /> {/* Remove styles. */}
+>>>>>>> upstream/main
                 </div>
                 <span>{action.label}</span>
               </button>

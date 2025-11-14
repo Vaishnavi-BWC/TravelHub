@@ -865,7 +865,11 @@ select.formControl {
   border: 2px solid var(--gray-300);
   border-radius: var(--radius-md);
   font-size: 1rem;
+<<<<<<< HEAD
    font-family: "Inter", sans-serif;
+=======
+  font-family: inherit;
+>>>>>>> upstream/main
   background: var(--gray-50);
   color: var(--gray-800);
   transition: all var(--transition-base);

@@ -1,5 +1,10 @@
 /* SLASettings.css */
 .containersla {
+<<<<<<< HEAD
+=======
+  /* margin: 15px; */
+  /* margin-top: 50px; */
+>>>>>>> upstream/main
   width: 98%;
   margin-top: 1%;
 }
@@ -10,6 +15,7 @@
 }
 
 .containersla .workflowInfo {
+<<<<<<< HEAD
   padding: 15px;
   border-radius: 8px;
   background: #f8f9fa;
@@ -20,14 +26,40 @@
 .containersla .cardBody p {
   margin-bottom: 8px;
   margin-left: 0;
+=======
+  padding: 10px;
+  border-radius: 20px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+  /* background: #f8f9fa; */
+  margin-bottom: 20px;
+  border-left: 4px solid #007bff;
+}
+
+.containersla .cardBody p {
+  margin-bottom: 10px;
+  margin-left: 20px;
+>>>>>>> upstream/main
 }
 
 .card {
   background: white;
+<<<<<<< HEAD
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   border: 1px solid #e1e5e9;
+=======
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  margin-bottom: 25px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+>>>>>>> upstream/main
 }
 
 .maincard {
@@ -45,29 +77,50 @@
   display: flex;
   align-items: center;
   gap: 15px;
+<<<<<<< HEAD
   width: 100%;
   padding-bottom: 20px;
   border-bottom: 1px solid #e9ecef;
+=======
+  /* border: 1px solid #000; */
+  width: 100%;
+  padding-bottom: 2%;
+  border-bottom: 1px solid lightgray;
+>>>>>>> upstream/main
 }
 
 .headerLeft h3 {
   margin: 0;
+<<<<<<< HEAD
   font-size: 24px;
   color: #2c3e50;
   font-weight: 600;
+=======
+  font-size: 1.5rem;
+  color: #2c3e50;
+>>>>>>> upstream/main
 }
 
 .workflowSelect {
   padding: 8px 12px;
+<<<<<<< HEAD
   border: 1px solid #d1d5db;
   border-radius: 6px;
   background: white;
   font-size: 14px;
   margin-left: auto;
+=======
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  font-size: 14px;
+  margin-left: 57%;
+>>>>>>> upstream/main
 }
 
 .tabButtons {
   display: flex;
+<<<<<<< HEAD
   gap: 8px;
 }
 
@@ -96,6 +149,29 @@
 
 .cardBody {
   padding: 0;
+=======
+  gap: 10px;
+}
+
+.tabButton {
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.tabButtonActive {
+  background: linear-gradient(135deg, #1a4f8c 0%, #2c3e50 100%);
+  color: white;
+  border-color: #1a4f8c;
+}
+
+.cardBody {
+  padding: 0 10px;
+>>>>>>> upstream/main
 }
 
 .workflowInfo p {
@@ -112,28 +188,44 @@
 .tableContainer {
   overflow-x: auto;
   margin-bottom: 20px;
+<<<<<<< HEAD
   border: 1px solid #e1e5e9;
   border-radius: 6px;
+=======
+>>>>>>> upstream/main
 }
 
 .dataTable {
   width: 100%;
   border-collapse: collapse;
+<<<<<<< HEAD
   background: white;
+=======
+  border-radius: 8px;
+  overflow: hidden;
+>>>>>>> upstream/main
 }
 
 .dataTable th,
 .dataTable td {
+<<<<<<< HEAD
   padding: 12px 8px;
   text-align: center;
   border-bottom: 1px solid #f1f3f4;
   border-right: 1px solid #f1f3f4;
+=======
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+  text-align: center;
+>>>>>>> upstream/main
 }
 
 .dataTable th {
   background: #f8f9fa;
   font-weight: 600;
   color: #2c3e50;
+<<<<<<< HEAD
   font-size: 14px;
   border-bottom: 2px solid #e9ecef;
 }
@@ -145,6 +237,21 @@
 
 .dataTable tr:hover {
   background-color: #fafbfc;
+=======
+  position: sticky;
+  top: 0;
+  /* border: 1px solid #000; */
+  padding: 20px;
+  text-align: center;
+}
+
+.dataTable tr {
+  transition: all 0.2s;
+}
+
+.dataTable tr:hover {
+  background: #f8f9fa;
+>>>>>>> upstream/main
 }
 
 .inactiveRow {
@@ -164,7 +271,13 @@
 
 .stepName {
   font-size: 14px;
+<<<<<<< HEAD
   font-weight: 600;
+=======
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+>>>>>>> upstream/main
   color: #2c3e50;
 }
 
@@ -178,6 +291,7 @@
   font-weight: 500;
 }
 
+<<<<<<< HEAD
 /* Role Cell - Updated with light background */
 .roleCell {
   font-weight: 500;
@@ -200,31 +314,73 @@
 .mandatoryBadge {
   background: #e8f5e8; /* Light green background */
   color: #2e7d32; /* Dark green text */
+=======
+/* Role Cell */
+.roleCell {
+  font-weight: 500;
+  /* border: 1px solid #000; */
+  /* background: linear-gradient(135deg, #1a4f8c 0%, #2c3e50 100%); */
+  width:5%;
+  border-radius:20px;
+}
+.roleclass
+{
+   background: linear-gradient(135deg, #1a4f8c 0%, #2c3e50 100%);
+   padding: 5px;
+   border-radius: 12px;
+   text-align: center;
+   justify-content: center;
+   justify-items: center;
+}
+.roleBadge {
+  color: white;
+>>>>>>> upstream/main
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
+<<<<<<< HEAD
   border: 1px solid #c8e6c9; /* Light green border */
 }
 
 .optionalBadge {
   background: #f5f5f5; /* Light gray background */
   color: #616161; /* Dark gray text */
+=======
+}
+
+.optionalBadge {
+  background: #dc3545;
+  color: white;
+>>>>>>> upstream/main
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
+<<<<<<< HEAD
   border: 1px solid #e0e0e0; /* Light gray border */
+=======
+>>>>>>> upstream/main
 }
 
 /* Sequence Cell */
 .sequenceCell {
   text-align: center;
+<<<<<<< HEAD
 }
 
 .sequenceSelect {
   padding: 6px 8px;
   border: 1px solid #d1d5db;
+=======
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.sequenceSelect {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+>>>>>>> upstream/main
   border-radius: 4px;
   background: white;
   font-size: 14px;
@@ -232,12 +388,20 @@
 
 /* Input Styles */
 .numberInput {
+<<<<<<< HEAD
   width: 70px;
   padding: 6px 8px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 14px;
   text-align: center;
+=======
+  width: 60px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+>>>>>>> upstream/main
 }
 
 .unsavedInput {
@@ -263,7 +427,11 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
+<<<<<<< HEAD
   transition: all 0.15s ease;
+=======
+  transition: all 0.3s ease;
+>>>>>>> upstream/main
 }
 
 .statusActive {
@@ -282,7 +450,10 @@
 .actionButtons {
   display: flex;
   gap: 8px;
+<<<<<<< HEAD
   justify-content: center;
+=======
+>>>>>>> upstream/main
 }
 
 .primaryBtnSmall,
@@ -292,8 +463,13 @@
   border-radius: 4px;
   border: none;
   cursor: pointer;
+<<<<<<< HEAD
   font-weight: 500;
   transition: all 0.15s ease;
+=======
+  transition: all 0.3s ease;
+  font-weight: 500;
+>>>>>>> upstream/main
 }
 
 .primaryBtnSmall {
@@ -301,12 +477,20 @@
   color: white;
 }
 
+<<<<<<< HEAD
 .primaryBtnSmall:hover:not(:disabled) {
+=======
+.primaryBtnSmall:hover {
+>>>>>>> upstream/main
   background: #218838;
 }
 
 .saveHighlight {
   background: #28a745 !important;
+<<<<<<< HEAD
+=======
+  border-color: #28a745 !important;
+>>>>>>> upstream/main
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -315,6 +499,7 @@
   color: white;
 }
 
+<<<<<<< HEAD
 .secondaryBtnSmall:hover:not(:disabled) {
   background: #5a6268;
 }
@@ -325,6 +510,12 @@
   cursor: not-allowed;
 }
 
+=======
+.secondaryBtnSmall:hover {
+  background: #5a6268;
+}
+
+>>>>>>> upstream/main
 /* Bulk Update Section */
 .bulkUpdateSection {
   background: #f8f9fa;
@@ -340,13 +531,19 @@
 .bulkForm h4 {
   margin-bottom: 15px;
   color: #2c3e50;
+<<<<<<< HEAD
   font-size: 18px;
+=======
+>>>>>>> upstream/main
 }
 
 .bulkForm p {
   margin-bottom: 20px;
   color: #6c757d;
+<<<<<<< HEAD
   font-size: 14px;
+=======
+>>>>>>> upstream/main
 }
 
 .formGroup {
@@ -361,13 +558,19 @@
 }
 
 .helpText {
+<<<<<<< HEAD
   font-size: 12px;
   color: #6c757d;
+=======
+  font-size: 0.875rem;
+  color: #6b7280;
+>>>>>>> upstream/main
   margin-top: 4px;
   font-style: italic;
 }
 
 .primaryBtn {
+<<<<<<< HEAD
   background: #1a4f8c;
   color: white;
   border: none;
@@ -381,11 +584,34 @@
 
 .primaryBtn:hover:not(:disabled) {
   background: #153d6f;
+=======
+  background: linear-gradient(135deg, #1a4f8c 0%, #153d6c 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26, 79, 140, 0.4);
+>>>>>>> upstream/main
 }
 
 .primaryBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+<<<<<<< HEAD
+=======
+  transform: none;
+>>>>>>> upstream/main
 }
 
 .bulkInfo {
@@ -393,7 +619,11 @@
   padding: 15px;
   background: #e7f3ff;
   border-radius: 6px;
+<<<<<<< HEAD
   border-left: 4px solid #1a4f8c;
+=======
+  border-left: 4px solid #007bff;
+>>>>>>> upstream/main
 }
 
 .bulkInfo p {
@@ -403,26 +633,46 @@
 }
 
 /* Notes and Messages */
+<<<<<<< HEAD
 .inactiveNote,
 .unsavedNote {
   padding: 12px 16px;
   border-radius: 6px;
+=======
+.inactiveNote {
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 6px;
+  padding: 12px;
+>>>>>>> upstream/main
   margin: 15px 0;
   display: flex;
   align-items: center;
   gap: 10px;
+<<<<<<< HEAD
   font-size: 14px;
 }
 
 .inactiveNote {
   background: #e7f3ff;
   border: 1px solid #b3d9ff;
+=======
+>>>>>>> upstream/main
   color: #0066cc;
 }
 
 .unsavedNote {
   background: #fff3cd;
   border: 1px solid #ffeaa7;
+<<<<<<< HEAD
+=======
+  border-radius: 6px;
+  padding: 12px;
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+>>>>>>> upstream/main
   color: #856404;
 }
 
@@ -468,11 +718,14 @@
     width: 100%;
   }
   
+<<<<<<< HEAD
   .workflowSelect {
     margin-left: 0;
     width: 100%;
   }
   
+=======
+>>>>>>> upstream/main
   .tabButtons {
     width: 100%;
     justify-content: center;
@@ -499,6 +752,7 @@
 
 @media (max-width: 480px) {
   .tabButton {
+<<<<<<< HEAD
     padding: 6px 12px;
     font-size: 12px;
   }
@@ -510,5 +764,18 @@
   
   .roleclass {
     padding: 4px 8px;
+=======
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+  
+  .workflowSelect {
+    width: 100%;
+  }
+  
+  .sequenceSelect,
+  .numberInput {
+    width: 50px;
+>>>>>>> upstream/main
   }
 }

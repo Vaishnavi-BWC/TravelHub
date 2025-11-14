@@ -29,16 +29,7 @@ public class GatewayAuthHeaderVerifier extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
         
-        // 🟢 Skip authentication setup for public endpoints
         if (isPublicEndpoint(path)) {
-            log.debug("[Workflow] Skipping auth setup for public endpoint: {}", path);
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 🟢 Allow workflow initiation without user context (internal service call)
-        if (path.equals("/api/workflows/initiate")) {
-            log.debug("[Workflow] Internal service call to initiate workflow - allowing without user context");
             filterChain.doFilter(request, response);
             return;
         }
@@ -47,41 +38,28 @@ public class GatewayAuthHeaderVerifier extends OncePerRequestFilter {
         String userId = request.getHeader("X-User-Id");
         String userEmail = request.getHeader("X-User-Email");
 
-        // 🟢 DEBUG LOGS
         log.debug("[Workflow] Path: {}", path);
         log.debug("[Workflow] Received X-User-Id: {}", userId);
-        log.debug("[Workflow] Received X-User-Email: {}", userEmail);
         log.debug("[Workflow] Received X-User-Roles: {}", rolesHeader);
 
-        // For internal service calls (no user context), proceed without authentication
-        if (userId == null && rolesHeader == null) {
-            log.debug("[Workflow] No user context - internal service call");
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // If we have user info but missing roles, treat as unauthenticated
-        if (userId != null && rolesHeader == null) {
-            log.warn("[Workflow] User ID present but no roles - treating as unauthenticated");
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        if (rolesHeader != null) {
+        if (userId != null && rolesHeader != null) {
             List<SimpleGrantedAuthority> authorities = Arrays.stream(rolesHeader.split(","))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
-                    .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                    .map(r -> new SimpleGrantedAuthority("ROLE_" + r.toUpperCase()))
                     .toList();
 
-            // Create authentication token with principal as user ID
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(auth);
             log.debug("[Workflow] Security context set for user: {} with authorities: {}", userId, authorities);
         } else {
-            log.warn("[Workflow] No authentication set - proceeding without security context");
+            log.warn("[Workflow] No valid user context - setting anonymous authentication");
+            List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS"));
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken("anonymous", null, authorities);
+            SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
         filterChain.doFilter(request, response);

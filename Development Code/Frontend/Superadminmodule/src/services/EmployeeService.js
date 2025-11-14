@@ -23,7 +23,10 @@ export const EmployeeService = {
         try {
           const errorData = await response.json();
           errorMessage = errorData.message || errorData.error || errorMessage;
+<<<<<<< HEAD
         // eslint-disable-next-line no-unused-vars
+=======
+>>>>>>> upstream/main
         } catch (parseError) {
           // Ignore parsing errors
         }

@@ -72,4 +72,15 @@ public class PolicyGradeController {
         policyGradeService.deleteGradePolicy(policyId, grade);
         return ResponseEntity.ok(ApiResponse.success("GradePolicy deleted successfully", null));
     }
+    
+    
+    @GetMapping("/details/{gradeId}")
+    @Operation(summary = "Get Grade Policy details by Grade ID")
+    public ResponseEntity<ApiResponse<GradePolicyResponse>> getGradePolicyById(
+            @PathVariable UUID gradeId) {
+
+        GradePolicyResponse response = policyGradeService.getGradePolicyById(gradeId);
+        return ResponseEntity.ok(ApiResponse.success("Fetched grade policy details successfully", response));
+    }
+
 }

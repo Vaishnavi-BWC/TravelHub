@@ -32,7 +32,6 @@ public class TravelBookingDTO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 
-    // For creation
     private UUID travelRequestId;
     private UUID workflowId;
 

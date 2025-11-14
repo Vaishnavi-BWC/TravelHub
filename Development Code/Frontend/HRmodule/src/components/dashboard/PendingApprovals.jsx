@@ -232,7 +232,11 @@ const PendingApprovals = ({
                             <i className="fas fa-check"></i>
                           )}
                         </button>
+<<<<<<< HEAD
                          {/* <button
+=======
+                         <button
+>>>>>>> upstream/main
                              // onClick={() => handleRequestChange(
                                // exception.exceptionId || exception.id,
                                 //exception.employeeName || exception.employee?.name
@@ -242,7 +246,11 @@ const PendingApprovals = ({
                               title="Request Changes"
                             >
                               <i className="fas fa-edit"></i>
+<<<<<<< HEAD
                             </button> */}
+=======
+                            </button>
+>>>>>>> upstream/main
                         <button
                           className="btn-sm1 btnDanger"
                           onClick={(e) => handleQuickReject(request, e)}

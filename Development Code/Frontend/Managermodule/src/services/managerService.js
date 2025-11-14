@@ -5,7 +5,11 @@ const TRAVEL_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8090/travel
 const WORKFLOW_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/workflows';
 const Manager_api = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/dashboard';
 const Manager_apporval_api = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/workflows';
+<<<<<<< HEAD
 // const TRAVEL_API = 'http://bwc-90.brainwaveconsulting.co.in:8090/travel-management/api';
+=======
+const TRAVEL_API = 'http://bwc-90.brainwaveconsulting.co.in:8090/travel-management/api';
+>>>>>>> upstream/main
 // Helper function to get current user info from auth API
 const getCurrentUserInfo = async () => {
   try {
@@ -135,7 +139,11 @@ const getAllTravelRequests = async () => {
     console.log('✅ Current user info obtained:', userInfo);
 
 
+<<<<<<< HEAD
     const response = await fetch(`${TRAVEL_API_BASE_URL}/travel-requests/employee/${userInfo.id}`, {
+=======
+    const response = await fetch(`${TRAVEL_API}/travel-requests/getRequestsByEmployee/${userInfo.id}`, {
+>>>>>>> upstream/main
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

@@ -1,35 +1,122 @@
 package com.bwc.approval_workflow_service.repository;
 
-import com.bwc.approval_workflow_service.entity.ApprovalWorkflow;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import com.bwc.approval_workflow_service.entity.ApprovalWorkflow;
+
 @Repository
 public interface ApprovalWorkflowRepository extends JpaRepository<ApprovalWorkflow, UUID> {
 
-    Optional<ApprovalWorkflow> findByTravelRequestId(UUID travelRequestId);
+    //  Fetch workflow with steps and actions (detailed view)
+    @Query("""
+        SELECT DISTINCT w 
+        FROM ApprovalWorkflow w
+        LEFT JOIN FETCH w.steps s
+        LEFT JOIN FETCH s.actorActions
+        WHERE w.workflowId = :workflowId
+    """)
+    Optional<ApprovalWorkflow> findByIdWithStepsAndActions(@Param("workflowId") UUID workflowId);
 
-    // ✅ Add this new method
+
+    //  Find by travel request ID and workflow type
     Optional<ApprovalWorkflow> findByTravelRequestIdAndWorkflowType(UUID travelRequestId, String workflowType);
 
-    List<ApprovalWorkflow> findByCurrentApproverRoleAndStatus(String approverRole, String status);
-    List<ApprovalWorkflow> findByCurrentApproverIdAndStatus(UUID approverId, String status);
-    List<ApprovalWorkflow> findByStatus(String status);
-    List<ApprovalWorkflow> findByWorkflowTypeAndStatus(String workflowType, String status);
 
-    @Query("SELECT w FROM ApprovalWorkflow w WHERE w.currentApproverRole = :role AND w.status = 'PENDING'")
-    List<ApprovalWorkflow> findPendingByApproverRole(@Param("role") String role);
+    //  Find workflows currently in progress for a given role
+    @Query("""
+        SELECT w 
+        FROM ApprovalWorkflow w 
+        WHERE w.currentApproverRole = :approverRole 
+          AND w.status = 'IN_PROGRESS'
+    """)
+    List<ApprovalWorkflow> findPendingApprovalsByRole(@Param("approverRole") String approverRole);
 
-    long countByStatus(String status);
-    long countByCurrentApproverRoleAndStatus(String approverRole, String status);
 
-    List<ApprovalWorkflow> findByStatusAndCurrentStep(String status, String currentStep);
-    
-    // Add this method for metrics
-    long count();
+    //  Find workflows where a user has taken some action
+    @Query("""
+        SELECT DISTINCT w 
+        FROM ApprovalWorkflow w 
+        JOIN w.steps s 
+        JOIN s.actorActions a 
+        WHERE a.actorId = :actorId
+    """)
+    List<ApprovalWorkflow> findWorkflowsWithUserActions(@Param("actorId") UUID actorId);
+
+
+    //  Find workflows with exceptions raised by a specific user
+    @Query("""
+        SELECT DISTINCT w 
+        FROM ApprovalWorkflow w 
+        JOIN w.steps s 
+        JOIN s.actorActions a 
+        JOIN a.exceptions e 
+        WHERE e.raisedById = :userId
+    """)
+    List<ApprovalWorkflow> findWorkflowsWithUserExceptions(@Param("userId") UUID userId);
+
+
+    //  Find workflows awaiting clarification for a role
+    @Query("""
+        SELECT w 
+        FROM ApprovalWorkflow w 
+        WHERE w.status LIKE '%CLARIFICATION%' 
+          AND w.currentApproverRole = :role
+    """)
+    List<ApprovalWorkflow> findAwaitingClarificationByRole(@Param("role") String role);
+
+
+    @Query("""
+        SELECT w 
+        FROM ApprovalWorkflow w 
+        WHERE w.status LIKE '%RETURNED%' 
+          AND w.currentApproverRole = :role
+    """)
+    List<ApprovalWorkflow> findReturnedRequestsByRole(@Param("role") String role);
+
+
+    @Query("""
+    	    SELECT DISTINCT w, e.reason, e.raisedAt 
+    	    FROM ApprovalWorkflow w
+    	    JOIN w.steps s
+    	    JOIN s.actorActions a
+    	    JOIN a.exceptions e
+    	    WHERE w.status = 'IN_PROGRESS'
+    	      AND w.currentApproverRole = :role
+    	    ORDER BY e.raisedAt DESC
+    	""")
+    	List<Object[]> findPendingWorkflowsWithExceptionsByRole(@Param("role") String role);
+
+
+
+        /**
+         * Find all workflows (for admin access)
+         */
+        @Query("SELECT w FROM ApprovalWorkflow w ORDER BY w.createdAt DESC")
+        List<ApprovalWorkflow> findAllWorkflows();
+        
+        /**
+         * Count workflows by status (for admin dashboard)
+         */
+        @Query("SELECT w.status, COUNT(w) FROM ApprovalWorkflow w GROUP BY w.status")
+        List<Object[]> countWorkflowsByStatus();
+        
+        /**
+         * Find recent workflows (for admin dashboard)
+         */
+        @Query("SELECT w FROM ApprovalWorkflow w WHERE w.createdAt >= :since ORDER BY w.createdAt DESC")
+        List<ApprovalWorkflow> findRecentWorkflows(@Param("since") LocalDateTime since);
+
+        
+        @Query("SELECT COUNT(w) FROM ApprovalWorkflow w")
+        long count();
+
+
 }

@@ -1,5 +1,9 @@
 import React from 'react';
+<<<<<<< HEAD
 import { useParams, useNavigate } from 'react-router-dom';
+=======
+import { useParams, useNavigate } from 'react-router-dom'; // Make sure this import is correct
+>>>>>>> upstream/main
 import { useApprovals } from '../../hooks/useApprovals';
 import ApprovalList from './ApprovalList';
 import ApprovalDetail from './ApprovalDetail';
@@ -19,11 +23,15 @@ const ApprovalManagement = () => {
   } = useApprovals();
 
   const activeView = requestId ? 'request-detail' : 'approval-requests';
+<<<<<<< HEAD
   
   // Find the selected request - use workflowId or travelRequestId for lookup
   const selectedRequest = approvals.find(req => 
     req.workflowId === requestId || req.travelRequestId === requestId || req.id === requestId
   );
+=======
+  const selectedRequest = approvals.find(req => req.id === requestId);
+>>>>>>> upstream/main
 
   const handleRequestSelect = (request) => {
     // Navigate using workflowId for the detail view
@@ -67,6 +75,11 @@ const ApprovalManagement = () => {
     );
   }
 
+<<<<<<< HEAD
+=======
+  // Remove the loading check that was returning LoadingSpinner here
+
+>>>>>>> upstream/main
   switch (activeView) {
     case 'approval-requests':
       return (
@@ -74,7 +87,7 @@ const ApprovalManagement = () => {
           <ApprovalList
             approvals={approvals}
             onRequestSelect={handleRequestSelect}
-            loading={loading}
+            loading={loading} // Pass loading prop to ApprovalList
             error={error}
             onRefresh={refetch}
             onApprove={handleApprove}
@@ -98,6 +111,5 @@ const ApprovalManagement = () => {
       return null;
   }
 };
-
 export { ApprovalManagement };
 export default ApprovalManagement;

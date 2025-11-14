@@ -2,7 +2,10 @@
 const HR_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/workflows';
 const AUTH_API_BASE_URL = 'http://bwc-97.brainwaveconsulting.co.in:8081/api/auth';
 const HR_API_URL='http://bwc-97.brainwaveconsulting.co.in:8088/api/v1/dashboard'
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/main
 // Helper function to get current HR user info
 const getCurrentHRUserInfo = async () => {
   try {
@@ -184,9 +187,21 @@ export const approvalService = {
       const requestBody = {
         workflowId: workflowId,
         actionType: "APPROVE",
+<<<<<<< HEAD
         approverId: userInfo.userId,
         approverName: userInfo.name,
         comments: remarks || "Approved by HR",
+=======
+        // approverRole: userInfo.role,
+        approverId: userInfo.userId,
+        approverName: userInfo.name,
+        comments: remarks || "Approved by HR",
+        // escalationReason: "",
+        // amountApproved: 0,
+        // reimbursementAmount: 0,
+        // markOverpriced: false,
+        // overpricedReason: ""
+>>>>>>> upstream/main
       };
 
       console.log('📤 Sending HR approval request body:', requestBody);
@@ -246,7 +261,12 @@ export const approvalService = {
       // Prepare the exact request body as required
       const requestBody = {
         workflowId: workflowId,
+<<<<<<< HEAD
         actionType: "REJECT",
+=======
+        actionType: "APPROVE",
+        // approverRole: userInfo.role,
+>>>>>>> upstream/main
         approverId: userInfo.userId,
         approverName: userInfo.name,
         comments: remarks || "Rejected by HR",

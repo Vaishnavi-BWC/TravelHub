@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .containerpolicy
 {
   /* border: 1px solid #000; */
@@ -8,20 +9,31 @@
 }
 .tableContainer {
   width: 98%;
+=======
+
+.tableContainer {
+  width: 100%;
+>>>>>>> upstream/main
   overflow-x: auto;
   background: white;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+<<<<<<< HEAD
   /* border: 1px solid #000; */
   margin: auto;
   text-align: center;
+=======
+>>>>>>> upstream/main
 }
 
 .dataTable {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+<<<<<<< HEAD
   /* border: beige; */
+=======
+>>>>>>> upstream/main
 }
 
 .dataTable thead {
@@ -31,13 +43,20 @@
 
 .dataTable th {
   padding: 12px 16px;
+<<<<<<< HEAD
   /* text-align: left; */
+=======
+  text-align: left;
+>>>>>>> upstream/main
   font-weight: 600;
   color: #475569;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+<<<<<<< HEAD
   text-align: center;
+=======
+>>>>>>> upstream/main
 }
 
 .dataTable td {
@@ -51,6 +70,13 @@
   transition: all 0.2s ease;
 }
 
+<<<<<<< HEAD
+=======
+/* REMOVED: Row hover background color */
+/* .dataTable tbody tr:hover {
+  background-color: #f8fafc;
+} */
+>>>>>>> upstream/main
 
 .dataTable tbody tr:last-child td {
   border-bottom: none;
@@ -103,8 +129,12 @@
   display: flex;
   gap: 8px;
   align-items: center;
+<<<<<<< HEAD
   justify-content: center;
   /* border: 1px solid #000; */
+=======
+  justify-content: flex-start;
+>>>>>>> upstream/main
 }
 
 .iconBtn {
@@ -249,6 +279,14 @@
 
 /* components/superadmin/superadmin.module.css */
 
+<<<<<<< HEAD
+=======
+.container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+>>>>>>> upstream/main
 
 .card {
   background: white;
@@ -259,6 +297,7 @@
 }
 
 .cardHeader {
+<<<<<<< HEAD
   padding: 20px;
   border-bottom: 1px solid #f1f5f9;
   background: #f8fafc;
@@ -285,14 +324,38 @@
   content: '📋';
   font-size: 20px;
 } */
+=======
+  padding: 24px;
+  border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.cardHeader h3 {
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardHeader h3::before {
+  content: '📋';
+  font-size: 20px;
+}
+>>>>>>> upstream/main
 
 .headerActions {
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+<<<<<<< HEAD
   /* border: 1px solid #000; */
   margin-left: 6%;
+=======
+>>>>>>> upstream/main
 }
 
 /* Search Box */
@@ -414,7 +477,10 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/main
 }
 
 .statCard {

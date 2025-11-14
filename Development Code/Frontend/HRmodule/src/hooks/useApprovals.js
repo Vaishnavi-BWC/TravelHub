@@ -83,10 +83,15 @@ export const useApprovals = () => {
       const apiData = await approvalService.getPendingApprovals();
       console.log('✅ HR Pending approvals raw response:', apiData);
       
+<<<<<<< HEAD
       const transformedData = transformApprovalData(apiData);
       setApprovals(transformedData);
+=======
+>>>>>>> upstream/main
       
-      return transformedData;
+      setApprovals(apiData);
+      
+      return apiData;
       
     } catch (err) {
       console.error('❌ Error loading HR approvals:', err);

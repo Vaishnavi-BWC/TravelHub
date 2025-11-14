@@ -1,5 +1,6 @@
 /* components/employees/EmployeeList.css */
 
+<<<<<<< HEAD
 .employee-list-container {
   width: 100%;
 }
@@ -200,6 +201,16 @@
   border: 1px solid #e1e5e9;
   border-radius: 6px;
   background: white;
+=======
+.employeeTable,
+.employeeTable *,
+.employeeTable td,
+.employeeTable th,
+.table-row,
+.table-row * {
+  animation: none !important;
+  transform: none !important;
+>>>>>>> upstream/main
 }
 
 .employeeTable {
@@ -210,6 +221,18 @@
   text-align: center;
 }
 
+<<<<<<< HEAD
+=======
+.employeeTable th:nth-child(1) { width: 120px; }
+.employeeTable th:nth-child(2) { width: 200px; }
+.employeeTable th:nth-child(3) { width: 200px; }
+.employeeTable th:nth-child(4) { width: 150px; }
+.employeeTable th:nth-child(5) { width: 150px; }
+.employeeTable th:nth-child(6) { width: 100px; }
+.employeeTable th:nth-child(7) { width: 150px; }
+.employeeTable th:nth-child(8) { width: 120px; }
+
+>>>>>>> upstream/main
 .employeeTable th {
   background-color: #f8f9fa;
   padding: 16px 12px;
@@ -231,9 +254,34 @@
   padding: 16px 12px;
   border-bottom: 1px solid #f1f3f4;
   vertical-align: middle;
+<<<<<<< HEAD
   color: #495057;
   font-size: 14px;
   border-right: 1px solid #f1f3f4;
+=======
+}
+
+/* Table row hover */
+.employeeTable tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.employeeTable tbody tr:hover {
+  background-color: var(--gray-50);
+}
+
+.employeeTable tbody tr:hover td {
+  background-color: transparent !important;
+}
+
+/* Status Badges */
+.employeeTable .status {
+  padding: 6px 12px;
+  border-radius: var(--radius-xl);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  display: inline-block;
+>>>>>>> upstream/main
   text-align: center;
 }
 
@@ -266,6 +314,7 @@
   font-size: 13px;
 }
 
+<<<<<<< HEAD
 .employee-name {
   color: #333;
   font-weight: 600;
@@ -280,6 +329,9 @@
 }
 
 /* Status cell */
+=======
+/* Status cell*/
+>>>>>>> upstream/main
 .status-cell {
   display: flex;
   align-items: center;
@@ -333,12 +385,16 @@
   transform: scale(1.1);
 }
 
+<<<<<<< HEAD
 .status-toggle:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Action buttons - Borderless */
+=======
+/* Action buttons*/
+>>>>>>> upstream/main
 .actionButtons {
   display: flex;
   gap: 8px;
@@ -366,6 +422,7 @@
   cursor: not-allowed;
 }
 
+<<<<<<< HEAD
 /* Pagination Styles */
 .paginationControls {
   display: flex;
@@ -376,14 +433,42 @@
   background: #f8f9fa;
   flex-wrap: wrap;
   gap: 16px;
+=======
+/* Card and container styles*/
+.card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  background: white;
+>>>>>>> upstream/main
 }
 
 .paginationInfo {
   display: flex;
   align-items: center;
+<<<<<<< HEAD
   gap: 8px;
   color: #6c757d;
   font-size: 14px;
+=======
+  justify-content: center;
+  flex-direction: column;
+  padding: 40px 20px;
+}
+
+.table-container {
+  position: relative;
+  overflow: auto;
+  max-height: 600px;
+}
+
+/* Pagination controls -*/
+.paginationControls {
+  padding: 16px 20px;
+  border-top: 1px solid var(--gray-200);
+  background: var(--gray-50);
+>>>>>>> upstream/main
 }
 
 .paginationButtons {
@@ -428,7 +513,96 @@
   transition: all 0.3s ease;
 }
 
+<<<<<<< HEAD
 .smooth-fade-in {
+=======
+/* Filter and search controls - KEEP YOUR GRADIENTS */
+.cardHeaderFlex {
+  padding: 20px;
+  border-bottom: 1px solid var(--gray-200);
+  /* background: var(--gray-50); */
+}
+
+.filterButtons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filterBtn {
+  padding: 8px 16px;
+  border: 1px solid var(--gray-300);
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* KEEP YOUR GRADIENT EFFECT */
+.filterBtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s;
+}
+
+.filterBtn:hover::before {
+  left: 100%;
+}
+
+.filterBtn:hover {
+  background-color: var(--gray-100);
+}
+
+.filterBtnActive {
+  background-color: var(--primary-500);
+  color: white;
+  border-color: var(--primary-500);
+}
+
+.searchAndControls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.searchBox {
+  position: relative;
+  flex: 1;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 12px 10px 40px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  transition: border-color 0.15s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--primary-500);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-400);
+}
+
+/* SMOOTH ANIMATIONS THAT WON'T CAUSE JUMPS */
+
+/* Only apply fade-in to loading states, not table rows */
+.loadingState, .errorState, .noData {
+>>>>>>> upstream/main
   animation: gentleFadeIn 0.5s ease-in-out;
 }
 
@@ -532,6 +706,7 @@
   }
 }
 
+<<<<<<< HEAD
 @media (max-width: 480px) {
   .header-content h3 {
     font-size: 20px;
@@ -556,4 +731,43 @@
     width: 100%;
     justify-content: center;
   }
+=======
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Button hover effects - minimal and contained */
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btnIcon:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+/* Filter button active state */
+.filterBtnActive {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table-container {
+  min-height: 400px; /* Prevent height jumps */
+}
+
+.employeeTable tbody {
+  display: table-row-group; /* Maintain table structure */
+}
+
+
+.employeeTable {
+  transform: translateZ(0); /* Hardware acceleration */
+  backface-visibility: hidden;
+}
+
+.table-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+>>>>>>> upstream/main
 }

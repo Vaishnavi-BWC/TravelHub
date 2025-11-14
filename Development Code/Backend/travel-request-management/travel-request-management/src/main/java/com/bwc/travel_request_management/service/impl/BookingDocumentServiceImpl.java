@@ -1,5 +1,14 @@
 package com.bwc.travel_request_management.service.impl;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
 import com.bwc.travel_request_management.client.WorkflowServiceClient;
 import com.bwc.travel_request_management.dto.BookingDocumentDTO;
 import com.bwc.travel_request_management.entity.BookingDocument;
@@ -13,17 +22,9 @@ import com.bwc.travel_request_management.repository.TravelBookingRepository;
 import com.bwc.travel_request_management.repository.TravelRequestRepository;
 import com.bwc.travel_request_management.service.BookingDocumentService;
 import com.bwc.travel_request_management.service.FileStorageService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -247,6 +248,5 @@ public class BookingDocumentServiceImpl implements BookingDocumentService {
                 .path("/view")
                 .toUriString();
     }
-    
-    
+  
 }

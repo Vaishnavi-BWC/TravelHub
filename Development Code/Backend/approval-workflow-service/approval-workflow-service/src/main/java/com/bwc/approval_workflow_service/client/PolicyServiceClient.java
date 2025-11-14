@@ -12,4 +12,7 @@ public interface PolicyServiceClient {
     @GetMapping("/api/policies/employee/{employeeId}")
     PolicyProxyFullDTO getPolicyByEmployee(@PathVariable("employeeId") UUID employeeId, 
                                          @RequestParam(required = false) String grade);
+
+    
+
 }

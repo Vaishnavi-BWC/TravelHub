@@ -71,7 +71,11 @@ const ApprovalList = ({
 
     setProcessingRequest(request.travelRequestId);
     try {
+<<<<<<< HEAD
       await onApprove(request.workflowId || request.travelRequestId, "Approved via quick action");
+=======
+      await onApprove(request.travelRequestId, "Approved via quick action");
+>>>>>>> upstream/main
     } catch (error) {
       console.error('Error approving request:', error);
       alert(`Failed to approve request: ${error.message}`);
@@ -98,7 +102,11 @@ const ApprovalList = ({
 
     setProcessingRequest(request.travelRequestId);
     try {
+<<<<<<< HEAD
       await onReject(request.workflowId || request.travelRequestId, reason);
+=======
+      await onReject(request.travelRequestId, reason);
+>>>>>>> upstream/main
     } catch (error) {
       console.error('Error rejecting request:', error);
       alert(`Failed to reject request: ${error.message}`);
@@ -114,6 +122,7 @@ const ApprovalList = ({
     }
   };
 
+<<<<<<< HEAD
   const handleViewDetails = (request, e) => {
     e.stopPropagation();
     if (onRequestSelect) {
@@ -132,6 +141,8 @@ const ApprovalList = ({
     return 'pending';
   };
 
+=======
+>>>>>>> upstream/main
   return (
     <div className="card">
       <div className="card-header">
@@ -249,7 +260,11 @@ const ApprovalList = ({
                       <span className="stage-badge">{request.currentStep}</span>
                     </td>
                     <td>
+<<<<<<< HEAD
                       <Badge variant={getStatusVariant(request.status)}>
+=======
+                      <Badge variant={request.status}>
+>>>>>>> upstream/main
                         {request.status?.charAt(0).toUpperCase() + request.status?.slice(1) || 'Pending'}
                       </Badge>
                     </td>
@@ -257,11 +272,18 @@ const ApprovalList = ({
                       <div className="action-buttons">
                         <button
                           className="btn-sm1"
+<<<<<<< HEAD
                           onClick={(e) => handleViewDetails(request, e)}
+=======
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(request);
+                          }}
+>>>>>>> upstream/main
                           title="View Details"
                           disabled={loading}
                         >
-                          <i className="fas fa-eye"></i>
+                           <i className="fas fa-eye"></i>
                         </button>
                         
                         {(request.status === "pending" || request.status === "PENDING" || request.status === "IN_PROGRESS" || request.status === undefined) && (
@@ -275,7 +297,11 @@ const ApprovalList = ({
                               {processingRequest === request.travelRequestId ? (
                                 <i className="fas fa-spinner fa-spin"></i>
                               ) : (
+<<<<<<< HEAD
                                 <i className="fas fa-check"></i>
+=======
+                                    <i className="fas fa-check"></i>
+>>>>>>> upstream/main
                               )}
                             </button>
                             <button
@@ -289,6 +315,17 @@ const ApprovalList = ({
                               ) : (
                                 <i className="fas fa-times"></i>
                               )}
+                            </button>
+                            <button
+                             // onClick={() => handleRequestChange(
+                               // exception.exceptionId || exception.id,
+                                //exception.employeeName || exception.employee?.name
+                              //)}
+                              //disabled={actionLoading}
+                              className="btn-sm1"
+                              title="Request Changes"
+                            >
+                              <i className="fas fa-edit"></i>
                             </button>
                           </>
                         )}

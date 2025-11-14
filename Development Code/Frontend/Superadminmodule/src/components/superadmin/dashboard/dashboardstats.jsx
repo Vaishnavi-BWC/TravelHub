@@ -6,6 +6,8 @@ import { EmployeeService } from '../../../services/EmployeeService';
 import CardKPI from '../../common/CardKPI';
 import { FaUsers, FaUserCheck, FaClipboardList, FaExclamationTriangle } from 'react-icons/fa';
 
+//stats card component
+
 const DashboardStats = () => {
   const { state, actions } = useSuperAdmin();
   const { dashboardStats, policies } = state;
@@ -62,6 +64,7 @@ const DashboardStats = () => {
           loading: false
         });
 
+<<<<<<< HEAD
         // Load other dashboard data
         await actions.loadDashboardData();
         
@@ -90,20 +93,43 @@ const DashboardStats = () => {
   const policyCount = policies?.length || 0;
 
   // Navigation handlers
+=======
+
+  //to navigate to users page with filter
+
+>>>>>>> upstream/main
   const handleViewEmployees = (filter = '') => {
     navigate('/users', {
       state: { filter: filter || 'all' }
     });
   };
 
+  //to navigate to override page
+
   const handleViewApprovals = () => {
     navigate('/override');
   };
 
+<<<<<<< HEAD
   const handleViewPolicies = () => {
     navigate('/policies');
+=======
+  //to navigate to logs page with exceptions filter
+
+  const handleViewExceptions = () => {
+    navigate('/logs', {
+      state: { filter: 'exceptions' }
+    });
   };
 
+  //to navigate to reports page with reimbursements filter
+
+  const handleViewReimbursements = () => {
+    navigate('/reports', {
+      state: { filter: 'reimbursements' }
+    });
+>>>>>>> upstream/main
+  };
   const stats = [
     {
       icon: <FaUsers />,

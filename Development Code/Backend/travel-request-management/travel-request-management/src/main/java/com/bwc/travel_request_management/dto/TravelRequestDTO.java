@@ -2,17 +2,13 @@ package com.bwc.travel_request_management.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -31,15 +27,14 @@ public class TravelRequestDTO {
 
     @NotNull(message = "Project ID is required")
     private UUID projectId;
-    
-    @NotBlank(message="origin location is required")
-    @Size(max = 1000, message = "Purpose cannot exceed 1000 characters")
+
+    @NotBlank(message = "Origin location is required")
+    @Size(max = 255, message = "Origin cannot exceed 255 characters")
     private String origin;
-    
-    @NotBlank(message="origin location is required")
-    @Size(max = 1000, message = "Purpose cannot exceed 1000 characters")
+
+    @NotBlank(message = "Destination location is required")
+    @Size(max = 255, message = "Destination cannot exceed 255 characters")
     private String travelDestination;
-    
 
     @NotNull(message = "Start date is required")
     @FutureOrPresent(message = "Start date must be today or in the future")
@@ -58,17 +53,43 @@ public class TravelRequestDTO {
     @Builder.Default
     private boolean managerPresent = true;
 
+    private Double estimatedBudget;
+
+    /** Employee requests advance */
+    @Builder.Default
+    private boolean advancedMoneyWanted = false;
+
+    /** Finance grants advance */
+    @Builder.Default
+    private boolean advancedGranted = false;
+
+    /** Amount of advance requested/granted */
+    private BigDecimal advancedMoneyTaken;
+
+    @Builder.Default
+    private String status = "DRAFT";
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Validation method
+    // ========================= VALIDATION LOGIC ============================= //
+
     @AssertTrue(message = "End date must be after start date")
     public boolean isEndDateAfterStartDate() {
-        if (startDate == null || endDate == null) {
-            return true; // Let @NotNull handle null cases
-        }
+        if (startDate == null || endDate == null) return true;
         return endDate.isAfter(startDate);
     }
-    
-    private Double estimatedBudget;
+
+    /**
+     * Ensures:
+     *  - If advance is wanted, amount must be given
+     *  - If advance is granted, amount must be given
+     */
+    @AssertTrue(message = "Please specify 'advancedMoneyTaken' when advance money is wanted or granted")
+    public boolean isAdvanceMoneyProvidedWhenRequired() {
+        if (advancedMoneyWanted || advancedGranted) {
+            return advancedMoneyTaken != null && advancedMoneyTaken.compareTo(BigDecimal.ZERO) > 0;
+        }
+        return true;
+    }
 }

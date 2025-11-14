@@ -32,7 +32,7 @@ public class PolicyController {
     public ResponseEntity<ApiResponse<Policy>> createPolicy(
             @Valid @RequestBody PolicyRequest request,
             HttpServletRequest servletRequest) {
-        
+
         Policy policy = policyService.createPolicy(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Policy created successfully", policy)
@@ -45,21 +45,21 @@ public class PolicyController {
         return ResponseEntity.ok(ApiResponse.success(policyService.getAllPoliciesDto())
                 .path(request.getRequestURI()));
     }
-    
 
     @GetMapping("/{id}")
     @Operation(summary = "Get policy by ID")
-    public ResponseEntity<ApiResponse<PolicyResponse>> getPolicyById(@PathVariable UUID id,
+    public ResponseEntity<ApiResponse<PolicyResponse>> getPolicyById(
+            @Parameter(description = "Policy ID") @PathVariable(name = "id") UUID id,
             HttpServletRequest request) {
-    	return ResponseEntity.ok(ApiResponse.success(policyService.getPolicyByIdDto(id))
-    			.path(request.getRequestURI()));
+        return ResponseEntity.ok(ApiResponse.success(policyService.getPolicyByIdDto(id))
+                .path(request.getRequestURI()));
     }
-    
+
     @GetMapping("/active/category/{cityCategoryId}")
     @Operation(summary = "Fetch active grade policy by city category and employee grade")
     public ResponseEntity<ApiResponse<GradePolicy>> getActivePolicyByCityCategory(
-            @Parameter(description = "City category ID") @PathVariable UUID cityCategoryId,
-            @Parameter(description = "Employee grade (L1-L5)") @RequestParam String grade,
+            @Parameter(description = "City category ID") @PathVariable(name = "cityCategoryId") UUID cityCategoryId,
+            @Parameter(description = "Employee grade (L1-L5)") @RequestParam(name = "grade") String grade,
             HttpServletRequest servletRequest) {
 
         GradePolicy gradePolicy = policyService.getActivePolicyByCityCategoryAndGrade(cityCategoryId, grade);
@@ -68,14 +68,13 @@ public class PolicyController {
                 .path(servletRequest.getRequestURI()));
     }
 
-    
     @PutMapping("/{id}")
     @Operation(summary = "Update policy")
     public ResponseEntity<ApiResponse<Policy>> updatePolicy(
-            @Parameter(description = "Policy ID") @PathVariable UUID id,
+            @Parameter(description = "Policy ID") @PathVariable(name = "id") UUID id,
             @Valid @RequestBody PolicyRequest request,
             HttpServletRequest servletRequest) {
-        
+
         Policy policy = policyService.updatePolicy(id, request);
         return ResponseEntity.ok(ApiResponse.success("Policy updated successfully", policy)
                 .path(servletRequest.getRequestURI()));
@@ -84,31 +83,31 @@ public class PolicyController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete policy")
     public ResponseEntity<ApiResponse<Void>> deletePolicy(
-            @Parameter(description = "Policy ID") @PathVariable UUID id,
+            @Parameter(description = "Policy ID") @PathVariable(name = "id") UUID id,
             HttpServletRequest servletRequest) {
-        
-    	policyService.deletePolicy(id);
+
+        policyService.deletePolicy(id);
         return ResponseEntity.ok(
-            ApiResponse.<Void>success("Policy deleted successfully", null)
-                .path(servletRequest.getRequestURI())
+                ApiResponse.<Void>success("Policy deleted successfully", null)
+                        .path(servletRequest.getRequestURI())
         );
     }
 
     @PatchMapping("/{id}/activate")
     @Operation(summary = "Activate or deactivate policy")
     public ResponseEntity<ApiResponse<PolicyResponse>> activatePolicy(
-            @Parameter(description = "Policy ID") @PathVariable UUID id,
-            @Parameter(description = "Activation status (true or false)") 
-            @RequestParam Boolean active,
+            @Parameter(description = "Policy ID") @PathVariable(name = "id") UUID id,
+            @Parameter(description = "Activation status (true or false)")
+            @RequestParam(name = "active") Boolean active,
             HttpServletRequest servletRequest) {
 
-        // Activate or deactivate the policy
         Policy policyEntity = policyService.activatePolicy(id, active);
 
-        // Convert to DTO to avoid recursive serialization
         PolicyResponse policyDto = policyService.getPolicyByIdDto(policyEntity.getId());
 
-        String message = Boolean.TRUE.equals(active) ? "Policy activated successfully" : "Policy deactivated successfully";
+        String message = Boolean.TRUE.equals(active)
+                ? "Policy activated successfully"
+                : "Policy deactivated successfully";
 
         return ResponseEntity.ok(
                 ApiResponse.success(message, policyDto)
@@ -116,15 +115,14 @@ public class PolicyController {
         );
     }
 
-
     @GetMapping("/active")
     @Operation(summary = "Fetch active policy for a given city and employee grade or by city category and grade")
     public ResponseEntity<ApiResponse<GradePolicy>> getActivePolicy(
-            @Parameter(description = "City name") @RequestParam(required = false) String city,
-            @Parameter(description = "City category ID") @RequestParam(required = false) UUID cityCategory,
-            @Parameter(description = "Employee grade (L1-L5)") @RequestParam String grade,
+            @Parameter(description = "City name") @RequestParam(name = "city", required = false) String city,
+            @Parameter(description = "City category ID") @RequestParam(name = "cityCategory", required = false) UUID cityCategory,
+            @Parameter(description = "Employee grade (L1-L5)") @RequestParam(name = "grade") String grade,
             HttpServletRequest servletRequest) {
-        
+
         GradePolicy policy;
         if (city != null) {
             policy = policyService.getActivePolicyByCityAndGrade(city, grade);
@@ -133,8 +131,43 @@ public class PolicyController {
         } else {
             throw new IllegalArgumentException("Either city or cityCategory must be provided");
         }
-        
+
         return ResponseEntity.ok(ApiResponse.success(policy)
                 .path(servletRequest.getRequestURI()));
     }
+    
+    @GetMapping("/active/id")
+    @Operation(summary = "Fetch active grade policy ID for a given city and employee grade or by city category and grade")
+    public ResponseEntity<UUID> getActiveGradePolicyId(
+            @Parameter(description = "City name") @RequestParam(name = "city", required = false) String city,
+            @Parameter(description = "City category ID") @RequestParam(name = "cityCategory", required = false) UUID cityCategory,
+            @Parameter(description = "Employee grade (L1-L5)") @RequestParam(name = "grade") String grade) {
+
+        GradePolicy gradePolicy;
+        if (city != null) {
+            gradePolicy = policyService.getActivePolicyByCityAndGrade(city, grade);
+        } else if (cityCategory != null) {
+            gradePolicy = policyService.getActivePolicyByCityCategoryAndGrade(cityCategory, grade);
+        } else {
+            throw new IllegalArgumentException("Either city or cityCategory must be provided");
+        }
+
+        // ✅ Return the GradePolicy ID instead of the Policy ID
+        return ResponseEntity.ok(gradePolicy.getId());
+    }
+    
+//    
+//    @GetMapping("/active/id")
+//    @Operation(summary = "Fetch active grade policy ID for a given city and employee grade or by city category and grade")
+//    public ResponseEntity<UUID> getActiveGradePolicyId(
+//            @Parameter(description = "City name") @RequestParam(name = "city", required = false) String city,
+//            @Parameter(description = "City category ID") @RequestParam(name = "cityCategory", required = false) UUID cityCategory,
+//            @Parameter(description = "Employee grade (L1-L5)") @RequestParam(name = "grade") String grade) {
+//
+//        // Temporarily return a random UUID for testing purposes
+//        UUID randomId = UUID.randomUUID();
+//        return ResponseEntity.ok(randomId);
+//    }
+
+
 }

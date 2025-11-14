@@ -13,9 +13,14 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**") // allow all endpoints
-                        .allowedOrigins("http://127.0.0.1:5500") // your front-end origin
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                registry.addMapping("/**")
+                        .allowedOrigins(
+                                "http://127.0.0.1:5500",
+                                "http://localhost:3000",
+                                "http://bwc-90.brainwaveconsulting.co.in:3003", // ✅ add this
+                                "https://bwc-90.brainwaveconsulting.co.in"       // ✅ optional if using HTTPS
+                        )
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH")
                         .allowedHeaders("*")
                         .allowCredentials(true);
             }

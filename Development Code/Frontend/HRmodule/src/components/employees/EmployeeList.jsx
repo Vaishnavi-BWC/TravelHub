@@ -6,7 +6,11 @@ import Modal from '../common/Model';
 import EmployeeEditForm from './EmployeeEditForm';
 import { useEmployees } from '../../hooks/useEmployees';
 import { useApp } from '../../contexts/AppContext';
+<<<<<<< HEAD
 import '../../styles/EmployeeList.css'; // We'll create this CSS file
+=======
+// import '../../styles/EmployeeList.css'; // We'll create this CSS file
+>>>>>>> upstream/main
 
 const EmployeeList = () => {
   const navigate = useNavigate();

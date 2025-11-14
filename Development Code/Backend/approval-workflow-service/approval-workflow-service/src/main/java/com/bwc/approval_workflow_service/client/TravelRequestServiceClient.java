@@ -6,26 +6,32 @@ import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.bwc.approval_workflow_service.config.FeignMultipartConfig;
+import com.bwc.approval_workflow_service.config.FeignConfig;
 import com.bwc.approval_workflow_service.dto.BookingDocumentDTO;
 import com.bwc.approval_workflow_service.dto.BookingSummaryDTO;
 import com.bwc.approval_workflow_service.dto.TravelBookingDTO;
 import com.bwc.approval_workflow_service.dto.TravelRequestProxyDTO;
 
 @FeignClient(
-    name = "travel-request-service", 
+    name = "travel-request-service",
+    contextId = "travelRequestClient",
     url = "${services.travel-request.url:http://localhost:8090/travel-management}",
-    configuration = FeignMultipartConfig.class
+    configuration = FeignConfig.class
 )
 public interface TravelRequestServiceClient {
 
-    // ==========================================================
     // 🧳 BOOKING MANAGEMENT ENDPOINTS
-    // ==========================================================
-
     @PostMapping("/api/bookings/{requestId}")
     TravelBookingDTO addBooking(@PathVariable UUID requestId, @RequestBody TravelBookingDTO bookingDto);
 
@@ -44,12 +50,9 @@ public interface TravelRequestServiceClient {
     @GetMapping("/api/bookings/summary/{requestId}")
     BookingSummaryDTO getBookingSummary(@PathVariable UUID requestId);
 
-    // ==========================================================
     // 📎 BOOKING DOCUMENT MANAGEMENT ENDPOINTS
-    // ==========================================================
-
     @PostMapping(
-        value = "/api/bookings/{bookingId}/documents/upload", 
+        value = "/api/bookings/{bookingId}/documents/upload",
         consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     ResponseEntity<BookingDocumentDTO> uploadBookingDocument(
@@ -57,7 +60,7 @@ public interface TravelRequestServiceClient {
             @RequestPart("file") MultipartFile file,
             @RequestParam("documentType") String documentType,
             @RequestParam(value = "description", required = false) String description,
-            @RequestHeader("X-User-Id") UUID uploadedBy);
+            @RequestHeader("X-User-Id") UUID uploadedBy); // ✅ KEEP as Header
 
     @GetMapping("/api/bookings/{bookingId}/documents")
     List<BookingDocumentDTO> getDocumentsByBooking(@PathVariable UUID bookingId);
@@ -68,10 +71,7 @@ public interface TravelRequestServiceClient {
     @DeleteMapping("/api/bookings/documents/{documentId}")
     void deleteDocument(@PathVariable UUID documentId);
 
-    // ==========================================================
-    // 🔁 TRAVEL REQUEST (for workflow updates)
-    // ==========================================================
-
+    // 🔁 TRAVEL REQUEST UPDATES
     @PostMapping("/api/travel-requests/{id}/status")
     void updateRequestStatus(@PathVariable UUID id, @RequestParam String status);
 

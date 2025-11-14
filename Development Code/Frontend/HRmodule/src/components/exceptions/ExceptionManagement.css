@@ -751,6 +751,7 @@
     flex-direction: column;
     gap: 8px;
   }
+<<<<<<< HEAD
 }
 
 
@@ -953,4 +954,6 @@
  font-weight: 600;
  padding: 0pc 5px;
  border-radius: 10px;
+=======
+>>>>>>> upstream/main
 }

@@ -6,6 +6,7 @@ import superAdminService from "../services/superAdminService";
 const SuperAdminContext = createContext();
 
 const ACTION_TYPES = {
+<<<<<<< HEAD
   SET_LOADING: "SET_LOADING",
   SET_ERROR: "SET_ERROR",
   SET_USERS: "SET_USERS",
@@ -24,6 +25,26 @@ const ACTION_TYPES = {
   SET_SELECTED_POLICY: "SET_SELECTED_POLICY",
   SET_TRAVEL_REQUESTS: "SET_TRAVEL_REQUESTS",
   SET_WORKFLOW_DETAILS: "SET_WORKFLOW_DETAILS",
+=======
+  SET_LOADING: 'SET_LOADING',
+  SET_ERROR: 'SET_ERROR',
+  SET_USERS: 'SET_USERS',
+  SET_POLICIES: 'SET_POLICIES',
+  SET_CITY_CATEGORIES: 'SET_CITY_CATEGORIES',
+  SET_CITIES: 'SET_CITIES',
+  SET_REPORTS: 'SET_REPORTS',
+  SET_SYSTEM_LOGS: 'SET_SYSTEM_LOGS',
+  SET_OVERRIDE_REQUESTS: 'SET_OVERRIDE_REQUESTS',
+  SET_SLA_SETTINGS: 'SET_SLA_SETTINGS',
+  SET_SYSTEM_SETTINGS: 'SET_SYSTEM_SETTINGS',
+  SET_FINANCIAL_DATA: 'SET_FINANCIAL_DATA',
+  SET_DASHBOARD_STATS: 'SET_DASHBOARD_STATS',
+  SET_SIDEBAR_OPEN: 'SET_SIDEBAR_OPEN',
+  SET_SELECTED_USER: 'SET_SELECTED_USER',
+  SET_SELECTED_POLICY: 'SET_SELECTED_POLICY',
+  SET_TRAVEL_REQUESTS: 'SET_TRAVEL_REQUESTS',
+  SET_WORKFLOW_DETAILS: 'SET_WORKFLOW_DETAILS',
+>>>>>>> upstream/main
 };
 
 const initialState = {
@@ -84,12 +105,21 @@ const superAdminReducer = (state, action) => {
     case ACTION_TYPES.SET_TRAVEL_REQUESTS:
       return { ...state, travelRequests: action.payload, loading: false };
     case ACTION_TYPES.SET_WORKFLOW_DETAILS:
+<<<<<<< HEAD
       return {
         ...state,
         workflowDetails: {
           ...state.workflowDetails,
           [action.payload.workflowId]: action.payload.data,
         },
+=======
+      return { 
+        ...state, 
+        workflowDetails: {
+          ...state.workflowDetails,
+          [action.payload.travelRequestId]: action.payload.data
+        }
+>>>>>>> upstream/main
       };
     default:
       return state;
@@ -203,7 +233,11 @@ export const SuperAdminProvider = ({ children }) => {
         await actions.loadPolicies();
 
         // Show success message
+<<<<<<< HEAD
         console.log("✅ Policy created successfully");
+=======
+        console.log('✅ Policy created successfully');
+>>>>>>> upstream/main
         return newPolicy;
       } catch (error) {
         dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
@@ -215,6 +249,7 @@ export const SuperAdminProvider = ({ children }) => {
     updatePolicy: async (policyId, policyData) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
+<<<<<<< HEAD
         const updatedPolicy = await superAdminService.updatePolicy(
           policyId,
           policyData
@@ -222,16 +257,26 @@ export const SuperAdminProvider = ({ children }) => {
 
         // Update local state
         const updatedPolicies = state.policies.map((policy) =>
+=======
+        const updatedPolicy = await superAdminService.updatePolicy(policyId, policyData);
+
+        // Update local state
+        const updatedPolicies = state.policies.map(policy =>
+>>>>>>> upstream/main
           policy.id === policyId ? updatedPolicy : policy
         );
         dispatch({ type: ACTION_TYPES.SET_POLICIES, payload: updatedPolicies });
 
         // Update selected policy if it's the one being edited
         if (state.selectedPolicy && state.selectedPolicy.id === policyId) {
+<<<<<<< HEAD
           dispatch({
             type: ACTION_TYPES.SET_SELECTED_POLICY,
             payload: updatedPolicy,
           });
+=======
+          dispatch({ type: ACTION_TYPES.SET_SELECTED_POLICY, payload: updatedPolicy });
+>>>>>>> upstream/main
         }
 
         return updatedPolicy;
@@ -248,9 +293,13 @@ export const SuperAdminProvider = ({ children }) => {
         await superAdminService.deletePolicy(policyId);
 
         // Update local state by removing the deleted policy
+<<<<<<< HEAD
         const updatedPolicies = state.policies.filter(
           (policy) => policy.id !== policyId
         );
+=======
+        const updatedPolicies = state.policies.filter(policy => policy.id !== policyId);
+>>>>>>> upstream/main
         dispatch({ type: ACTION_TYPES.SET_POLICIES, payload: updatedPolicies });
 
         // Clear selected policy if it was the deleted one
@@ -266,6 +315,7 @@ export const SuperAdminProvider = ({ children }) => {
     // Activate/Deactivate policy
     updatePolicyStatus: async (policyId, active) => {
       try {
+<<<<<<< HEAD
         const updatedPolicy = await superAdminService.updatePolicyStatus(
           policyId,
           active
@@ -273,6 +323,12 @@ export const SuperAdminProvider = ({ children }) => {
 
         // Update local state
         const updatedPolicies = state.policies.map((policy) =>
+=======
+        const updatedPolicy = await superAdminService.updatePolicyStatus(policyId, active);
+
+        // Update local state
+        const updatedPolicies = state.policies.map(policy =>
+>>>>>>> upstream/main
           policy.id === policyId ? { ...policy, active } : policy
         );
         dispatch({ type: ACTION_TYPES.SET_POLICIES, payload: updatedPolicies });
@@ -289,10 +345,14 @@ export const SuperAdminProvider = ({ children }) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
         const categories = await superAdminService.getCityCategories();
+<<<<<<< HEAD
         dispatch({
           type: ACTION_TYPES.SET_CITY_CATEGORIES,
           payload: categories,
         });
+=======
+        dispatch({ type: ACTION_TYPES.SET_CITY_CATEGORIES, payload: categories });
+>>>>>>> upstream/main
       } catch (error) {
         dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
       }
@@ -312,6 +372,7 @@ export const SuperAdminProvider = ({ children }) => {
     updatePolicyGrade: async (policyId, grade, gradeData) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
+<<<<<<< HEAD
         const result = await superAdminService.updatePolicyGrade(
           policyId,
           grade,
@@ -322,6 +383,14 @@ export const SuperAdminProvider = ({ children }) => {
         const updatedPolicies = state.policies.map((policy) => {
           if (policy.id === policyId) {
             const updatedGradePolicies = policy.gradePolicies.map((gp) =>
+=======
+        const result = await superAdminService.updatePolicyGrade(policyId, grade, gradeData);
+
+        // Update local state to reflect changes
+        const updatedPolicies = state.policies.map(policy => {
+          if (policy.id === policyId) {
+            const updatedGradePolicies = policy.gradePolicies.map(gp =>
+>>>>>>> upstream/main
               gp.grade === grade ? { ...gp, ...gradeData } : gp
             );
             return { ...policy, gradePolicies: updatedGradePolicies };
@@ -341,11 +410,15 @@ export const SuperAdminProvider = ({ children }) => {
     getActivePolicy: async (city, cityCategory, grade) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
+<<<<<<< HEAD
         const policy = await superAdminService.getActivePolicy(
           city,
           cityCategory,
           grade
         );
+=======
+        const policy = await superAdminService.getActivePolicy(city, cityCategory, grade);
+>>>>>>> upstream/main
         return policy;
       } catch (error) {
         dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
@@ -385,6 +458,7 @@ export const SuperAdminProvider = ({ children }) => {
 
     // ==================== SYSTEM LOGS & WORKFLOW ACTIONS ====================
 
+<<<<<<< HEAD
 // Load travel requests (System Logs) - FIXED
 loadTravelRequests: async (params = {}, skipLoading = false) => {
   if (!skipLoading) {
@@ -568,6 +642,86 @@ loadSystemLogs: async (params = {}) => {
     });
   }
 },
+=======
+    // Load travel requests (System Logs)
+    loadTravelRequests: async (params = {}) => {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
+      try {
+        const travelRequests = await superAdminService.getTravelRequests(params);
+        dispatch({ type: ACTION_TYPES.SET_TRAVEL_REQUESTS, payload: travelRequests });
+        return travelRequests;
+      } catch (error) {
+        dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
+        throw error;
+      }
+    },
+
+    // Load workflow detail for a specific travel request
+    loadWorkflowDetail: async (travelRequestId) => {
+      try {
+        const workflowDetail = await superAdminService.getWorkflowDetail(travelRequestId);
+        
+        // Store workflow detail in state for caching
+        dispatch({ 
+          type: ACTION_TYPES.SET_WORKFLOW_DETAILS, 
+          payload: { 
+            travelRequestId, 
+            data: workflowDetail 
+          } 
+        });
+        
+        return workflowDetail;
+      } catch (error) {
+        console.error(`Error loading workflow detail for ${travelRequestId}:`, error);
+        throw error;
+      }
+    },
+
+    // Load combined system logs with workflow details
+    loadSystemLogs: async (params = {}) => {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
+      try {
+        // Load travel requests
+        const travelRequests = await actions.loadTravelRequests(params);
+
+        // Load workflow details for each request
+        const logsWithWorkflows = await Promise.all(
+          travelRequests.map(async (request) => {
+            try {
+              const workflowDetail = await actions.loadWorkflowDetail(request.travelRequestId);
+              return {
+                ...request,
+                workflowDetail,
+                id: request.travelRequestId,
+                timestamp: request.createdAt,
+                user: request.employeeId,
+                action: 'TRAVEL_REQUEST',
+                description: `Travel request from ${request.origin} to ${request.travelDestination}`,
+                status: request.status
+              };
+            } catch (error) {
+              console.error(`Error loading workflow for ${request.travelRequestId}:`, error);
+              return {
+                ...request,
+                workflowDetail: null,
+                id: request.travelRequestId,
+                timestamp: request.createdAt,
+                user: request.employeeId,
+                action: 'TRAVEL_REQUEST',
+                description: `Travel request from ${request.origin} to ${request.travelDestination}`,
+                status: request.status
+              };
+            }
+          })
+        );
+
+        dispatch({ type: ACTION_TYPES.SET_SYSTEM_LOGS, payload: logsWithWorkflows });
+      } catch (error) {
+        dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
+        throw error;
+      }
+    },
+>>>>>>> upstream/main
 
     // Override Requests
     loadOverrideRequests: async (params = {}) => {
@@ -598,6 +752,7 @@ loadSystemLogs: async (params = {}) => {
     },
 
     // SLA Settings
+<<<<<<< HEAD
     loadSlaSettings: async (workflowType = "PRE_TRAVEL") => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
@@ -607,6 +762,17 @@ loadSystemLogs: async (params = {}) => {
         dispatch({ type: ACTION_TYPES.SET_SLA_SETTINGS, payload: settings });
       } catch (error) {
         console.error("❌ Error loading SLA settings:", error);
+=======
+    loadSlaSettings: async (workflowType = 'PRE_TRAVEL') => {
+      dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
+      try {
+        console.log('🚀 Loading SLA settings for:', workflowType);
+        const settings = await superAdminService.getSlaSettings(workflowType);
+        console.log('✅ SLA settings loaded:', settings);
+        dispatch({ type: ACTION_TYPES.SET_SLA_SETTINGS, payload: settings });
+      } catch (error) {
+        console.error('❌ Error loading SLA settings:', error);
+>>>>>>> upstream/main
         dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
       }
     },
@@ -614,7 +780,11 @@ loadSystemLogs: async (params = {}) => {
     updateStepSLA: async (configId, slaData) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
+<<<<<<< HEAD
         console.log("🚀 Updating step SLA:", { configId, slaData });
+=======
+        console.log('🚀 Updating step SLA:', { configId, slaData });
+>>>>>>> upstream/main
         const result = await superAdminService.updateStepSLA(configId, slaData);
 
         // Immediately update the local state for better UX
@@ -622,12 +792,17 @@ loadSystemLogs: async (params = {}) => {
           const updatedStepSettings = { ...state.slaSettings.stepSettings };
 
           // Find the step with matching configId in the stepSettings object
+<<<<<<< HEAD
           Object.keys(updatedStepSettings).forEach((key) => {
+=======
+          Object.keys(updatedStepSettings).forEach(key => {
+>>>>>>> upstream/main
             if (updatedStepSettings[key].configId === configId) {
               updatedStepSettings[key] = {
                 ...updatedStepSettings[key],
                 timeLimitHours: slaData.timeLimitHours,
                 autoApproveAfterTimeout: slaData.autoApproveAfterTimeout,
+<<<<<<< HEAD
                 lastUpdated: new Date().toISOString(),
               };
               console.log(
@@ -635,12 +810,18 @@ loadSystemLogs: async (params = {}) => {
                 key,
                 updatedStepSettings[key]
               );
+=======
+                lastUpdated: new Date().toISOString()
+              };
+              console.log('🔄 Updated step in local state:', key, updatedStepSettings[key]);
+>>>>>>> upstream/main
             }
           });
 
           const updatedSlaSettings = {
             ...state.slaSettings,
             stepSettings: updatedStepSettings,
+<<<<<<< HEAD
             lastUpdated: new Date().toISOString(),
           };
 
@@ -664,6 +845,23 @@ loadSystemLogs: async (params = {}) => {
         return result;
       } catch (error) {
         console.error("❌ Error updating step SLA:", error);
+=======
+            lastUpdated: new Date().toISOString()
+          };
+
+          console.log('📝 Dispatching updated SLA settings:', updatedSlaSettings);
+          dispatch({ type: ACTION_TYPES.SET_SLA_SETTINGS, payload: updatedSlaSettings });
+        }
+
+        // Then reload from server to ensure consistency
+        console.log('🔄 Reloading SLA settings from server...');
+        await actions.loadSlaSettings(state.slaSettings?.workflowType || 'PRE_TRAVEL');
+
+        console.log('✅ Step SLA updated successfully');
+        return result;
+      } catch (error) {
+        console.error('❌ Error updating step SLA:', error);
+>>>>>>> upstream/main
         dispatch({ type: ACTION_TYPES.SET_ERROR, payload: error.message });
         throw error;
       }
@@ -672,10 +870,14 @@ loadSystemLogs: async (params = {}) => {
     updateBulkSLA: async (workflowType, bulkData) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
+<<<<<<< HEAD
         const result = await superAdminService.updateBulkSLA(
           workflowType,
           bulkData
         );
+=======
+        const result = await superAdminService.updateBulkSLA(workflowType, bulkData);
+>>>>>>> upstream/main
         // Reload SLA settings to get updated data
         await actions.loadSlaSettings(workflowType);
         return result;
@@ -688,10 +890,14 @@ loadSystemLogs: async (params = {}) => {
     toggleStepActivation: async (configId, activationData) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
+<<<<<<< HEAD
         const result = await superAdminService.toggleStepActivation(
           configId,
           activationData
         );
+=======
+        const result = await superAdminService.toggleStepActivation(configId, activationData);
+>>>>>>> upstream/main
         // Reload SLA settings to get updated data
         await actions.loadSlaSettings();
         return result;
@@ -704,10 +910,14 @@ loadSystemLogs: async (params = {}) => {
     updateStepSequence: async (configId, sequenceData) => {
       dispatch({ type: ACTION_TYPES.SET_LOADING, payload: true });
       try {
+<<<<<<< HEAD
         const result = await superAdminService.updateStepSequence(
           configId,
           sequenceData
         );
+=======
+        const result = await superAdminService.updateStepSequence(configId, sequenceData);
+>>>>>>> upstream/main
         // Reload SLA settings to get updated data
         await actions.loadSlaSettings();
         return result;

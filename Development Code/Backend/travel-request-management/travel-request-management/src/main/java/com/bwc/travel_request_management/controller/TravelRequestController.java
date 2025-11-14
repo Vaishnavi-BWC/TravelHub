@@ -94,4 +94,21 @@ public class TravelRequestController {
         // service.updateActualCost(id, actualCost);
         return ResponseEntity.ok().build();
     }
+    
+    @Operation(summary = "Get all travel requests for a specific employee")
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<List<TravelRequestDTO>> getRequestsByEmployee(
+            @Parameter(description = "Employee ID") @PathVariable UUID employeeId) {
+        return ResponseEntity.ok(service.getRequestsByEmployee(employeeId));
+    }
+
+    @Operation(summary = "Get paginated travel requests for a specific employee")
+    @GetMapping("/employee/{employeeId}/page")
+    public ResponseEntity<Page<TravelRequestDTO>> getRequestsByEmployeePaginated(
+            @Parameter(description = "Employee ID") @PathVariable UUID employeeId,
+            Pageable pageable) {
+        return ResponseEntity.ok(service.getRequestsByEmployee(employeeId, pageable));
+    }
+
+    
 }

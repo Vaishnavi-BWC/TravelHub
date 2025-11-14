@@ -21,6 +21,43 @@ const DashboardPage = () => {
   const [messageType, setMessageType] = useState('');
   const [userName, setUserName] = useState('Manager');
   const [userNameLoading, setUserNameLoading] = useState(false);
+<<<<<<< HEAD
+=======
+
+  // Get first name from full name
+  const getFirstName = (fullName) => {
+    if (!fullName) return 'Manager';
+    const nameArray = fullName.split(" ").filter(name => name.trim() !== '');
+    return nameArray.length > 1 ? nameArray[0] : fullName;
+  };
+
+  // Fetch manager name on component mount
+  useEffect(() => {
+    const fetchManagerName = async () => {
+      try {
+        setUserNameLoading(true);
+        console.log('🔍 Fetching manager name for dashboard...');
+        
+        const profileData = await managerService.getManagerProfile();
+        console.log('✅ Manager Profile data received:', profileData);
+        
+        // Set the user name (only first name)
+        if (profileData && profileData.name) {
+          setUserName(getFirstName(profileData.name));
+        }
+      } catch (err) {
+        console.error('❌ Error fetching manager profile:', err);
+        // Fallback to localStorage data
+        const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+        setUserName(getFirstName(userData.userName) || 'Manager');
+      } finally {
+        setUserNameLoading(false);
+      }
+    };
+
+    fetchManagerName();
+  }, []);
+>>>>>>> upstream/main
 
   // Add state for MyRequests stats
   const [myRequestsStats, setMyRequestsStats] = useState({
@@ -83,6 +120,7 @@ const DashboardPage = () => {
   useEffect(() => {
     const fetchManagerName = async () => {
       try {
+<<<<<<< HEAD
         setUserNameLoading(true);
         console.log('🔍 Fetching manager name for dashboard...');
         
@@ -100,6 +138,12 @@ const DashboardPage = () => {
         setUserName(getFirstName(userData.userName) || 'Manager');
       } finally {
         setUserNameLoading(false);
+=======
+        const allRequests = await managerService.getTravelRequestsFilteredByEmployee();
+        // You can use this count if needed, but we'll use personalRequests.length for now
+      } catch (error) {
+        console.error('Error fetching total requests count:', error);
+>>>>>>> upstream/main
       }
     };
 
@@ -281,8 +325,14 @@ const DashboardPage = () => {
 
       {/* Stats Overview - Use MyRequests stats for personal counts */}
       <StatsCards
+<<<<<<< HEAD
         personalRequestsCount={myRequestsStats.totalCount || personalRequests.length}
         approvedCount={myRequestsStats.approvedCount || approvedCount}
+=======
+        personalRequestsCount={personalRequests.length}
+        teamRequestsCount={teamRequests.length}
+        approvedCount={approvedCount}
+>>>>>>> upstream/main
         pendingApprovalCount={pendingApprovals.length}
         rejectedCount={myRequestsStats.rejectedCount || rejectedCount}
         onPersonalRequestsClick={() => goto('/my-requests')}

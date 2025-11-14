@@ -1,9 +1,13 @@
 package com.bwc.travel_request_management.client.dto;
 
-import lombok.*;
-
 import java.util.Set;
 import java.util.UUID;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -17,5 +21,7 @@ public class EmployeeProxyDTO {
     private String level;
     private UUID managerId;
     private Set<String> roles;
-    private Set<UUID> projectIds; // ✅ Add this
+
+    @Schema(description = "Set of assigned projects with full details")
+    private Set<ProjectResponse> projects;
 }

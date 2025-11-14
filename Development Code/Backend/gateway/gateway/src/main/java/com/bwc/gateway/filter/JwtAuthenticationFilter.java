@@ -9,6 +9,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -22,7 +23,6 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String AUTH_COOKIE = "auth_token=";
-    private static final String MANAGER_ROLE = "MANAGER";
 
     private final JwtGatewayUtil jwtUtil;
 
@@ -34,19 +34,34 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String path = exchange.getRequest().getURI().getPath();
         String authHeader = resolveAuthHeader(exchange);
 
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
-            log.debug("⚪ [Gateway] No token found for path: {}", path);
-            return chain.filter(exchange);
+        // 🟢 Skip JWT processing for internal service-to-service calls
+        if (isInternalServiceCall(path) || authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+            log.debug("⚪ [Gateway] No token or internal call for path: {}", path);
+            
+            // For internal calls, preserve existing headers and add gateway secret
+            ServerHttpRequest.Builder requestBuilder = exchange.getRequest().mutate();
+            
+            // Check if X-User-Id header already exists (from TRMS service)
+            String existingUserId = exchange.getRequest().getHeaders().getFirst("X-User-Id");
+            if (existingUserId != null && !existingUserId.isBlank()) {
+                log.debug("🟢 [Gateway] Preserving existing X-User-Id header: {}", existingUserId);
+                // Header will be preserved automatically since we're not removing it
+            } else {
+                log.debug("⚪ [Gateway] No existing X-User-Id header to preserve");
+            }
+            
+            // Add gateway secret
+            ServerHttpRequest mutatedRequest = requestBuilder
+                    .header("X-Internal-Gateway-Secret", internalSecret)
+                    .build();
+
+            ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
+            return chain.filter(mutatedExchange);
         }
 
         String token = authHeader.substring(BEARER_PREFIX.length());
         try {
             JWTClaimsSet claims = jwtUtil.parseToken(token);
-            if (isUnauthorizedManagerAccess(path, claims)) {
-                log.warn("🔴 [Gateway] Access denied for non-manager user at {}", path);
-                return chain.filter(exchange);
-            }
-
             ServerWebExchange mutated = enrichRequestWithUserHeaders(exchange, claims);
             return chain.filter(mutated);
 
@@ -57,18 +72,21 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     }
 
     private String resolveAuthHeader(ServerWebExchange exchange) {
+        // Check Authorization header first
         String auth = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (auth != null && auth.startsWith(BEARER_PREFIX)) {
             return auth;
         }
 
+        // Check cookies
         List<String> cookieHeaders = exchange.getRequest().getHeaders().get(HttpHeaders.COOKIE);
         if (cookieHeaders != null) {
             for (String cookieHeader : cookieHeaders) {
                 for (String cookiePair : cookieHeader.split(";")) {
                     String trimmed = cookiePair.trim();
                     if (trimmed.startsWith(AUTH_COOKIE)) {
-                        return BEARER_PREFIX + trimmed.substring(AUTH_COOKIE.length());
+                        String tokenValue = trimmed.substring(AUTH_COOKIE.length());
+                        return BEARER_PREFIX + tokenValue;
                     }
                 }
             }
@@ -76,9 +94,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         return null;
     }
 
-    private boolean isUnauthorizedManagerAccess(String path, JWTClaimsSet claims) throws Exception {
-        List<String> roles = claims.getStringListClaim("roles");
-        return path.startsWith("/api/manager/") && (roles == null || !roles.contains(MANAGER_ROLE));
+    private boolean isInternalServiceCall(String path) {
+        return path.contains("/api/workflows/") && 
+               (path.contains("/progress-to-travel-desk") || 
+                path.contains("/initiate") ||
+                path.contains("/submit"));
     }
 
     private ServerWebExchange enrichRequestWithUserHeaders(ServerWebExchange exchange, JWTClaimsSet claims) throws Exception {
@@ -86,16 +106,14 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String email = claims.getStringClaim("email");
         List<String> roles = claims.getStringListClaim("roles");
 
-        return exchange.mutate()
-                .request(r -> r.headers(headers -> {
-                    headers.add("X-User-Id", userId);
-                    headers.add("X-Internal-Gateway-Secret", internalSecret);
-                    if (email != null) headers.add("X-User-Email", email);
-                    if (roles != null && !roles.isEmpty()) {
-                        headers.add("X-User-Roles", String.join(",", roles));
-                    }
-                }))
+        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+                .header("X-User-Id", userId != null ? userId : "")
+                .header("X-Internal-Gateway-Secret", internalSecret)
+                .header("X-User-Email", email != null ? email : "")
+                .header("X-User-Roles", roles != null ? String.join(",", roles) : "")
                 .build();
+
+        return exchange.mutate().request(mutatedRequest).build();
     }
 
     @Override

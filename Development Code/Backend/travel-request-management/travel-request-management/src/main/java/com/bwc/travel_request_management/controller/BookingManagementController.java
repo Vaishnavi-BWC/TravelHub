@@ -101,9 +101,11 @@ public class BookingManagementController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("documentType") String documentType,
             @RequestParam(value = "description", required = false) String description,
-            @RequestHeader("X-User-Id") UUID uploadedBy) {
+            @RequestHeader("X-User-Id") UUID uploadedBy) { // ✅ KEEP as Header
 
-        log.info("Uploading document for booking: {}, type: {}, uploadedBy: {}", bookingId, documentType, uploadedBy);
+        log.info("Uploading document for booking: {}, type: {}, uploadedBy: {}", 
+                bookingId, documentType, uploadedBy);
+        
         BookingDocumentDTO document = documentService.uploadBookingDocument(
                 bookingId, file, documentType, description, uploadedBy);
 

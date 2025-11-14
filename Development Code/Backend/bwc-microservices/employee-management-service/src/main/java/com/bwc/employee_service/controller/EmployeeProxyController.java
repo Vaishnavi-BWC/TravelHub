@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.bwc.common.exception.ResourceNotFoundException; // ✅ Use custom exception
+import com.bwc.common.exception.ResourceNotFoundException;
 import com.bwc.employee_management_service.dto.EmployeeResponse;
 import com.bwc.employee_management_service.service.EmployeeService;
 import com.bwc.employee_service.dto.EmployeeProxyDTO;
@@ -44,8 +44,9 @@ public class EmployeeProxyController {
             log.info("🔍 Cache miss → Fetching employee proxy for ID: {}", key);
             
             EmployeeResponse emp = employeeService.getEmployeeById(key);
+            log.debug("Fetched Employee: {}", emp);
+
             if (emp == null) {
-                // ✅ Use a domain-specific exception
                 throw new ResourceNotFoundException("Employee not found with ID: " + key);
             }
 
@@ -57,7 +58,7 @@ public class EmployeeProxyController {
                     .level(emp.getLevel())
                     .managerId(emp.getManagerId())
                     .roles(Optional.ofNullable(emp.getRoles()).orElse(Set.of()))
-                    .projectIds(Optional.ofNullable(emp.getProjectIds()).orElse(Set.of()))
+                    .projects(Optional.ofNullable(emp.getProjects()).orElse(Set.of())) // ✅ use full project details
                     .build();
         });
     }
@@ -75,7 +76,6 @@ public class EmployeeProxyController {
             throw new ResourceNotFoundException("No employees found with role: " + role);
         }
 
-        // ✅ Use Stream.toList() instead of collect(Collectors.toList())
         return employees.stream()
                 .map(emp -> EmployeeProxyDTO.builder()
                         .employeeId(emp.getEmployeeId())
@@ -85,9 +85,8 @@ public class EmployeeProxyController {
                         .level(emp.getLevel())
                         .managerId(emp.getManagerId())
                         .roles(Optional.ofNullable(emp.getRoles()).orElse(Set.of()))
-                        .projectIds(Optional.ofNullable(emp.getProjectIds()).orElse(Set.of()))
+                        .projects(Optional.ofNullable(emp.getProjects()).orElse(Set.of())) // ✅ replaced projectIds
                         .build())
-                .toList(); // ✅ Java 16+ preferred immutable list
+                .toList();
     }
-
 }
