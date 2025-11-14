@@ -1,0 +1,17 @@
+.dashboard-page
+{
+    padding: 10px;
+}
+.dashboard-page .page-header h1
+{
+    font-size: 1.3rem;
+    margin-left: 1%;
+    font-weight: 650;
+    text-align: left;
+    color:#2c3e50;
+}
+.dashboard-grid
+{
+    display: flex;
+    flex-direction: column;
+}

@@ -1,0 +1,63 @@
+.info-cardtravelpolicy {
+    padding-left: 40px;
+    padding-bottom: 1%;
+}
+
+.info-cardtravelpolicy .info-card-content {
+    margin-top: 20px;
+    background: rgba(44, 123, 229, 0.08);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid rgba(44, 123, 229, 0.2);
+    backdrop-filter: blur(8px);
+    position: relative;
+    width: 97%;
+    /* margin: auto; */
+}
+
+.info-cardtravelpolicy .info-card-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(44, 123, 229, 0.6), rgba(44, 123, 229, 0.3));
+}
+
+.info-cardtravelpolicy h3 {
+    color: #2c7be5;
+    font-size: 1.2em;
+    margin-bottom: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.info-cardtravelpolicy .info-icon {
+    color: #2c7be5;
+    font-size: 1.1em;
+}
+
+.info-cardtravelpolicy .info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-cardtravelpolicy .info-list p {
+    color: #333;
+    margin: 0;
+    padding: 8px 12px;
+    background: rgba(44, 123, 229, 0.05);
+    border-radius: 4px;
+    border-left: 2px solid rgba(44, 123, 229, 0.3);
+}
+
+.info-cardtravelpolicy .info-list strong {
+    color: #2c7be5;
+    font-weight: 600;
+    display: inline-block;
+    min-width: 70px;
+}

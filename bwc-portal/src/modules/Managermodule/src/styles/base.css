@@ -1,0 +1,45 @@
+/* Base Reset & Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #f5f7fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Focus states for accessibility */
+button:focus, input:focus, textarea:focus, select:focus {
+  outline: 2px solid #1a4f8c;
+  outline-offset: 2px;
+}
+
+/* Hover effects for better UX */
+.menu-item, .stat-card, .quick-action-btn, .filter-btn, .btn-icon, 
+.btn-primary, .btn-secondary, .btn-accent, .btn-reject, .btn-draft,
+.checkbox-label, .user-profile {
+  transition: all 0.3s ease;
+}
