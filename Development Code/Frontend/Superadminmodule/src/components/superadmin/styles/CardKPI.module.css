@@ -1,0 +1,88 @@
+/* styles/CardKPI.module.css */
+.statCard {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+  cursor: pointer;
+  width: 100%;
+}
+
+.statCard:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+}
+
+.statIcon {
+  width: 65px;
+  height: 65px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+  font-size: 1.8rem;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.statIcon.blue {
+  background: linear-gradient(135deg, #1a4f8c 0%, #3a7bb8 100%);
+}
+
+.statIcon.green {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.statIcon.purple {
+  background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
+}
+
+.statIcon.orange {
+  background: linear-gradient(135deg, #fd7e14 0%, #ff9800 100%);
+}
+
+.statIcon.red {
+  background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+.statIcon.total {
+  background: linear-gradient(135deg, #1a4f8c 0%, #3a7bb8 100%);
+}
+
+.statIcon.approved {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.statIcon.pending {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+}
+
+.statIcon.exception {
+  background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+.statIcon.reimbursement {
+  background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
+}
+
+.statCard:hover .statIcon {
+  transform: scale(1.1);
+}
+
+.statInfo h3 {
+  font-size: 2rem;
+  margin: 0;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.statInfo p {
+  color: #6c757d;
+  margin: 5px 0 0;
+  font-weight: 500;
+}

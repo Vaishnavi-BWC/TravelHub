@@ -1,0 +1,14 @@
+.statsContainer {
+  width: 100%;
+  display: flex;
+  /* flex-direction: row; */
+  gap: 20px;
+  margin-bottom: 30px;
+  border: 1px solid #000;
+}
+
+@media (max-width: 768px) {
+  .statsContainer {
+    flex-direction: column;
+  }
+}
