@@ -1,7 +1,71 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import Badge from '../common/Badge';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import './ApprovalList.css';
+
+// Cache configuration
+const CACHE_KEYS = {
+  APPROVALS: 'approvals_cache',
+  TIMESTAMP: 'approvals_timestamp'
+};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Cache utilities
+const cacheUtils = {
+  getCache: () => {
+    try {
+      const cachedData = localStorage.getItem(CACHE_KEYS.APPROVALS);
+      const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
+      
+      if (!cachedData || !timestamp) return null;
+      
+      const now = Date.now();
+      const cacheTime = parseInt(timestamp, 10);
+      
+      if (now - cacheTime > CACHE_DURATION) {
+        cacheUtils.clearCache();
+        return null;
+      }
+      
+      return JSON.parse(cachedData);
+    } catch (error) {
+      console.error('Error reading cache:', error);
+      cacheUtils.clearCache();
+      return null;
+    }
+  },
+  
+  setCache: (data) => {
+    try {
+      localStorage.setItem(CACHE_KEYS.APPROVALS, JSON.stringify(data));
+      localStorage.setItem(CACHE_KEYS.TIMESTAMP, Date.now().toString());
+    } catch (error) {
+      console.error('Error setting cache:', error);
+    }
+  },
+  
+  clearCache: () => {
+    try {
+      localStorage.removeItem(CACHE_KEYS.APPROVALS);
+      localStorage.removeItem(CACHE_KEYS.TIMESTAMP);
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    }
+  },
+  
+  isCacheValid: () => {
+    try {
+      const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
+      if (!timestamp) return false;
+      
+      const now = Date.now();
+      const cacheTime = parseInt(timestamp, 10);
+      return now - cacheTime <= CACHE_DURATION;
+    } catch (error) {
+      return false;
+    }
+  }
+};
 
 const ApprovalList = ({
   approvals,
@@ -15,6 +79,70 @@ const ApprovalList = ({
   const [requestFilter, setRequestFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [processingRequest, setProcessingRequest] = useState(null);
+
+  // Enhanced refresh handler with cache clearing
+  const handleRefresh = useCallback(() => {
+    // Clear cache on manual refresh to force fresh data
+    cacheUtils.clearCache();
+    if (onRefresh) {
+      onRefresh();
+    }
+  }, [onRefresh]);
+
+  // Enhanced approve handler with cache clearing
+  const handleQuickApprove = async (request, e) => {
+    e.stopPropagation();
+    if (!onApprove) {
+      console.warn('onApprove function not provided');
+      return;
+    }
+
+    const formattedId = formatTravelRequestId(request.travelRequestId);
+    const confirmed = window.confirm(`Are you sure you want to approve request ${formattedId}?`);
+    if (!confirmed) return;
+
+    setProcessingRequest(request.travelRequestId);
+    try {
+      await onApprove(request.workflowId || request.travelRequestId, "Approved via quick action");
+      // Clear cache after successful approval to reflect changes
+      cacheUtils.clearCache();
+    } catch (error) {
+      console.error('Error approving request:', error);
+      alert(`Failed to approve request: ${error.message}`);
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
+
+  // Enhanced reject handler with cache clearing
+  const handleQuickReject = async (request, e) => {
+    e.stopPropagation();
+    if (!onReject) {
+      console.warn('onReject function not provided');
+      return;
+    }
+
+    const formattedId = formatTravelRequestId(request.travelRequestId);
+    const reason = prompt(`Please enter reason for rejecting request ${formattedId}:`);
+    if (reason === null) return;
+
+    if (!reason.trim()) {
+      alert("Please provide a reason for rejection.");
+      return;
+    }
+
+    setProcessingRequest(request.travelRequestId);
+    try {
+      await onReject(request.workflowId || request.travelRequestId, reason);
+      // Clear cache after successful rejection to reflect changes
+      cacheUtils.clearCache();
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      alert(`Failed to reject request: ${error.message}`);
+    } finally {
+      setProcessingRequest(null);
+    }
+  };
 
   // Function to format travel request ID
   const formatTravelRequestId = (id) => {
@@ -56,55 +184,6 @@ const ApprovalList = ({
 
   const handleClearSearch = () => {
     setSearchTerm("");
-  };
-
-  const handleQuickApprove = async (request, e) => {
-    e.stopPropagation();
-    if (!onApprove) {
-      console.warn('onApprove function not provided');
-      return;
-    }
-
-    const formattedId = formatTravelRequestId(request.travelRequestId);
-    const confirmed = window.confirm(`Are you sure you want to approve request ${formattedId}?`);
-    if (!confirmed) return;
-
-    setProcessingRequest(request.travelRequestId);
-    try {
-      await onApprove(request.workflowId || request.travelRequestId, "Approved via quick action");
-    } catch (error) {
-      console.error('Error approving request:', error);
-      alert(`Failed to approve request: ${error.message}`);
-    } finally {
-      setProcessingRequest(null);
-    }
-  };
-
-  const handleQuickReject = async (request, e) => {
-    e.stopPropagation();
-    if (!onReject) {
-      console.warn('onReject function not provided');
-      return;
-    }
-
-    const formattedId = formatTravelRequestId(request.travelRequestId);
-    const reason = prompt(`Please enter reason for rejecting request ${formattedId}:`);
-    if (reason === null) return;
-
-    if (!reason.trim()) {
-      alert("Please provide a reason for rejection.");
-      return;
-    }
-
-    setProcessingRequest(request.travelRequestId);
-    try {
-      await onReject(request.workflowId || request.travelRequestId, reason);
-    } catch (error) {
-      console.error('Error rejecting request:', error);
-      alert(`Failed to reject request: ${error.message}`);
-    } finally {
-      setProcessingRequest(null);
-    }
   };
 
   const handleRowClick = (request) => {
@@ -183,7 +262,7 @@ const ApprovalList = ({
           </div>
 
           <button
-            onClick={onRefresh}
+            onClick={handleRefresh}
             className="btn btnSecondary"
             disabled={loading}
             title="Refresh approvals"
@@ -198,7 +277,7 @@ const ApprovalList = ({
           <div className="errorMessage">
             <i className="fas fa-exclamation-circle"></i>
             {error}
-            <button onClick={onRefresh} className="btn btnSecondary" style={{ marginLeft: '10px' }}>
+            <button onClick={handleRefresh} className="btn btnSecondary" style={{ marginLeft: '10px' }}>
               <i className="fas fa-refresh"></i> Retry
             </button>
           </div>
@@ -321,5 +400,6 @@ const ApprovalList = ({
   );
 };
 
-export { ApprovalList };
+// Export cache utilities for external use
+export { ApprovalList, cacheUtils as approvalsCacheUtils };
 export default ApprovalList;

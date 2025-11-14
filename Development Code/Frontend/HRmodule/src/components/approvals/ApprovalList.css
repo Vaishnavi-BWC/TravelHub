@@ -161,7 +161,10 @@
   gap: 6px;
   text-decoration: none;
 }
-
+.btn-danger
+{
+    background-color: red;
+}
 .btnPrimary {
   background: #1a4f8c;
   color: white;

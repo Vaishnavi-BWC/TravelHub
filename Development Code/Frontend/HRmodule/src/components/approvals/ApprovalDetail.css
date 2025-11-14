@@ -224,19 +224,25 @@
   resize: vertical;
 }
 
-.action-buttons {
+.action-buttons1 {
   display: flex;
   gap: 10px;
   justify-content:center;
+  margin-left: 75%;
 }
 
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+.btn1 {
+ padding: var(--space-lg) var(--space-xl);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    border: 1px solid var(--border-color);
 }
 
 .btn:disabled {
@@ -247,6 +253,7 @@
 .btn-danger {
   background: #e53e3e;
   color: white;
+  
 }
 
 .btn-success {

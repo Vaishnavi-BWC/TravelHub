@@ -8,6 +8,70 @@ import { hrService } from '../../services/hrService';
 import { approvalService } from '../../services/approvalService';
 import './ExceptionManagement.css';
 
+// Cache configuration
+const CACHE_KEYS = {
+  EXCEPTIONS: 'exceptions_cache',
+  TIMESTAMP: 'exceptions_timestamp'
+};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Cache utilities
+const cacheUtils = {
+  getCache: () => {
+    try {
+      const cachedData = localStorage.getItem(CACHE_KEYS.EXCEPTIONS);
+      const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
+      
+      if (!cachedData || !timestamp) return null;
+      
+      const now = Date.now();
+      const cacheTime = parseInt(timestamp, 10);
+      
+      if (now - cacheTime > CACHE_DURATION) {
+        cacheUtils.clearCache();
+        return null;
+      }
+      
+      return JSON.parse(cachedData);
+    } catch (error) {
+      console.error('Error reading cache:', error);
+      cacheUtils.clearCache();
+      return null;
+    }
+  },
+  
+  setCache: (data) => {
+    try {
+      localStorage.setItem(CACHE_KEYS.EXCEPTIONS, JSON.stringify(data));
+      localStorage.setItem(CACHE_KEYS.TIMESTAMP, Date.now().toString());
+    } catch (error) {
+      console.error('Error setting cache:', error);
+    }
+  },
+  
+  clearCache: () => {
+    try {
+      localStorage.removeItem(CACHE_KEYS.EXCEPTIONS);
+      localStorage.removeItem(CACHE_KEYS.TIMESTAMP);
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    }
+  },
+  
+  isCacheValid: () => {
+    try {
+      const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
+      if (!timestamp) return false;
+      
+      const now = Date.now();
+      const cacheTime = parseInt(timestamp, 10);
+      return now - cacheTime <= CACHE_DURATION;
+    } catch (error) {
+      return false;
+    }
+  }
+};
+
 const ExceptionsManagement = () => {
   const { exceptionId } = useParams();
   const navigate = useNavigate();
@@ -27,24 +91,54 @@ const ExceptionsManagement = () => {
     fetchExceptionRequests();
   }, []);
 
-  // Fetch data using hrService
-  const fetchExceptionRequests = async () => {
+  // Enhanced fetch data with caching
+  const fetchExceptionRequests = async (useCache = true) => {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔍 Fetching exception requests...');
+      
+      // Check cache first if allowed
+      if (useCache) {
+        const cachedData = cacheUtils.getCache();
+        if (cachedData) {
+          console.log('📦 Using cached exceptions data:', cachedData.length, 'items');
+          setExceptionRequests(cachedData);
+          setTotalItems(cachedData.length);
+          setLoading(false);
+          return cachedData;
+        }
+      }
+
+      console.log('🔍 Fetching exception requests from API...');
       
       const exceptions = await hrService.getRoleExceptions();
       console.log('✅ Exception requests fetched:', exceptions);
       
-      setExceptionRequests(exceptions || []);
-      setTotalItems(exceptions?.length || 0);
+      const exceptionsArray = exceptions || [];
+      setExceptionRequests(exceptionsArray);
+      setTotalItems(exceptionsArray.length);
+      
+      // Cache the data
+      cacheUtils.setCache(exceptionsArray);
+      console.log('💾 Exceptions data cached successfully');
+      
+      return exceptionsArray;
     } catch (err) {
       console.error('❌ Error fetching exception requests:', err);
       setError(err.message);
+      setExceptionRequests([]);
+      setTotalItems(0);
+      return [];
     } finally {
       setLoading(false);
     }
+  };
+
+  // Enhanced refetch that bypasses cache
+  const refetchExceptions = async () => {
+    console.log('🔄 Manual refetch - bypassing cache');
+    cacheUtils.clearCache();
+    return await fetchExceptionRequests(false);
   };
 
   // Helper functions to get consistent IDs and names
@@ -106,7 +200,7 @@ const ExceptionsManagement = () => {
     }
   };
 
-  // Action handlers using window.confirm for approve/reject
+  // Enhanced action handlers with cache clearing
   const handleApprove = (workflowId, employeeName) => {
     const isConfirmed = window.confirm(`Are you sure you want to approve the role exception for ${employeeName}?`);
     
@@ -123,7 +217,7 @@ const ExceptionsManagement = () => {
     }
   };
 
-  // Separate functions for actual approve/reject actions
+  // Enhanced approve action with cache clearing
   const performApproveAction = async (workflowId, employeeName) => {
     try {
       setActionLoading(true);
@@ -133,18 +227,27 @@ const ExceptionsManagement = () => {
         workflowId, 
         `Approved via Quick Action for the exception request ${employeeName}`
       );
+      
+      // Clear cache after successful approval
+      cacheUtils.clearCache();
+      console.log('🗑️ Cache cleared after approval');
+      
       showMessage(`Exception approved successfully for ${employeeName}!`, 'success');
       
-      await fetchExceptionRequests();
+      // Refetch fresh data
+      await fetchExceptionRequests(false);
       
     } catch (err) {
       console.error('Error approving exception:', err);
+      // Clear cache on error too
+      cacheUtils.clearCache();
       showMessage(`Failed to approve exception: ${err.message}`, 'error');
     } finally {
       setActionLoading(false);
     }
   };
 
+  // Enhanced reject action with cache clearing
   const performRejectAction = async (workflowId, employeeName) => {
     try {
       setActionLoading(true);
@@ -154,12 +257,20 @@ const ExceptionsManagement = () => {
         workflowId, 
         `Rejected via Quick Action for the exception request ${employeeName}`
       );
+      
+      // Clear cache after successful rejection
+      cacheUtils.clearCache();
+      console.log('🗑️ Cache cleared after rejection');
+      
       showMessage(`Exception rejected successfully for ${employeeName}!`, 'success');
       
-      await fetchExceptionRequests();
+      // Refetch fresh data
+      await fetchExceptionRequests(false);
       
     } catch (err) {
       console.error('Error rejecting exception:', err);
+      // Clear cache on error too
+      cacheUtils.clearCache();
       showMessage(`Failed to reject exception: ${err.message}`, 'error');
     } finally {
       setActionLoading(false);
@@ -238,7 +349,7 @@ const ExceptionsManagement = () => {
           <i className="fas fa-exclamation-triangle error-icon"></i>
           <h3>Unable to Load Exceptions</h3>
           <p>{error}</p>
-          <button onClick={fetchExceptionRequests} className="btn btn-primary" disabled={loading}>
+          <button onClick={refetchExceptions} className="btn btn-primary" disabled={loading}>
             {loading ? 'Retrying...' : 'Retry'}
           </button>
           <button onClick={handleBack} className="btn btn-secondary">Back to Dashboard</button>
@@ -264,9 +375,18 @@ const ExceptionsManagement = () => {
       <div className="card">
         <div className="card-header">
           <div className="cardbody">
-            {/* {exception.length} */}
             <h3>Pending Exceptions</h3>
             <p>Manage all employee requests awaiting your approval in one place</p>
+          </div>
+          <div className="header-actions">
+            <button
+              onClick={refetchExceptions}
+              className="btn btn-secondary"
+              disabled={loading}
+              title="Refresh exceptions"
+            >
+              <i className="fas fa-refresh"></i> Refresh
+            </button>
           </div>
         </div>
 
@@ -276,6 +396,9 @@ const ExceptionsManagement = () => {
               <i className="fas fa-check-circle empty-icon"></i>
               <h3>No Pending Exceptions</h3>
               <p>All role exception requests have been processed.</p>
+              <button onClick={refetchExceptions} className="btn btn-primary">
+                <i className="fas fa-refresh"></i> Refresh
+              </button>
             </div>
           ) : (
             <>
@@ -416,5 +539,5 @@ const ExceptionsManagement = () => {
   );
 };
 
-export { ExceptionsManagement };
+export { ExceptionsManagement, cacheUtils as exceptionsCacheUtils };
 export default ExceptionsManagement;

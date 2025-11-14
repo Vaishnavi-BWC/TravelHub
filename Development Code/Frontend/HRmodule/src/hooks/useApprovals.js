@@ -1,6 +1,70 @@
 import { useState, useEffect, useCallback } from 'react';
 import { approvalService } from '../services/approvalService';
 
+// Cache configuration (same as in ApprovalManagement)
+const CACHE_KEYS = {
+  APPROVALS: 'approvals_cache',
+  TIMESTAMP: 'approvals_timestamp'
+};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Cache utilities
+const cacheUtils = {
+  getCache: () => {
+    try {
+      const cachedData = localStorage.getItem(CACHE_KEYS.APPROVALS);
+      const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
+      
+      if (!cachedData || !timestamp) return null;
+      
+      const now = Date.now();
+      const cacheTime = parseInt(timestamp, 10);
+      
+      if (now - cacheTime > CACHE_DURATION) {
+        cacheUtils.clearCache();
+        return null;
+      }
+      
+      return JSON.parse(cachedData);
+    } catch (error) {
+      console.error('Error reading cache:', error);
+      cacheUtils.clearCache();
+      return null;
+    }
+  },
+  
+  setCache: (data) => {
+    try {
+      localStorage.setItem(CACHE_KEYS.APPROVALS, JSON.stringify(data));
+      localStorage.setItem(CACHE_KEYS.TIMESTAMP, Date.now().toString());
+    } catch (error) {
+      console.error('Error setting cache:', error);
+    }
+  },
+  
+  clearCache: () => {
+    try {
+      localStorage.removeItem(CACHE_KEYS.APPROVALS);
+      localStorage.removeItem(CACHE_KEYS.TIMESTAMP);
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    }
+  },
+  
+  isCacheValid: () => {
+    try {
+      const timestamp = localStorage.getItem(CACHE_KEYS.TIMESTAMP);
+      if (!timestamp) return false;
+      
+      const now = Date.now();
+      const cacheTime = parseInt(timestamp, 10);
+      return now - cacheTime <= CACHE_DURATION;
+    } catch (error) {
+      return false;
+    }
+  }
+};
+
 export const useApprovals = () => {
   const [approvals, setApprovals] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -72,19 +136,34 @@ export const useApprovals = () => {
   }, []);
 
   /**
-   * Load HR pending approvals with enhanced error handling
+   * Load HR pending approvals with caching support
    */
-  const loadApprovals = useCallback(async () => {
+  const loadApprovals = useCallback(async (useCache = true) => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 Fetching HR pending approvals...');
+      // Check cache first if allowed
+      if (useCache) {
+        const cachedData = cacheUtils.getCache();
+        if (cachedData) {
+          console.log('📦 Using cached approvals data:', cachedData.length, 'items');
+          setApprovals(cachedData);
+          setLoading(false);
+          return cachedData;
+        }
+      }
+
+      console.log('🔄 Fetching HR pending approvals from API...');
       const apiData = await approvalService.getPendingApprovals();
       console.log('✅ HR Pending approvals raw response:', apiData);
       
       const transformedData = transformApprovalData(apiData);
       setApprovals(transformedData);
+      
+      // Cache the transformed data
+      cacheUtils.setCache(transformedData);
+      console.log('💾 Data cached successfully');
       
       return transformedData;
       
@@ -111,6 +190,14 @@ export const useApprovals = () => {
       setLoading(false);
     }
   }, [transformApprovalData]);
+
+  /**
+   * Enhanced refetch that bypasses cache
+   */
+  const refetch = useCallback(async () => {
+    console.log('🔄 Manual refetch - bypassing cache');
+    return await loadApprovals(false); // Don't use cache for manual refresh
+  }, [loadApprovals]);
 
   /**
    * Fetch workflow details for a specific request
@@ -149,7 +236,7 @@ export const useApprovals = () => {
   }, []);
 
   /**
-   * Approve a HR request with workflow ID
+   * Approve a HR request with workflow ID and cache clearing
    */
   const approveRequest = useCallback(async (workflowId, remarks) => {
     try {
@@ -165,12 +252,19 @@ export const useApprovals = () => {
       const result = await approvalService.approveRequest(workflowId, remarks);
       console.log('✅ HR Request approved:', result);
       
-      await loadApprovals();
+      // Clear cache after approval to force fresh data on next load
+      cacheUtils.clearCache();
+      console.log('🗑️ Cache cleared after approval');
+      
+      // Refetch without cache to get updated data
+      await loadApprovals(false);
       
       return result;
       
     } catch (err) {
-      await loadApprovals();
+      // On error, clear cache and refetch to ensure data consistency
+      cacheUtils.clearCache();
+      await loadApprovals(false);
       throw err;
     } finally {
       setLoading(false);
@@ -178,7 +272,7 @@ export const useApprovals = () => {
   }, [loadApprovals]);
 
   /**
-   * Reject a HR request with workflow ID
+   * Reject a HR request with workflow ID and cache clearing
    */
   const rejectRequest = useCallback(async (workflowId, remarks) => {
     try {
@@ -194,21 +288,28 @@ export const useApprovals = () => {
       const result = await approvalService.rejectRequest(workflowId, remarks);
       console.log('✅ HR Request rejected:', result);
       
-      await loadApprovals();
+      // Clear cache after rejection to force fresh data on next load
+      cacheUtils.clearCache();
+      console.log('🗑️ Cache cleared after rejection');
+      
+      // Refetch without cache to get updated data
+      await loadApprovals(false);
       
       return result;
       
     } catch (err) {
-      await loadApprovals();
+      // On error, clear cache and refetch to ensure data consistency
+      cacheUtils.clearCache();
+      await loadApprovals(false);
       throw err;
     } finally {
       setLoading(false);
     }
   }, [loadApprovals]);
 
-  // Load approvals on mount
+  // Load approvals on mount with cache
   useEffect(() => {
-    loadApprovals();
+    loadApprovals(true); // Use cache on initial load
   }, [loadApprovals]);
 
   return {
@@ -220,11 +321,12 @@ export const useApprovals = () => {
     // Actions
     approveRequest,
     rejectRequest,
-    getWorkflowDetail, // Add this new function
-    refetch: loadApprovals,
+    getWorkflowDetail,
+    refetch, // Use enhanced refetch that bypasses cache
     
     // Utilities
-    clearError: () => setError(null)
+    clearError: () => setError(null),
+    clearCache: cacheUtils.clearCache // Expose cache clearing utility
   };
 };
 

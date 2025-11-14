@@ -133,14 +133,14 @@ const ApprovalDetail = ({ workflowId, onApprove, onReject, onBack, loading = fal
             rows="3"
             disabled={loading}
           />
-          <div className="action-buttons">
-            <button onClick={handleReject} className="btn btn-danger" disabled={loading || !remark.trim()}>
+          <div className="action-buttons1">
+            <button onClick={handleReject} className="btn1 btn-danger" disabled={loading || !remark.trim()}>
               Reject
             </button>
-            <button onClick={handleApprove} className="btn btn-success" disabled={loading || !remark.trim()}>
+            <button onClick={handleApprove} className="btn1 btn-success" disabled={loading || !remark.trim()}>
               Approve
             </button>
-             <button onClick={onBack} className="btn btn-back">
+             <button onClick={onBack} className="btn1 btn-back">
           Back
         </button>
           </div>
