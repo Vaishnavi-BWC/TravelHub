@@ -1,23 +1,32 @@
 // components/superadmin/users/UserManagement.js
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useEmployees } from '../../../hooks/useEmployees';
-import { useApp } from '../../../contexts/AppContext';
-import { 
-  FaSearch, FaSync, FaPlus, FaEye, FaEdit, 
-  FaToggleOn, FaToggleOff, FaSpinner,
-  FaAngleLeft, FaAngleRight, FaAngleDoubleLeft, FaAngleDoubleRight
-} from 'react-icons/fa';
-import styles from '../superadmin.module.css';
-import '../styles/UserManagement.css';
+import React, { useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useEmployees } from "../../../hooks/useEmployees";
+import { useApp } from "../../../contexts/AppContext";
+import {
+  FaSearch,
+  FaSync,
+  FaPlus,
+  FaEye,
+  FaEdit,
+  FaToggleOn,
+  FaToggleOff,
+  FaSpinner,
+  FaAngleLeft,
+  FaAngleRight,
+  FaAngleDoubleLeft,
+  FaAngleDoubleRight,
+} from "react-icons/fa";
+
+import "../styles/UserManagement.css";
 
 const UserManagement = () => {
   const navigate = useNavigate();
   const { showNotification } = useApp();
-  
-  const { 
-    employees, 
-    loading, 
+
+  const {
+    employees,
+    loading,
     error,
     deactivateEmployee,
     activateEmployee,
@@ -25,88 +34,95 @@ const UserManagement = () => {
     goToNextPage,
     goToPrevPage,
     goToPage,
-    changePageSize
+    changePageSize,
   } = useEmployees();
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [employeeFilter, setEmployeeFilter] = useState("All");
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(null);
   const [statusAnimations, setStatusAnimations] = useState({});
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Status update handler with animations
-  const handleStatusUpdate = useCallback(async (employeeId, currentStatus) => {
-    try {
-      setStatusUpdateLoading(employeeId);
-      
-      setStatusAnimations(prev => ({
-        ...prev,
-        [employeeId]: 'updating'
-      }));
+  const handleStatusUpdate = useCallback(
+    async (employeeId, currentStatus) => {
+      try {
+        setStatusUpdateLoading(employeeId);
 
-      let result;
-      if (currentStatus === 'active') {
-        result = await deactivateEmployee(employeeId);
-        showNotification('Employee deactivated successfully!', 'success');
-      } else {
-        result = await activateEmployee(employeeId);
-        showNotification('Employee activated successfully!', 'success');
+        setStatusAnimations((prev) => ({
+          ...prev,
+          [employeeId]: "updating",
+        }));
+
+        let result;
+        if (currentStatus === "active") {
+          result = await deactivateEmployee(employeeId);
+          showNotification("Employee deactivated successfully!", "success");
+        } else {
+          // eslint-disable-next-line no-unused-vars
+          result = await activateEmployee(employeeId);
+          showNotification("Employee activated successfully!", "success");
+        }
+
+        setStatusAnimations((prev) => ({
+          ...prev,
+          [employeeId]: "success",
+        }));
+
+        setTimeout(() => {
+          setStatusAnimations((prev) => {
+            const newState = { ...prev };
+            delete newState[employeeId];
+            return newState;
+          });
+        }, 1500);
+      } catch (error) {
+        console.error("❌ Error updating employee status:", error);
+        showNotification(
+          "Failed to update employee status: " + error.message,
+          "error"
+        );
+
+        setStatusAnimations((prev) => ({
+          ...prev,
+          [employeeId]: "error",
+        }));
+
+        setTimeout(() => {
+          setStatusAnimations((prev) => {
+            const newState = { ...prev };
+            delete newState[employeeId];
+            return newState;
+          });
+        }, 2000);
+      } finally {
+        setStatusUpdateLoading(null);
       }
-      
-      setStatusAnimations(prev => ({
-        ...prev,
-        [employeeId]: 'success'
-      }));
-
-      setTimeout(() => {
-        setStatusAnimations(prev => {
-          const newState = { ...prev };
-          delete newState[employeeId];
-          return newState;
-        });
-      }, 1500);
-      
-    } catch (error) {
-      console.error('❌ Error updating employee status:', error);
-      showNotification('Failed to update employee status: ' + error.message, 'error');
-      
-      setStatusAnimations(prev => ({
-        ...prev,
-        [employeeId]: 'error'
-      }));
-
-      setTimeout(() => {
-        setStatusAnimations(prev => {
-          const newState = { ...prev };
-          delete newState[employeeId];
-          return newState;
-        });
-      }, 2000);
-    } finally {
-      setStatusUpdateLoading(null);
-    }
-  }, [deactivateEmployee, activateEmployee, showNotification]);
+    },
+    [deactivateEmployee, activateEmployee, showNotification]
+  );
 
   const filteredEmployees = useMemo(() => {
     let filtered = employees;
-    
+
     if (employeeFilter !== "All") {
-      filtered = filtered.filter(e => {
+      filtered = filtered.filter((e) => {
         const status = e.status?.toLowerCase();
         return status === employeeFilter.toLowerCase();
       });
     }
-    
+
     if (searchTerm) {
-      filtered = filtered.filter(e => 
-        e.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.employee_code?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (e) =>
+          e.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          e.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          e.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          e.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          e.employee_code?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     return filtered;
   }, [employees, employeeFilter, searchTerm]);
 
@@ -115,30 +131,36 @@ const UserManagement = () => {
   };
 
   const handleAddUser = () => {
-    navigate('/add-employee');
+    navigate("/add-employee");
   };
 
-  const handleViewEmployee = useCallback((employee) => {
-    const employeeId = employee.user_id || employee.id;
-    if (employeeId) {
-      navigate(`/employees/${employeeId}`);
-    } else {
-      alert('Cannot view employee: No valid ID found');
-    }
-  }, [navigate]);
+  // const handleViewEmployee = useCallback(
+  //   (employee) => {
+  //     const employeeId = employee.user_id || employee.id;
+  //     if (employeeId) {
+  //       navigate(`/employees/${employeeId}`);
+  //     } else {
+  //       alert("Cannot view employee: No valid ID found");
+  //     }
+  //   },
+  //   [navigate]
+  // );
 
-  const handleEditEmployee = useCallback((employee) => {
-    console.log('Edit employee:', employee);
-  }, []);
+  // const handleEditEmployee = useCallback((employee) => {
+  //   console.log("Edit employee:", employee);
+  // }, []);
 
   // Pagination handlers with transitions
-  const handlePageChange = useCallback(async (page) => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      goToPage(page - 1);
-      setTimeout(() => setIsTransitioning(false), 300);
-    }, 150);
-  }, [goToPage]);
+  const handlePageChange = useCallback(
+    async (page) => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        goToPage(page - 1);
+        setTimeout(() => setIsTransitioning(false), 300);
+      }, 150);
+    },
+    [goToPage]
+  );
 
   const handleNextPage = useCallback(async () => {
     if (pagination.currentPage < pagination.totalPages - 1) {
@@ -160,86 +182,102 @@ const UserManagement = () => {
     }
   }, [pagination.currentPage, goToPrevPage]);
 
-  const handleItemsPerPageChange = useCallback(async (value) => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      changePageSize(Number(value));
-      setTimeout(() => setIsTransitioning(false), 300);
-    }, 150);
-  }, [changePageSize]);
+  const handleItemsPerPageChange = useCallback(
+    async (value) => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        changePageSize(Number(value));
+        setTimeout(() => setIsTransitioning(false), 300);
+      }, 150);
+    },
+    [changePageSize]
+  );
 
   // Get animation class for status cell
-  const getStatusAnimationClass = useCallback((employeeId) => {
-    const animation = statusAnimations[employeeId];
-    switch (animation) {
-      case 'updating':
-        return 'status-updating';
-      case 'success':
-        return 'status-success';
-      case 'error':
-        return 'status-error';
-      default:
-        return '';
-    }
-  }, [statusAnimations]);
+  const getStatusAnimationClass = useCallback(
+    (employeeId) => {
+      const animation = statusAnimations[employeeId];
+      switch (animation) {
+        case "updating":
+          return "status-updating";
+        case "success":
+          return "status-success";
+        case "error":
+          return "status-error";
+        default:
+          return "";
+      }
+    },
+    [statusAnimations]
+  );
 
   return (
-    <div className={styles.container}>
-      <h2> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Employee Management</h2>
-      <button
-        className={`${styles.primaryBtn} primarybtnadd`}
-        onClick={handleAddUser}
-      >
-        <FaPlus className={styles.btnIcon} />
-        Add Employee
-      </button>
-      
-      <div className={`${styles.card} maincard`}>
+    <div className="container">
+      <div className="card maincard">
+        <div className="card-header">
+          <div className="header-content">
+            <h3 style={{ fontWeight: "500", marginBottom: "10px" }}>
+              Employee Management
+            </h3>
+            <h6 style={{ color: "gray", fontSize: "15px", fontWeight: "400" }}>
+              Streamline workforce data and maintain employee records
+              efficiently.
+            </h6>
+          </div>
+        </div>
         <div className="cardheaderuser">
           <div className="filterButtons">
             {["All", "active", "inactive"].map((x) => (
               <button
                 key={x}
                 onClick={() => setEmployeeFilter(x)}
-                className={`filterBtn smooth-transition ${employeeFilter === x ? 'filterBtnActive' : ''}`}
+                className={`filterBtn smooth-transition ${
+                  employeeFilter === x ? "filterBtnActive" : ""
+                }`}
               >
                 {x[0].toUpperCase() + x.slice(1)}
               </button>
             ))}
           </div>
-          
+
           <div className="headerActions">
-            <div className={styles.searchBox}>
-              <FaSearch className={styles.searchIcon} />
-              <input 
-                type="text" 
-                placeholder="Search employees..." 
+            <div className="searchBox">
+              <FaSearch className="searchIcon" />
+              <input
+                type="text"
+                placeholder="Search employees..."
                 className="searchInput"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
-            <button 
+            <button
+              className="primaryBtn primarybtnadd"
+              onClick={handleAddUser}
+            >
+              <FaPlus className="btn-icon" />
+              Add Employee
+            </button>
+            <button
               onClick={handleRefresh}
-              className={`${styles.secondaryBtn} btnSecondary smooth-transition`}
+              className="secondaryBtn btnSecondary smooth-transition"
               disabled={loading}
             >
-              <FaSync className={styles.btnIcon} />
+              <FaSync className="btn-icon" />
               Refresh
             </button>
           </div>
         </div>
 
-        <div className={`${styles.cardBody} ${isTransitioning ? 'page-transition' : ''}`}>
+        <div className={`cardBody ${isTransitioning ? "page-transition" : ""}`}>
           {loading ? (
             <div className="loadingState smooth-fade-in">
-              <FaSpinner className="fas fa-spinner fa-spin" />
+              <FaSpinner className="spinner-icon fa-spin" />
               Loading employees...
             </div>
           ) : error ? (
             <div className="errorState smooth-fade-in">
-              <i className="fas fa-exclamation-circle"></i> Error: {error}
+              <span className="error-icon">⚠️</span> Error: {error}
             </div>
           ) : (
             <>
@@ -254,92 +292,125 @@ const UserManagement = () => {
                       <th>Designation</th>
                       <th>Grade</th>
                       <th>Status</th>
-                      <th>Actions</th>
+                      {/* <th>Actions</th> */}
                     </tr>
                   </thead>
                   <tbody>
                     {filteredEmployees.map((emp, index) => {
                       const currentStatus = emp.status;
                       const isUpdating = statusUpdateLoading === emp.user_id;
-                      const animationClass = getStatusAnimationClass(emp.user_id);
-                      
+                      const animationClass = getStatusAnimationClass(
+                        emp.user_id
+                      );
+
                       return (
-                        <tr 
-                          key={emp.user_id} 
-                          className={`table-row smooth-fade-in row-animation-${index % 5}`}
+                        <tr
+                          key={emp.user_id}
+                          className={`table-row smooth-fade-in row-animation-${
+                            index % 5
+                          }`}
                           style={{ animationDelay: `${(index % 10) * 0.05}s` }}
                         >
                           <td className="smooth-slide-in">
-                            <span className="employee-code">{emp.employee_code || 'N/A'}</span>
+                            <span className="employee-code">
+                              {emp.employee_code || "N/A"}
+                            </span>
                           </td>
                           <td className="smooth-slide-in">
-                            <strong className="employee-name">{emp.first_name} {emp.last_name}</strong>
+                            <strong className="employee-name">
+                              {emp.first_name} {emp.last_name}
+                            </strong>
                           </td>
                           <td className="smooth-slide-in">
                             <span className="employee-email">{emp.email}</span>
                           </td>
                           <td className="smooth-slide-in">
-                            <span className="employee-department">{emp.department || 'N/A'}</span>
+                            <span className="employee-department">
+                              {emp.department || "N/A"}
+                            </span>
                           </td>
                           <td className="smooth-slide-in">
-                            <span className="employee-designation">{emp.designation || 'N/A'}</span>
+                            <span className="employee-designation">
+                              {emp.designation || "N/A"}
+                            </span>
                           </td>
                           <td className="smooth-slide-in">
-                            <span className="employee-grade">{emp.grade || 'N/A'}</span>
+                            <span className="employee-grade">
+                              {emp.grade || "N/A"}
+                            </span>
                           </td>
                           <td className={`smooth-slide-in ${animationClass}`}>
                             <div className="status-cell">
-                              <span className="status-text">
-                                {currentStatus ? currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1) : 'Unknown'}
-                              </span>   <button
-                                className={`btnIcon status-toggle smooth-transition ${animationClass}`}
-                                onClick={() => handleStatusUpdate(emp.user_id, currentStatus)}
+                              {/* UPDATED: Added active/inactive class to status text */}
+                              <span
+                                className={`status-text ${
+                                  currentStatus === "active"
+                                    ? "active"
+                                    : "inactive"
+                                }`}
+                              >
+                                {currentStatus
+                                  ? currentStatus.charAt(0).toUpperCase() +
+                                    currentStatus.slice(1)
+                                  : "Unknown"}
+                              </span>
+                              <button
+                                className={`action-btn status-toggle smooth-transition ${animationClass}`}
+                                onClick={() =>
+                                  handleStatusUpdate(emp.user_id, currentStatus)
+                                }
                                 disabled={isUpdating || loading}
-                                title={currentStatus === 'active' ? 'Deactivate Employee' : 'Activate Employee'}
+                                title={
+                                  currentStatus === "active"
+                                    ? "Deactivate Employee"
+                                    : "Activate Employee"
+                                }
                               >
                                 {isUpdating ? (
-                                  <FaSpinner className="fas fa-spinner fa-spin pulse-animation" />
-                                ) : currentStatus === 'active' ? (
-                                  <FaToggleOn className="toggle-icon" style={{color: '#28a745', fontSize: '16px'}} />
+                                  <FaSpinner className="spinner-icon fa-spin pulse-animation" />
+                                ) : currentStatus === "active" ? (
+                                  <FaToggleOn className="toggle-icon active" />
                                 ) : (
-                                  <FaToggleOff className="toggle-icon" style={{color: '#6c757d', fontSize: '16px'}} />
+                                  <FaToggleOff className="toggle-icon inactive" />
                                 )}
                               </button>
                             </div>
                           </td>
-                          <td className="smooth-slide-in">
+                          {/* <td className="smooth-slide-in">
                             <div className="actionButtons">
+                           
                               <button
-                                className="btnIcon smooth-scale"
+                                className="action-btn view-btn smooth-scale"
                                 onClick={() => handleViewEmployee(emp)}
                                 title="View Details"
                                 disabled={isUpdating}
                               >
-                                <FaEye className="fas fa-eye" />
+                                <FaEye className="action-icon view-icon" />
                               </button>
+                     
                               <button
-                                className="btnIcon smooth-scale"
+                                className="action-btn edit-btn smooth-scale"
                                 onClick={() => handleEditEmployee(emp)}
                                 title="Edit Employee"
                                 disabled={isUpdating}
                               >
-                                <FaEdit className="fas fa-edit" />
+                                <FaEdit className="action-icon edit-icon" />
                               </button>
                             </div>
-                          </td>
+                          </td> */}
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
               </div>
-              
+
               {filteredEmployees.length === 0 && !isTransitioning && (
                 <div className="noData smooth-fade-in">
-                  <i className="fas fa-users"></i>
+                  <span className="no-data-icon">👥</span>
                   <p>No employees found</p>
                   {searchTerm && (
-                    <button 
+                    <button
                       onClick={() => setSearchTerm("")}
                       className="btn btnSecondary smooth-transition"
                     >
@@ -357,10 +428,11 @@ const UserManagement = () => {
           <div className="paginationControls smooth-fade-in">
             <div className="paginationInfo">
               <span>
-                Showing {filteredEmployees.length} of {pagination.totalElements} employees
+                Showing {filteredEmployees.length} of {pagination.totalElements}{" "}
+                employees
                 {pagination.pageSize && (
-                  <select 
-                    value={pagination.pageSize} 
+                  <select
+                    value={pagination.pageSize}
                     onChange={(e) => handleItemsPerPageChange(e.target.value)}
                     className="pageSizeSelect"
                     disabled={loading || isTransitioning}
@@ -373,58 +445,80 @@ const UserManagement = () => {
                 )}
               </span>
             </div>
-            
+
             <div className="paginationButtons">
               <button
                 onClick={() => handlePageChange(1)}
-                disabled={pagination.currentPage === 0 || loading || isTransitioning}
-                className="btn btnSecondary smooth-transition"
+                disabled={
+                  pagination.currentPage === 0 || loading || isTransitioning
+                }
+                className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleDoubleLeft />
               </button>
               <button
                 onClick={handlePrevPage}
-                disabled={pagination.currentPage === 0 || loading || isTransitioning}
-                className="btn btnSecondary smooth-transition"
+                disabled={
+                  pagination.currentPage === 0 || loading || isTransitioning
+                }
+                className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleLeft />
               </button>
-              
-              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                let pageNum;
-                if (pagination.totalPages <= 5) {
-                  pageNum = i;
-                } else if (pagination.currentPage <= 2) {
-                  pageNum = i;
-                } else if (pagination.currentPage >= pagination.totalPages - 3) {
-                  pageNum = pagination.totalPages - 5 + i;
-                } else {
-                  pageNum = pagination.currentPage - 2 + i;
+
+              {Array.from(
+                { length: Math.min(5, pagination.totalPages) },
+                (_, i) => {
+                  let pageNum;
+                  if (pagination.totalPages <= 5) {
+                    pageNum = i;
+                  } else if (pagination.currentPage <= 2) {
+                    pageNum = i;
+                  } else if (
+                    pagination.currentPage >=
+                    pagination.totalPages - 3
+                  ) {
+                    pageNum = pagination.totalPages - 5 + i;
+                  } else {
+                    pageNum = pagination.currentPage - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum + 1)}
+                      className={`pagibtn smooth-transition ${
+                        pagination.currentPage === pageNum
+                          ? "btnPrimary"
+                          : "btnSecondary"
+                      }`}
+                      disabled={loading || isTransitioning}
+                    >
+                      {pageNum + 1}
+                    </button>
+                  );
                 }
-                
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => handlePageChange(pageNum + 1)}
-                    className={`btn smooth-transition ${pagination.currentPage === pageNum ? 'btnPrimary' : 'btnSecondary'}`}
-                    disabled={loading || isTransitioning}
-                  >
-                    {pageNum + 1}
-                  </button>
-                );
-              })}
-              
+              )}
+
               <button
                 onClick={handleNextPage}
-                disabled={pagination.currentPage >= pagination.totalPages - 1 || loading || isTransitioning}
-                className="btn btnSecondary smooth-transition"
+                disabled={
+                  pagination.currentPage >= pagination.totalPages - 1 ||
+                  loading ||
+                  isTransitioning
+                }
+                className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleRight />
               </button>
               <button
                 onClick={() => handlePageChange(pagination.totalPages)}
-                disabled={pagination.currentPage >= pagination.totalPages - 1 || loading || isTransitioning}
-                className="btn btnSecondary smooth-transition"
+                disabled={
+                  pagination.currentPage >= pagination.totalPages - 1 ||
+                  loading ||
+                  isTransitioning
+                }
+                className="pagibtn btnSecondary smooth-transition"
               >
                 <FaAngleDoubleRight />
               </button>

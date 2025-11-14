@@ -1,16 +1,48 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { useSuperAdmin } from "@/contexts/SuperAdminContext";
 import { useAuth } from '../../../hooks/useAuth';
+import { SuperAdminService } from '../../../services/superAdminService';
 import styles from '../styles/SuperAdminHeader.module.css';
 import { FaBars, FaPowerOff, FaSpinner } from 'react-icons/fa';
 
-// Move constants outside component to prevent recreation
 const LOGOUT_REDIRECT_URL = 'http://bwc-90.brainwaveconsulting.co.in:3000/';
-const AVATAR_URL = "https://ui-avatars.com/api/?name=Super+Admin&background=7d3a98&color=fff";
 
 const SuperAdminHeader = () => {
   const { logout, loading: logoutLoading } = useAuth();
   const { actions } = useSuperAdmin();
+  const [userName, setUserName] = useState('Super Admin');
+  const [userFullName, setUserFullName] = useState('Super Admin');
+  const [userNameLoading, setUserNameLoading] = useState(false);
+
+  // Fetch super admin name on component mount
+  useEffect(() => {
+    const fetchSuperAdminName = async () => {
+      try {
+        setUserNameLoading(true);
+        console.log('🔍 Fetching super admin name for header...');
+        
+        const profileData = await SuperAdminService.getSuperAdminProfile();
+        console.log('✅ Super Admin Profile data received:', profileData);
+        
+        // Set both first name and full name
+        if (profileData) {
+          setUserName(profileData.firstName || 'Super Admin'); // "Vikram"
+          setUserFullName(profileData.fullName || 'Super Admin'); // "Vikram Deshmukh"
+        }
+      } catch (err) {
+        console.error('❌ Error fetching super admin profile:', err);
+        // Fallback to localStorage data
+        // eslint-disable-next-line no-unused-vars
+        const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+        setUserName('Super Admin');
+        setUserFullName('Super Admin');
+      } finally {
+        setUserNameLoading(false);
+      }
+    };
+
+    fetchSuperAdminName();
+  }, []);
 
   // Memoized logout handler
   const handleLogout = useCallback(async () => {
@@ -21,17 +53,17 @@ const SuperAdminHeader = () => {
       });
     } catch (error) {
       console.error('Logout failed:', error);
-      // Fallback redirect
       window.location.href = LOGOUT_REDIRECT_URL;
     }
   }, [logout]);
 
-  // Memoized user profile data
+  // Memoized user profile data with dynamic name
   const userProfile = useMemo(() => ({
-    name: "Super Admin",
+    name: userName, // First name for display
+    fullName: userFullName, // Full name if needed
     role: "System Administrator",
-    avatar: AVATAR_URL
-  }), []);
+    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userFullName)}&background=7d3a98&color=fff`
+  }), [userName, userFullName]);
 
   return (
     <div className={styles.header}>
@@ -52,11 +84,11 @@ const SuperAdminHeader = () => {
         <div className={styles.userProfile}>
           <img 
             src={userProfile.avatar} 
-            alt={userProfile.name}
+            alt={userProfile.fullName}
             loading="lazy"
           />
           <div>
-            <div>{userProfile.name}</div>
+            <div>{userNameLoading ? 'Super Admin' : userProfile.fullName}</div>
             <small>{userProfile.role}</small>
           </div>
           <div className={styles.logoutbutton}>

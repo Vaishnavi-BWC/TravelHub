@@ -1,0 +1,514 @@
+/* SLASettings.css */
+.containersla {
+  width: 98%;
+  margin-top: 1%;
+}
+
+.containersla .cardHeader {
+  margin-bottom: 30px;
+  padding: 10px;
+}
+
+.containersla .workflowInfo {
+  padding: 15px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  margin-bottom: 20px;
+  border-left: 4px solid #1a4f8c;
+}
+
+.containersla .cardBody p {
+  margin-bottom: 8px;
+  margin-left: 0;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #e1e5e9;
+}
+
+.maincard {
+  padding: 20px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.headerLeft h3 {
+  margin: 0;
+  font-size: 24px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.workflowSelect {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.tabButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.tabButton {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  transition: all 0.15s ease;
+}
+
+.tabButton:hover {
+  background: #f8f9fa;
+  border-color: #6c757d;
+}
+
+.tabButtonActive {
+  background: #1a4f8c;
+  border-color: #1a4f8c;
+  color: white;
+}
+
+.cardBody {
+  padding: 0;
+}
+
+.workflowInfo p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #495057;
+}
+
+.workflowInfo strong {
+  color: #2c3e50;
+}
+
+/* Table Styles */
+.tableContainer {
+  overflow-x: auto;
+  margin-bottom: 20px;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.dataTable th,
+.dataTable td {
+  padding: 12px 8px;
+  text-align: center;
+  border-bottom: 1px solid #f1f3f4;
+  border-right: 1px solid #f1f3f4;
+}
+
+.dataTable th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.dataTable th:last-child,
+.dataTable td:last-child {
+  border-right: none;
+}
+
+.dataTable tr:hover {
+  background-color: #fafbfc;
+}
+
+.inactiveRow {
+  background-color: #f8f9fa !important;
+  color: #6c757d;
+}
+
+.inactiveRow:hover {
+  background-color: #e9ecef !important;
+}
+
+/* Step Cell */
+.stepCell {
+  font-weight: 600;
+  color: #495057;
+}
+
+.stepName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.unsavedBadge {
+  background: #ffc107;
+  color: #856404;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+/* Role Cell - Updated with light background */
+.roleCell {
+  font-weight: 500;
+}
+
+.roleclass {
+  background: #e3f2fd; /* Light blue background */
+  padding: 6px 12px;
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid #bbdefb; /* Light blue border */
+}
+
+.roleBadge {
+  color: #1565c0; /* Dark blue text for contrast */
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mandatoryBadge {
+  background: #e8f5e8; /* Light green background */
+  color: #2e7d32; /* Dark green text */
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #c8e6c9; /* Light green border */
+}
+
+.optionalBadge {
+  background: #f5f5f5; /* Light gray background */
+  color: #616161; /* Dark gray text */
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #e0e0e0; /* Light gray border */
+}
+
+/* Sequence Cell */
+.sequenceCell {
+  text-align: center;
+}
+
+.sequenceSelect {
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  font-size: 14px;
+}
+
+/* Input Styles */
+.numberInput {
+  width: 70px;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.unsavedInput {
+  border: 2px solid #ffc107 !important;
+  background-color: #fffbf0 !important;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.unsavedCheckbox {
+  accent-color: #ffc107;
+}
+
+/* Status Toggle */
+.statusToggle {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.statusActive {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.statusInactive {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.primaryBtnSmall,
+.secondaryBtnSmall {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.primaryBtnSmall {
+  background: #28a745;
+  color: white;
+}
+
+.primaryBtnSmall:hover:not(:disabled) {
+  background: #218838;
+}
+
+.saveHighlight {
+  background: #28a745 !important;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.secondaryBtnSmall {
+  background: #6c757d;
+  color: white;
+}
+
+.secondaryBtnSmall:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.primaryBtnSmall:disabled,
+.secondaryBtnSmall:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Bulk Update Section */
+.bulkUpdateSection {
+  background: #f8f9fa;
+  padding: 30px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.bulkForm {
+  max-width: 500px;
+}
+
+.bulkForm h4 {
+  margin-bottom: 15px;
+  color: #2c3e50;
+  font-size: 18px;
+}
+
+.bulkForm p {
+  margin-bottom: 20px;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.helpText {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.primaryBtn {
+  background: #1a4f8c;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  background: #153d6f;
+}
+
+.primaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bulkInfo {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e7f3ff;
+  border-radius: 6px;
+  border-left: 4px solid #1a4f8c;
+}
+
+.bulkInfo p {
+  margin: 0;
+  font-size: 14px;
+  color: #495057;
+}
+
+/* Notes and Messages */
+.inactiveNote,
+.unsavedNote {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.inactiveNote {
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  color: #0066cc;
+}
+
+.unsavedNote {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .containersla {
+    margin: 10px;
+    margin-top: 20px;
+  }
+  
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .headerLeft {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .workflowSelect {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .tabButtons {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .tableContainer {
+    font-size: 14px;
+  }
+  
+  .dataTable th,
+  .dataTable td {
+    padding: 8px 6px;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .bulkUpdateSection {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabButton {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .sequenceSelect,
+  .numberInput {
+    width: 60px;
+  }
+  
+  .roleclass {
+    padding: 4px 8px;
+  }
+}

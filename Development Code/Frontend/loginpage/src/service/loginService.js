@@ -71,6 +71,7 @@ export class LoginService {
           const errorData = await response.json();
           errorMessage = errorData.message || errorData.error || errorMessage;
           console.error('🔴 Login error details:', errorData);
+        // eslint-disable-next-line no-unused-vars
         } catch (parseError) {
           console.error('🔴 Cannot parse error response');
         }

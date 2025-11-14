@@ -1,12 +1,12 @@
 //path: src/components/loginpage.jsx
-import React from 'react';
-import { useLogin } from '../hooks/useLogin';
-import '../login.css';
+import React from "react";
+import { useLogin } from "../hooks/useLogin";
+import "../login.css";
 
 const LoginPage = () => {
   const [credentials, setCredentials] = React.useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = React.useState(false);
 
@@ -14,10 +14,10 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Clear previous errors
     clearError();
-    
+
     // Basic validation before API call
     if (!credentials.email || !credentials.password) {
       clearError(); // This will set error to empty
@@ -28,9 +28,9 @@ const LoginPage = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setCredentials(prev => ({
+    setCredentials((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
 
     // Clear error when user starts typing
@@ -54,11 +54,14 @@ const LoginPage = () => {
         <div className="company-content">
           <div className="welcome-badge">Welcome</div>
           <h1>BrainWave Travel Hub</h1>
-          <p className="tagline">Your trusted partner in managing travel requests seamlessly.</p>
+          <p className="tagline">
+            Your trusted partner in managing travel requests seamlessly.
+          </p>
           <p className="description">
-            BrainWave Consulting Pvt. Ltd. is a global leader in digital transformation,
-            offering solutions in AI, cloud computing, and enterprise automation.
-            With 10+ years of excellence, we empower businesses worldwide.
+            BrainWave Consulting Pvt. Ltd. is a global leader in digital
+            transformation, offering solutions in AI, cloud computing, and
+            enterprise automation. With 10+ years of excellence, we empower
+            businesses worldwide.
           </p>
         </div>
       </div>
@@ -68,7 +71,7 @@ const LoginPage = () => {
           <div className="login-header">
             <div className="logo">
               <div className="logo-icon">
-                <img src='/BWCLOGO.png' alt="Brainwave Logo" />
+                <img src="/BWCLOGO.png" alt="Brainwave Logo" />
               </div>
               <div className="logo-text">
                 <h1>BrainWave Travel Hub</h1>
@@ -84,7 +87,7 @@ const LoginPage = () => {
                 <strong>Login Failed</strong>
                 <p>{error}</p>
               </div>
-              <button 
+              <button
                 className="error-close"
                 onClick={clearError}
                 aria-label="Close error message"
@@ -103,11 +106,11 @@ const LoginPage = () => {
                   type="email"
                   placeholder="Enter your company email"
                   value={credentials.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
                   required
                   disabled={loading}
                   autoComplete="email"
-                  className={error && !credentials.email ? 'input-error' : ''}
+                  className={error && !credentials.email ? "input-error" : ""}
                 />
                 <span className="input-icon">✉️</span>
               </div>
@@ -121,11 +124,15 @@ const LoginPage = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={credentials.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("password", e.target.value)
+                  }
                   required
                   disabled={loading}
                   autoComplete="current-password"
-                  className={error && !credentials.password ? 'input-error' : ''}
+                  className={
+                    error && !credentials.password ? "input-error" : ""
+                  }
                 />
                 <span className="input-icon">🔒</span>
                 <button
@@ -133,9 +140,9 @@ const LoginPage = () => {
                   className="password-toggle"
                   onClick={togglePasswordVisibility}
                   disabled={loading}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                  {showPassword ? "👁️" : "👁️‍🗨️"}
                 </button>
               </div>
             </div>
@@ -145,13 +152,17 @@ const LoginPage = () => {
                 <input type="checkbox" disabled={loading} />
                 <span>Remember me</span>
               </label>
-              <a href="/forgot-password" className="forgot-link">Forgot Password?</a>
+              <a href="/forgot-password" className="forgot-link">
+                Forgot Password?
+              </a>
             </div>
 
             <button
               type="submit"
               disabled={!canSubmit}
-              className={`login-btn ${loading ? 'loading' : ''} ${!canSubmit ? 'disabled' : ''}`}
+              className={`login-btn ${loading ? "loading" : ""} ${
+                !canSubmit ? "disabled" : ""
+              }`}
             >
               {loading ? (
                 <>
@@ -159,16 +170,17 @@ const LoginPage = () => {
                   Signing In...
                 </>
               ) : (
-                'Sign In'
+                "Sign In"
               )}
             </button>
           </form>
 
           <div className="login-footer">
-            <p>Don't have an account? <a href="/contact-admin">Contact Administrator</a></p>
-            <div className="security-note">
-              🔒 Secure authentication system
-            </div>
+            <p>
+              Don't have an account?{" "}
+              <a href="/contact-admin">Contact Administrator</a>
+            </p>
+            <div className="security-note">🔒 Secure authentication system</div>
           </div>
         </div>
       </div>

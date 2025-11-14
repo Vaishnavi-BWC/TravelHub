@@ -49,6 +49,7 @@ export const useLogout = () => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const clearAuthData = () => {
     // Clear all authentication related data
     localStorage.removeItem('auth_token');

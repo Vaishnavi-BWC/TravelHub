@@ -1,7 +1,7 @@
 /* styles/SuperAdminDashboard.module.css */
 .dashboardbody
 {
-  padding: 30px;
+  padding: 10px;
 }
 .dashboardbody h2
 {
@@ -11,7 +11,10 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 25px;
+  /* border: 1px solid #000; */
   margin-bottom: 30px;
+  width: 98%;
+  margin: auto;
 }
 
 /* Responsive */

@@ -2,7 +2,7 @@
 .container {
   display: flex;
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ font-family: "Inter", sans-serif;
   background-color: #f5f7fa;
 }
 
@@ -17,10 +17,11 @@
 
 
 .content h2 {
-  font-size: 1.8rem;
+  font-size: 1.3rem;
   color: #2c3e50;
-  margin-bottom: 10px;
+  /* margin-bottom: 10px; */
   font-weight: 700;
+  margin-left: 1%;
 }
 
 .content > p {

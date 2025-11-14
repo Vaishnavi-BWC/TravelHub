@@ -29,24 +29,24 @@ export const useAuth = () => {
       setError(null);
 
       console.log('🔜 Starting enhanced logout process...');
-      
+
       await authService.logout();
-      
+
       console.log('🔄 Performing hard redirect to clear everything...');
-      
+
       if (config.forceRedirect) {
         window.location.href = config.redirectTo;
-        
+
         // Fallback redirect
         setTimeout(() => {
           window.location.replace(config.redirectTo);
         }, AUTH_CONSTANTS.LOGOUT_TIMEOUT);
       }
-      
+
     } catch (err) {
       console.error('❌ Logout error:', err);
       setError(err.message);
-      
+
       // Emergency cleanup and redirect
       authService.clearAuthStorage();
       authService.clearAllCookies();
